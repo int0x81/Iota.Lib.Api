@@ -5,6 +5,8 @@ VisualStudioVersion = 15.0.27130.2024
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "iota.lib.dotnet", "iota.lib.dotnet\iota.lib.dotnet.csproj", "{B30E4377-FCDE-4B07-BDEC-8C2BEB7AB606}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "iota.lib.test", "iota.lib.test\iota.lib.test.csproj", "{DBEFAC87-79B2-46C4-8A21-120C975C34EC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{B30E4377-FCDE-4B07-BDEC-8C2BEB7AB606}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B30E4377-FCDE-4B07-BDEC-8C2BEB7AB606}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B30E4377-FCDE-4B07-BDEC-8C2BEB7AB606}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DBEFAC87-79B2-46C4-8A21-120C975C34EC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DBEFAC87-79B2-46C4-8A21-120C975C34EC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DBEFAC87-79B2-46C4-8A21-120C975C34EC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DBEFAC87-79B2-46C4-8A21-120C975C34EC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
