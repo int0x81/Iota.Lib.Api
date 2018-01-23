@@ -3,7 +3,7 @@ using Iota.Lib.CSharp.Api.Model;
 using Iota.Lib.CSharp.Api.Utils;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Iota.Lib.CSharpTests.Api.Utils
+namespace Iota.Lib.CSharpTests
 {
     [TestClass]
     public class InputValidatorTests

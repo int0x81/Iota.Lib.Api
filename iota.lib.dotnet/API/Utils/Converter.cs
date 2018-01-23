@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Numerics;
+using System.Linq;
 
 namespace Iota.Lib.CSharp.Api.Utils
 {
@@ -357,22 +358,24 @@ namespace Iota.Lib.CSharp.Api.Utils
             }
         }
 
-        /// <summary>
-        /// Converts an array of trits into a BigInteger
-        /// </summary>
-        /// <param name="trits"> The trits</param>
-        /// <param name="offset"></param>
-        /// <param name="size"></param>
-        /// <returns>The BigInteger formed by the trits</returns>
-        public static BigInteger ConvertTritsToBigInt(int[] trits)
+        public static BigInteger ConvertTritsToBigInt(int[] trits, int offset, int size)
         {
-            return new BigInteger(ToLongValue(trits));
+            var value = BigInteger.Zero;
+
+            for (var i = size; i-- > 0;)
+            {
+                value = BigInteger.Multiply(value, new BigInteger(RADIX));
+                value = BigInteger.Add(value, new BigInteger(trits[offset + i]));
+            }
+
+            return value;
         }
 
         public static int[] ConvertBigIntToTrits(BigInteger value)
         {
-            List<int> trits = new List<int>();
+            int[] trits = new int[Kerl.HASH_LENGTH];
             BigInteger absoluteValue = BigInteger.Abs(value);
+            int counter = 0;
             while (absoluteValue > 0)
             {
                 BigInteger quotient = BigInteger.DivRem(absoluteValue, new BigInteger(RADIX), out BigInteger remainder_as_bi);
@@ -385,12 +388,13 @@ namespace Iota.Lib.CSharp.Api.Utils
                     remainder = MIN_TRIT_VALUE;
                     absoluteValue = BigInteger.Add(absoluteValue, BigInteger.One);
                 }
-                trits.Add(remainder);
+                trits[counter] = remainder;
+                counter++;
             }
 
             if (value < 0)
             {
-                for(int i = 0; i < trits.Count; i++)
+                for(int i = 0; i < trits.Length; i++)
                 {
                     trits[i] = -trits[i];
                 }
@@ -401,7 +405,9 @@ namespace Iota.Lib.CSharp.Api.Utils
         public static byte[] ConvertBigIntToBytes(BigInteger value)
         {
             byte[] result = new byte[Kerl.BYTE_HASH_LENGTH];
-            byte[] bytes = value.ToByteArray();
+            byte[] bytes = value.ToByteArray();              // In .NET Standard the 'ToByteArray()'-function fills the array in reverse order compared to .NET Framework 4.6
+            bytes = bytes.Reverse().ToArray();
+
 
             var i = 0;
             while (i + bytes.Length < Kerl.BYTE_HASH_LENGTH)
@@ -426,11 +432,17 @@ namespace Iota.Lib.CSharp.Api.Utils
 
         public static byte[] ConvertTritsToBytes(int[] trits)
         {
-            return ConvertBigIntToBytes(ConvertTritsToBigInt(trits));
+            return ConvertBigIntToBytes(ConvertTritsToBigInt(trits, 0, Kerl.HASH_LENGTH));
         }
-        public static int[] ConvertBytesToTrits(byte[] bytes)
+
+        public static int[] ConvertBytesToTrits(IEnumerable<byte> bytes)
         {
-            return ConvertBigIntToTrits(new BigInteger(bytes));
+            return ConvertBigIntToTrits(new BigInteger(bytes.Reverse().ToArray()));
+        }
+
+        public static BigInteger ConvertBytesToBigInt(IEnumerable<byte> bytes)
+        {
+            return new BigInteger(bytes.ToArray());
         }
 
         private static int FindMaxPowValue(BigInteger value)

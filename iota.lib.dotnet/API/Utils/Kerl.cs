@@ -19,14 +19,13 @@ namespace Iota.Lib.CSharp.Api.Utils
         public const int BYTE_HASH_LENGTH = BIT_HASH_LENGTH / 8;
 
         private byte[] byteState;
-
-        private int[] State;
+        private int[] tritState;
 
         public Kerl() 
         {
             keccak = new KeccakDigest(BIT_HASH_LENGTH);
             byteState = new byte[BYTE_HASH_LENGTH];
-            State = new int[HASH_LENGTH];
+            tritState = new int[HASH_LENGTH];
         }
 
         public ISponge Clone()
@@ -38,11 +37,12 @@ namespace Iota.Lib.CSharp.Api.Utils
         {
             while (offset < length)
             {
-                Array.Copy(trits, offset, State, 0, HASH_LENGTH);
-                State[HASH_LENGTH - 1] = 0;
+                Array.Copy(trits, offset, tritState, 0, HASH_LENGTH);
+                tritState[HASH_LENGTH - 1] = 0;
 
-                //var bytes = Converter.ConvertTritsToBytes(State);
-                var bytes = Converter.ToBytes(State);
+                var tmp_01 = Converter.ConvertTritsToBigInt(tritState, 0, Kerl.HASH_LENGTH);
+                var bytes = Converter.ConvertTritsToBytes(tritState);
+                
                 keccak.BlockUpdate(bytes, 0, bytes.Length);
 
                 offset += HASH_LENGTH;
@@ -62,9 +62,9 @@ namespace Iota.Lib.CSharp.Api.Utils
             while (offset < length)
             {
                 keccak.DoFinal(byteState, 0);
-                Converter.GetTrits((sbyte[])(Array)byteState, State);
-                State[HASH_LENGTH - 1] = 0;
-                Array.Copy(State, 0, trits, offset, HASH_LENGTH);
+                tritState = Converter.ConvertBytesToTrits(byteState);
+                tritState[HASH_LENGTH - 1] = 0;
+                Array.Copy(tritState, 0, trits, offset, HASH_LENGTH);
 
                 keccak.Reset();
 
@@ -77,12 +77,12 @@ namespace Iota.Lib.CSharp.Api.Utils
                 offset += HASH_LENGTH;
             }
 
-            return State;
+            return tritState;
         }
 
         public int[] Squeeze()
         {
-            return Squeeze(State, 0, State.Length);
+            return Squeeze(tritState, 0, tritState.Length);
         }
 
         public ISponge Reset()

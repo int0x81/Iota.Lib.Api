@@ -1,7 +1,7 @@
 ﻿using Iota.Lib.CSharp.Api.Utils;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Iota.Lib.CSharpTests.Api.Utils
+namespace Iota.Lib.CSharpTests
 {
     [TestClass]
     public class ChecksumTest
@@ -24,6 +24,14 @@ namespace Iota.Lib.CSharpTests.Api.Utils
         public void ShouldRemoveChecksum()
         {
             Assert.AreEqual(Checksum.RemoveChecksum(TEST_ADDRESS_WITH_CHECKSUM), TEST_ADDRESS_WITHOUT_CHECKSUM);
+        }
+
+        [TestMethod]
+        public void TestAddressDoesNotIncludeChecksumShouldGenerateCorrectChecksum_02()
+        {
+            string address = "FAJIXQNBJHCCVBIW9PDYIAXAHWJZHHUNTOPLXTPGYIHYGUGTCTOWJSJZLJQZPBNL9FCRSFTENJLVSDMPD";
+
+            Assert.AreEqual("FAJIXQNBJHCCVBIW9PDYIAXAHWJZHHUNTOPLXTPGYIHYGUGTCTOWJSJZLJQZPBNL9FCRSFTENJLVSDMPDETBRCTSI9", Checksum.AddChecksum(address));
         }
     }
 }
