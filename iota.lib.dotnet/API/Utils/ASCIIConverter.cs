@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using System.Text;
+using System.Collections.Generic;
 
 namespace Iota.Lib.CSharp.Api.Utils
 {
@@ -7,7 +8,7 @@ namespace Iota.Lib.CSharp.Api.Utils
     /// <summary>
     /// This class allows to convert between ASCII and tryte encoded strings 
     /// </summary>
-    public class TrytesConverter
+    public class ASCIIConverter
     {
         /// <summary>
         /// Converts the ASCII encoded string to trytes
@@ -31,8 +32,7 @@ namespace Iota.Lib.CSharp.Api.Utils
                 int firstValue = asciiValue%27;
                 int secondValue = (asciiValue - firstValue)/27;
 
-                string trytesValue = Constants.TRYTE_ALPHABET[firstValue].ToString() +
-                                     Constants.TRYTE_ALPHABET[secondValue];
+                string trytesValue = Constants.TRYTE_ALPHABET.ElementAt(firstValue).Key.ToString() + Constants.TRYTE_ALPHABET.ElementAt(secondValue).Key.ToString();
 
                 trytes.Append(trytesValue);
             }
@@ -53,10 +53,8 @@ namespace Iota.Lib.CSharp.Api.Utils
 
             for (int i = 0; i < inputTrytes.Length; i += 2)
             {
-                // get a trytes pair
-
-                int firstValue = Constants.TRYTE_ALPHABET.IndexOf(inputTrytes[(i)]);
-                int secondValue = Constants.TRYTE_ALPHABET.IndexOf(inputTrytes[(i + 1)]);
+                int firstValue = FindDictionaryIndex(Constants.TRYTE_ALPHABET, inputTrytes[i]);
+                int secondValue = FindDictionaryIndex(Constants.TRYTE_ALPHABET, inputTrytes[i+1]);
 
                 int decimalValue = firstValue + secondValue*27;
 
@@ -66,6 +64,21 @@ namespace Iota.Lib.CSharp.Api.Utils
             }
 
             return builder.ToString();
+        }
+
+        private static int FindDictionaryIndex(Dictionary<char, int[]> dict, char keyValue)
+        {
+            int index = 0;
+
+            while(index < dict.Count)
+            {
+                if (dict.ElementAt(index).Key.Equals(keyValue))
+                {
+                    return index;
+                }
+                index++;
+            }
+            return index;
         }
     }
 }

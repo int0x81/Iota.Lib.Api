@@ -122,9 +122,7 @@ namespace Iota.Lib.CSharp.Api.Model
                 long sum = 0;
                 for (int j = 0; j < 27; j++)
                 {
-                    sum +=
-                    (normalizedBundle[i*27 + j] =
-                        Converter.ToValue(Converter.ToTritsString("" + bundleHash[i*27 + j])));
+                    sum += (normalizedBundle[i*27 + j] = Converter.ConvertTritsToInteger(Converter.ConvertTrytesToTrits("" + bundleHash[i*27 + j])));
                 }
 
                 if (sum >= 0)
@@ -171,29 +169,32 @@ namespace Iota.Lib.CSharp.Api.Model
 
             for (int i = 0; i < Transactions.Count; i++)
             {
-                int[] valueTrits = Converter.ToTrits(Transactions[i].Value, 81);
+                int[] valueTrits = Converter.ConvertTrytesToTrits(Transactions[i].Value);
+                valueTrits = ArrayUtils.PadArrayWithZeros(valueTrits, 81);
 
-                int[] timestampTrits = Converter.ToTrits(Transactions[i].Timestamp, 27);
+                int[] timestampTrits = Converter.ConvertTrytesToTrits(Transactions[i].Timestamp);
+                timestampTrits = ArrayUtils.PadArrayWithZeros(timestampTrits, 27);
 
-                int[] currentIndexTrits = Converter.ToTrits(Transactions[i].CurrentIndex = ("" + i), 27);
+                int[] currentIndexTrits = Converter.ConvertTrytesToTrits(Transactions[i].CurrentIndex = ("" + i));
+                currentIndexTrits = ArrayUtils.PadArrayWithZeros(currentIndexTrits, 27);
 
-                int[] lastIndexTrits = Converter.ToTrits(
-                    Transactions[i].LastIndex = ("" + (this.Transactions.Count - 1)), 27);
+                int[] lastIndexTrits = Converter.ConvertTrytesToTrits(Transactions[i].LastIndex = ("" + (this.Transactions.Count - 1)));
+                lastIndexTrits = ArrayUtils.PadArrayWithZeros(lastIndexTrits, 27);
 
                 string stringToConvert = Transactions[i].Address
-                                         + Converter.ToTrytes(valueTrits)
+                                         + Converter.ConvertTritsToTrytes(valueTrits)
                                          + Transactions[i].Tag +
-                                         Converter.ToTrytes(timestampTrits)
-                                         + Converter.ToTrytes(currentIndexTrits) +
-                                         Converter.ToTrytes(lastIndexTrits);
+                                         Converter.ConvertTritsToTrytes(timestampTrits)
+                                         + Converter.ConvertTritsToTrytes(currentIndexTrits) +
+                                         Converter.ConvertTritsToTrytes(lastIndexTrits);
 
-                int[] t = Converter.ToTrits(stringToConvert);
+                int[] t = Converter.ConvertTrytesToTrits(stringToConvert);
                 customCurl.Absorb(t, 0, t.Length);
             }
 
             int[] hash = new int[243];
-            hash = customCurl.Squeeze();
-            string hashInTrytes = Converter.ToTrytes(hash);
+            hash = customCurl.Squeeze(243);
+            string hashInTrytes = Converter.ConvertTritsToTrytes(hash);
 
             for (int i = 0; i < Transactions.Count; i++)
             {

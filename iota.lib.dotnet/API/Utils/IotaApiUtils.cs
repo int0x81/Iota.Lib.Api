@@ -1,68 +1,36 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using Iota.Lib.CSharp.Api.Model;
+using System.Runtime.CompilerServices;
+
+[assembly: InternalsVisibleTo("Iota.Lib.CSharpTests")]
 
 namespace Iota.Lib.CSharp.Api.Utils
 {
-    internal class IotaApiUtils
+    /// <summary>
+    /// Provides several methods used in the Iota API
+    /// </summary>
+    internal static class IotaApiUtils
     {
         /// <summary>
-        ///  Generates a new address
+        /// Creates a new address
         /// </summary>
-        /// <param name="seed"></param>
-        /// <param name="index"></param>
-        /// <param name="checksum"></param>
-        /// <param name="curl"></param>
-        /// <returns></returns>
-        internal static string NewAddress(string seed, int index, bool checksum, ISponge curl)
+        /// <param name="seed">The seed</param>
+        /// <param name="index">The address index</param>
+        /// <param name="securityLevel">The security level</param>
+        /// <param name="checksum">Indicates if the address shall contain a checksum</param>
+        /// <returns>A tryte-string that represents an address</returns>
+        public static string CreateNewAddress(string seed, int index, int securityLevel, bool checksum)
         {
-            Signing signing = new Signing(curl);
-            Stopwatch stopWatch = new Stopwatch();
-            stopWatch.Start();
-            // Get the elapsed time as a TimeSpan value.
-            TimeSpan ts = stopWatch.Elapsed;
+            int[] privateKey = Signing.Key(Converter.ConvertTrytesToTrits(seed), index, securityLevel);
+            int[] digests = Signing.Digests(privateKey);
+            int[] addressInTrits = Signing.Address(digests);
+            string address = Converter.ConvertTritsToTrytes(addressInTrits);
 
-            // Format and display the TimeSpan value.
-            string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:00}",
-                ts.Hours, ts.Minutes, ts.Seconds,
-                ts.Milliseconds/10);
-            Console.WriteLine(elapsedTime);
-
-            int[] key = signing.Key(Converter.ToTrits(seed), index, 2);
-
-            ts = stopWatch.Elapsed;
-            elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:00}",
-                ts.Hours, ts.Minutes, ts.Seconds,
-                ts.Milliseconds/10);
-            Console.WriteLine(elapsedTime);
-
-            int[] digests = signing.Digests(key);
-
-            ts = stopWatch.Elapsed;
-            elapsedTime = String.Format("After Digest {0:00}:{1:00}:{2:00}.{3:00}",
-                ts.Hours, ts.Minutes, ts.Seconds,
-                ts.Milliseconds/10);
-            Console.WriteLine(elapsedTime);
-
-            int[] addressTrits = signing.Address(digests);
-            ts = stopWatch.Elapsed;
-            elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:00}",
-                ts.Hours, ts.Minutes, ts.Seconds,
-                ts.Milliseconds/10);
-            Console.WriteLine(elapsedTime);
-            string address = Converter.ToTrytes(addressTrits);
-
-            if (checksum)
-                address = Checksum.AddChecksum(address);
-
-            return address;
+            return checksum ? Checksum.AddChecksum(address) : address;
         }
 
-        internal static List<string> SignInputsAndReturn(string seed,
-            List<Input> inputs,
-            Bundle bundle,
-            List<string> signatureFragments, ISponge curl)
+        public static List<string> SignInputsAndReturn(string seed,  List<Input> inputs, Bundle bundle, List<string> signatureFragments, ISponge curl)
         {
             bundle.FinalizeBundle(curl);
             bundle.AddTrytes(signatureFragments);
@@ -92,7 +60,7 @@ namespace Iota.Lib.CSharp.Api.Utils
                     string bundleHash = bundle.Transactions[i].Bundle;
 
                     // Get corresponding private key of address
-                    int[] key = new Signing(curl).Key(Converter.ToTrits(seed), keyIndex, 2);
+                    int[] key = Signing.Key(Converter.ConvertTrytesToTrits(seed), keyIndex, 2);
 
                     //  First 6561 trits for the firstFragment
                     int[] firstFragment = ArrayUtils.SubArray2(key, 0, 6561);
@@ -104,10 +72,10 @@ namespace Iota.Lib.CSharp.Api.Utils
                     int[] firstBundleFragment = ArrayUtils.SubArray2(normalizedBundleHash, 0, 27);
 
                     //  Calculate the new signatureFragment with the first bundle fragment
-                    int[] firstSignedFragment = new Signing(curl).SignatureFragment(firstBundleFragment, firstFragment);
+                    int[] firstSignedFragment = Signing.SignatureFragment(firstBundleFragment, firstFragment);
 
                     //  Convert signature to trytes and assign the new signatureFragment
-                    bundle.Transactions[i].SignatureFragment = Converter.ToTrytes(firstSignedFragment);
+                    bundle.Transactions[i].SignatureFragment = Converter.ConvertTritsToTrytes(firstSignedFragment);
 
                     //  Because the signature is > 2187 trytes, we need to
                     //  find the second transaction to add the remainder of the signature
@@ -124,11 +92,11 @@ namespace Iota.Lib.CSharp.Api.Utils
                             int[] secondBundleFragment = ArrayUtils.SubArray2(normalizedBundleHash, 27, 27);
 
                             //  Calculate the new signature
-                            int[] secondSignedFragment = new Signing(curl).SignatureFragment(secondBundleFragment,
+                            int[] secondSignedFragment = Signing.SignatureFragment(secondBundleFragment,
                                 secondFragment);
 
                             //  Convert signature to trytes and assign it again to this bundle entry
-                            bundle.Transactions[j].SignatureFragment = (Converter.ToTrytes(secondSignedFragment));
+                            bundle.Transactions[j].SignatureFragment = (Converter.ConvertTritsToTrytes(secondSignedFragment));
                         }
                     }
                 }

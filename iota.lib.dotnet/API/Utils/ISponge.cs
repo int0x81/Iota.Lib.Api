@@ -30,11 +30,9 @@
         /// <summary>
         /// Squeezes the specified trits.
         /// </summary>
-        /// <param name="trits">The trits.</param>
-        /// <param name="offset">The offset to start from.</param>
-        /// <param name="length">The length.</param>
+        /// <param name="length">The desired outputlength.</param>
         /// <returns>the squeezed trits</returns>
-        int[] Squeeze();
+        int[] Squeeze(int length);
 
         /// <summary>
         /// Transforms this instance.

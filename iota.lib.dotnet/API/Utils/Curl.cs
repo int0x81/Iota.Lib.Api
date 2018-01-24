@@ -69,28 +69,19 @@ namespace Iota.Lib.CSharp.Api.Utils
         /// <returns>
         /// the squeezed trits
         /// </returns>
-        public int[] Squeeze(int[] trits, int offset, int length)
+        public int[] Squeeze(int length)
         {
+            int[] digest = new int[length];
+            int offset = 0;
+
             do
             {
-                Array.Copy(State, 0, trits, offset, length < HASH_LENGTH ? length : HASH_LENGTH);
+                Array.Copy(State, 0, digest, offset, length < HASH_LENGTH ? length : HASH_LENGTH);
                 Transform();
                 offset += HASH_LENGTH;
             } while ((length -= HASH_LENGTH) > 0);
 
             return State;
-        }
-
-        /// <summary>
-        /// Squeezes the specified trits.
-        /// </summary>
-        /// <param name="trits">The trits.</param>
-        /// <returns>
-        /// the squeezed trits
-        /// </returns>
-        public int[] Squeeze()
-        {
-            return Squeeze(State, 0, State.Length);
         }
 
         /// <summary>

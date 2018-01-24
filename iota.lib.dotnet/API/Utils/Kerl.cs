@@ -4,10 +4,12 @@ using System.Numerics;
 using System.Text;
 using Org.BouncyCastle.Crypto.Digests;
 
+using static Iota.Lib.CSharp.Api.Utils.Converter;
+
 namespace Iota.Lib.CSharp.Api.Utils
 {
     /// <summary>
-    /// <see href="https://github.com/iotaledger/kerl">Kerl</see> is the hashfunction IOTA uses for multiple scenarios such as address generation, signature generation etc.
+    /// <see href="https://github.com/iotaledger/kerl">Kerl</see> is the hashfunction Iota uses for multiple scenarios such as address generation, signature generation etc.
     /// It is sponge-function based on <see href="https://keccak.team/keccak.html">Keccak-384</see>.
     /// </summary>
     public class Kerl : ISponge
@@ -39,9 +41,8 @@ namespace Iota.Lib.CSharp.Api.Utils
             {
                 Array.Copy(trits, offset, tritState, 0, HASH_LENGTH);
                 tritState[HASH_LENGTH - 1] = 0;
-
-                var tmp_01 = Converter.ConvertTritsToBigInt(tritState, 0, Kerl.HASH_LENGTH);
-                var bytes = Converter.ConvertTritsToBytes(tritState);
+                
+                byte[] bytes = ConvertTritsToBytes(tritState, BYTE_HASH_LENGTH);
                 
                 keccak.BlockUpdate(bytes, 0, bytes.Length);
 
@@ -57,14 +58,18 @@ namespace Iota.Lib.CSharp.Api.Utils
             return this;
         }
 
-        public int[] Squeeze(int[] trits, int offset, int length)
+        public int[] Squeeze(int length)
         {
+            int[] digest = new int[length];
+            int offset = 0;
+
             while (offset < length)
             {
                 keccak.DoFinal(byteState, 0);
-                tritState = Converter.ConvertBytesToTrits(byteState);
+                tritState = ConvertBytesToTrits(byteState);
+                tritState = ArrayUtils.PadArrayWithZeros(tritState, HASH_LENGTH);
                 tritState[HASH_LENGTH - 1] = 0;
-                Array.Copy(tritState, 0, trits, offset, HASH_LENGTH);
+                Array.Copy(tritState, 0, digest, offset, HASH_LENGTH);
 
                 keccak.Reset();
 
@@ -77,12 +82,7 @@ namespace Iota.Lib.CSharp.Api.Utils
                 offset += HASH_LENGTH;
             }
 
-            return tritState;
-        }
-
-        public int[] Squeeze()
-        {
-            return Squeeze(tritState, 0, tritState.Length);
+            return digest;
         }
 
         public ISponge Reset()

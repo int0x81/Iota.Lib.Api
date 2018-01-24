@@ -72,7 +72,7 @@ namespace Iota.Lib.CSharp.Api
 
                 for (int i = start; i < end; i++)
                 {
-                    string address = IotaApiUtils.NewAddress(seed, i, false, curl);
+                    string address = IotaApiUtils.CreateNewAddress(seed, i, 2, false);
                     allAddresses[i] = address;
                 }
 
@@ -86,7 +86,7 @@ namespace Iota.Lib.CSharp.Api
             //  We then do getBalance, format the output and return it
             else
             {
-                string[] addresses = GetNewAddress(seed, start, true, 0, true);
+                string[] addresses = GetNewAddress(seed, start, 2, true, 0, true);
                 return GetBalanceAndFormat(addresses, start, threshold);
             }
         }
@@ -366,12 +366,11 @@ namespace Iota.Lib.CSharp.Api
         /// <param name="total">Optional (default 1)Total number of addresses to generate.</param>
         /// <param name="returnAll">If true, it returns all addresses which were deterministically generated (until findTransactions returns null)</param>
         /// <returns>an array of strings with the specifed number of addresses</returns>
-        public string[] GetNewAddress(string seed, int index = 0, bool checksum = false, int total = 0,
-            bool returnAll = false)
+        public string[] GetNewAddress(string seed, int index = 0, int securityLevel = 2, bool checksum = false, int total = 0, bool returnAll = false)
         {
-            List<string> allAdresses = new List<string>();
+            //Validate all parameters
 
-            // TODO make two different functions out of this
+            List<string> allAdresses = new List<string>();
 
             // Case 1: total
             //
@@ -382,7 +381,7 @@ namespace Iota.Lib.CSharp.Api
                 // Increase index with each iteration
                 for (int i = index; i < index + total; i++)
                 {
-                    allAdresses.Add(IotaApiUtils.NewAddress(seed, i, checksum, curl));
+                    allAdresses.Add(IotaApiUtils.CreateNewAddress(seed, i, securityLevel, checksum));
                 }
 
                 return allAdresses.ToArray();
@@ -399,7 +398,7 @@ namespace Iota.Lib.CSharp.Api
 
                 for (int i = index;; i++)
                 {
-                    string newAddress = IotaApiUtils.NewAddress(seed, i, checksum, curl);
+                    string newAddress = IotaApiUtils.CreateNewAddress(seed, i, 2, checksum);
                     FindTransactionsResponse response = FindTransactionsByAddresses(newAddress);
 
                     if (returnAll)
@@ -446,7 +445,7 @@ namespace Iota.Lib.CSharp.Api
             // If a transaction is non tail, get the tail transactions associated with it
             // add it to the list of tail transactions
 
-            string[] addresses = GetNewAddress(seed, start.Value, false,
+            string[] addresses = GetNewAddress(seed, start.Value, 2, false,
                 end.HasValue ? end.Value : end.Value - start.Value, true);
 
 
@@ -775,7 +774,7 @@ namespace Iota.Lib.CSharp.Api
                 string thisTxTrytes = bundleTransaction.ToTransactionTrytes().Substring(2187, 162);
 
                 // Absorb bundle hash + value + timestamp + lastIndex + currentIndex trytes.
-                curl.Absorb(Converter.ToTrits(thisTxTrytes));
+                curl.Absorb(Converter.ConvertTrytesToTrits(thisTxTrytes));
 
                 // Check if input transaction
                 if (bundleValue < 0)
@@ -806,8 +805,8 @@ namespace Iota.Lib.CSharp.Api
                 throw new InvalidBundleException("Invalid Bundle Sum");
 
             int[] bundleFromTrxs = new int[243];
-            bundleFromTrxs = curl.Squeeze();
-            string bundleFromTxString = Converter.ToTrytes(bundleFromTrxs);
+            bundleFromTrxs = curl.Squeeze(243);
+            string bundleFromTxString = Converter.ConvertTritsToTrytes(bundleFromTrxs);
 
             // Check if bundle hash is the same as returned by tx object
             if (!bundleFromTxString.Equals(bundleHash))
@@ -824,7 +823,7 @@ namespace Iota.Lib.CSharp.Api
             {
                 String[] signatureFragments = aSignaturesToValidate.SignatureFragments.ToArray();
                 string address = aSignaturesToValidate.Address;
-                bool isValidSignature = new Signing().ValidateSignatures(address, signatureFragments, bundleHash);
+                bool isValidSignature = Signing.ValidateSignatures(address, signatureFragments, bundleHash);
 
                 if (!isValidSignature)
                     throw new InvalidSignatureException();

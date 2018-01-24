@@ -5,77 +5,49 @@ using Iota.Lib.CSharp.Api.Model;
 
 namespace Iota.Lib.CSharp.Api.Utils
 {
-    /// <summary>
-    /// Ask cfb
-    /// </summary>
-    public class Signing
+    public static class Signing
     {
-        private ISponge curl;
+        static ISponge kerl;
 
-        public Signing(ISponge curl)
+        static Signing()
         {
-            this.curl = curl;
+            kerl = new Kerl();
         }
 
-        public Signing()
+        public static int[] Key(int[] seed, int index, int securityLevel)
         {
-            this.curl = new Curl();
-        }
+            int[] filledSeed = FillSeed(seed);
 
-        public int[] Key(int[] seed, int index, int length)
-        {
-            int[] subseed = seed;
+            int[] subseed = Converter.Increment(filledSeed, index);
+            
+            kerl.Reset();
+            kerl.Absorb(subseed);
+            subseed = kerl.Squeeze(subseed.Length);
 
-            for (int i = 0; i < index; i++)
-            {
-                for (int j = 0; j < 243; j++)
-                {
-                    if (++subseed[j] > 1)
-                    {
-                        subseed[j] = -1;
-                    }
-                    else
-                    {
-                        break;
-                    }
-                }
-            }
+            kerl.Reset();
+            kerl.Absorb(subseed);
 
-            curl.Reset();
-            curl.Absorb(subseed, 0, subseed.Length);
-            subseed = curl.Squeeze();
-            curl.Reset();
-            curl.Absorb(subseed, 0, subseed.Length);
-
-            IList<int> key = new List<int>();
+            IList<int> privateKey = new List<int>();
+            int loopCounter = securityLevel;
             int[] buffer = new int[subseed.Length];
 
-            while (length-- > 0)
+            while (loopCounter > 0)
             {
                 for (int i = 0; i < 27; i++)
                 {
-                    buffer = curl.Squeeze();
-                    for (int j = 0; j < 243; j++)
+                    buffer = kerl.Squeeze(subseed.Length);
+
+                    foreach(int trit in buffer)
                     {
-                        key.Add(buffer[j]);
+                        privateKey.Add(trit);
                     }
                 }
+                loopCounter--;
             }
-            return ToIntArray(key);
+            return privateKey.ToArray();
         }
 
-        private static int[] ToIntArray(IList<int> key)
-        {
-            int[] a = new int[key.Count];
-            int i = 0;
-            foreach (int v in key)
-            {
-                a[i++] = v;
-            }
-            return a;
-        }
-
-        public int[] Digests(int[] key)
+        public static int[] Digests(int[] key)
         {
             int[] digests = new int[(int) Math.Floor((decimal) key.Length/6561)*243];
             int[] buffer = new int[243];
@@ -90,9 +62,9 @@ namespace Iota.Lib.CSharp.Api.Utils
                     Array.Copy(keyFragment, j*243, buffer, 0, 243);
                     for (int k = 0; k < 26; k++)
                     {
-                        curl.Reset();
-                        curl.Absorb(buffer, 0, buffer.Length);
-                        buffer = curl.Squeeze();
+                        kerl.Reset();
+                        kerl.Absorb(buffer);
+                        buffer = kerl.Squeeze(Kerl.HASH_LENGTH);
                     }
                     for (int k = 0; k < 243; k++)
                     {
@@ -100,51 +72,50 @@ namespace Iota.Lib.CSharp.Api.Utils
                     }
                 }
 
-                curl.Reset();
-                curl.Absorb(keyFragment, 0, keyFragment.Length);
-                buffer = curl.Squeeze();
+                kerl.Reset();
+                kerl.Absorb(keyFragment);
+                buffer = kerl.Squeeze(Kerl.HASH_LENGTH);
 
                 for (int j = 0; j < 243; j++)
                 {
-                    digests[i*243 + j] = buffer[j];
+                    digests[i * 243 + j] = buffer[j];
                 }
             }
             return digests;
         }
 
-        public int[] Digest(int[] normalizedBundleFragment, int[] signatureFragment)
+        public static int[] Digest(int[] normalizedBundleFragment, int[] signatureFragment)
         {
-            curl.Reset();
+            kerl.Reset();
             int[] buffer = new int[243];
 
             for (int i = 0; i < 27; i++)
             {
                 buffer = ArrayUtils.SubArray(signatureFragment, i*243, 243);
-                ;
-                ISponge jCurl = curl.Clone();
+
+                ISponge jKerl = new Kerl();
 
                 for (int j = normalizedBundleFragment[i] + 13; j-- > 0;)
                 {
-                    jCurl.Reset();
-                    jCurl.Absorb(buffer);
-                    buffer = jCurl.Squeeze();
+                    jKerl.Reset();
+                    jKerl.Absorb(buffer);
+                    buffer = jKerl.Squeeze(Kerl.HASH_LENGTH);
                 }
-                curl.Absorb(buffer);
+                kerl.Absorb(buffer);
             }
 
-            return curl.Squeeze();
+            return kerl.Squeeze(Kerl.HASH_LENGTH);
         }
 
-        public int[] Address(int[] digests)
+        public static int[] Address(int[] digests)
         {
-            int[] address = new int[243];
-            address = curl.Reset()
-                .Absorb(digests)
-                .Squeeze();
-            return address;
+            kerl.Reset();
+            kerl.Absorb(digests);
+
+            return kerl.Squeeze(Kerl.HASH_LENGTH);
         }
 
-        public int[] SignatureFragment(int[] normalizedBundleFragment, int[] keyFragment)
+        public static int[] SignatureFragment(int[] normalizedBundleFragment, int[] keyFragment)
         {
             int[] hash = new int[243];
 
@@ -154,9 +125,9 @@ namespace Iota.Lib.CSharp.Api.Utils
 
                 for (int j = 0; j < 13 - normalizedBundleFragment[i]; j++)
                 {
-                    hash = curl.Reset()
-                        .Absorb(hash)
-                        .Squeeze();
+                    kerl.Reset();
+                    kerl.Absorb(hash);
+                    hash = kerl.Squeeze(Kerl.HASH_LENGTH);
                 }
 
                 for (int j = 0; j < 243; j++)
@@ -168,7 +139,7 @@ namespace Iota.Lib.CSharp.Api.Utils
             return keyFragment;
         }
 
-        public bool ValidateSignatures(string expectedAddress, string[] signatureFragments, string bundleHash)
+        public static bool ValidateSignatures(string expectedAddress, string[] signatureFragments, string bundleHash)
         {
             Bundle bundle = new Bundle();
 
@@ -188,16 +159,33 @@ namespace Iota.Lib.CSharp.Api.Utils
             for (int i = 0; i < signatureFragments.Length; i++)
             {
                 int[] digestBuffer = Digest(ArrayUtils.SliceRow(normalizedBundleFragments, i%3).ToArray(),
-                    Converter.ToTrits(signatureFragments[i]));
+                    Converter.ConvertTrytesToTrits(signatureFragments[i]));
 
                 for (int j = 0; j < 243; j++)
                 {
                     Array.Copy(digestBuffer, j, digests, i*243 + j, 1);
                 }
             }
-            string address = Converter.ToTrytes(Address(digests));
+            string address = Converter.ConvertTritsToTrytes(Address(digests));
 
             return (expectedAddress.Equals(address));
+        }
+
+        /// <summary>
+        /// Fills a seed with null values until the maximum seed length is reached
+        /// </summary>
+        /// <param name="seed">The seed</param>
+        /// <returns>The filled seed</returns>
+        private static int[] FillSeed(int[] seed)
+        {
+            List<int> seedAsList = new List<int>(seed);
+
+            while (seedAsList.Count % (Constants.SEED_MAX_LENGTH * 3) != 0)
+            {
+                seedAsList.Add(0);
+            }
+
+            return seedAsList.ToArray();
         }
     }
 }

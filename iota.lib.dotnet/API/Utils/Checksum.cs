@@ -68,8 +68,9 @@ namespace Iota.Lib.CSharp.Api.Utils
         {
             ISponge sponge = new Kerl();
             sponge.Reset();
-            sponge.Absorb(Converter.ToTrits(address));
-            string checksum = Converter.ToTrytes(sponge.Squeeze());
+            int[] paddedAddress = ArrayUtils.PadArrayWithZeros(Converter.ConvertTrytesToTrits(address), Kerl.HASH_LENGTH);
+            sponge.Absorb(paddedAddress);
+            string checksum = Converter.ConvertTritsToTrytes(sponge.Squeeze(Kerl.HASH_LENGTH));
             return checksum.Substring(72);
         }
     }
