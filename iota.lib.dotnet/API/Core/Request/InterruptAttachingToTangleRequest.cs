@@ -8,7 +8,7 @@
         /// <summary>
         /// Initializes a new instance of the <see cref="InterruptAttachingToTangleRequest"/> class.
         /// </summary>
-        public InterruptAttachingToTangleRequest() : base(Command.InterruptAttachingToTangle)
+        public InterruptAttachingToTangleRequest() : base(Core.Command.InterruptAttachingToTangle)
         {
         }
     }

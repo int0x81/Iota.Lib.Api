@@ -21,7 +21,7 @@ namespace Iota.Lib.CSharp.Api.Core
         /// Initializes a new instance of the <see cref="AddNeighborsRequest"/> class.
         /// </summary>
         /// <param name="uris">The uris of the neighbors to add.</param>
-        public AddNeighborsRequest(List<string> uris) : base(Command.AddNeighbors)
+        public AddNeighborsRequest(List<string> uris) : base(Core.Command.AddNeighbors)
         {
             Uris = uris;
         }

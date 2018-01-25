@@ -1,4 +1,6 @@
-﻿namespace Iota.Lib.CSharp.Api.Core
+﻿using System.Net;
+
+namespace Iota.Lib.CSharp.Api.Core
 {
     /// <summary>
     /// Base class for all api responses
@@ -12,5 +14,10 @@
         /// The duration.
         /// </value>
         public long Duration { get; set; }
+
+        /// <summary>
+        /// The Status Code
+        /// </summary>
+        public HttpStatusCode StatusCode;
     }
 }

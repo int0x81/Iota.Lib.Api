@@ -14,12 +14,12 @@ namespace Iota.Lib.CSharp.Api.Core
         /// <param name="addresses">The addresses.</param>
         /// <param name="tags">The tags.</param>
         /// <param name="approvees">The approvees.</param>
-        public FindTransactionsRequest(List<string> bundles, List<string> addresses, List<string> tags, List<string> approvees) : base(Command.FindTransactions)
+        public FindTransactionsRequest(List<string> bundles, List<string> addresses, List<string> tags, List<string> approves) : base(Core.Command.FindTransactions)
         {
             Bundles = bundles;
             Addresses = addresses;
             Tags = tags;
-            Approvees = approvees;
+            Approves = approves;
 
             if (Bundles == null)
                 Bundles = new List<string>();
@@ -27,8 +27,8 @@ namespace Iota.Lib.CSharp.Api.Core
                 Addresses = new List<string>();
             if (Tags == null)
                 Tags = new List<string>();
-            if (Approvees == null)
-                Approvees = new List<string>();
+            if (Approves == null)
+                Approves = new List<string>();
         }
 
         /// <summary>
@@ -61,6 +61,6 @@ namespace Iota.Lib.CSharp.Api.Core
         /// <value>
         /// The approvees.
         /// </value>
-        public List<string> Approvees { get; set; }
+        public List<string> Approves { get; set; }
     }
 }

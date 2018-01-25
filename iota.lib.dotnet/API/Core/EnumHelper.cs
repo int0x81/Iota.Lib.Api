@@ -7,7 +7,7 @@ namespace Iota.Lib.CSharp.Api.Core
     /// <summary>
     /// Helper class that extracts the command string corresponding to the different <see cref="Command"/>s
     /// </summary>
-    public static class EnumHelper
+    internal static class EnumHelper
     {
         /// <summary>
         /// Retrieve the description on the enum

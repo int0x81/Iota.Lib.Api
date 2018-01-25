@@ -12,7 +12,7 @@ namespace Iota.Lib.CSharp.Api.Core
         /// Initializes a new instance of the <see cref="BroadcastTransactionsRequest"/> class.
         /// </summary>
         /// <param name="trytes">The trytes.</param>
-        public BroadcastTransactionsRequest(List<string> trytes) : base(Command.BroadcastTransactions)
+        public BroadcastTransactionsRequest(List<string> trytes) : base(Core.Command.BroadcastTransactions)
         {
             Trytes = trytes;
         }

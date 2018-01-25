@@ -9,7 +9,7 @@
         /// <summary>
         /// Initializes a new instance of the <see cref="GetNeighborsRequest"/> class.
         /// </summary>
-        public GetNeighborsRequest() : base(Command.GetNeighbors)
+        public GetNeighborsRequest() : base(Core.Command.GetNeighbors)
         {
         }
     }

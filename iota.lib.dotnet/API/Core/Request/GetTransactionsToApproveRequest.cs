@@ -9,7 +9,7 @@
         /// Initializes a new instance of the <see cref="GetTransactionsToApproveRequest"/> class.
         /// </summary>
         /// <param name="depth">The depth.</param>
-        public GetTransactionsToApproveRequest(int depth) : base(Command.GetTransactionsToApprove)
+        public GetTransactionsToApproveRequest(int depth) : base(Core.Command.GetTransactionsToApprove)
         {
             Depth = depth;
         }

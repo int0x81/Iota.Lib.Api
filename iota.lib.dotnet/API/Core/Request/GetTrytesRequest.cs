@@ -8,7 +8,7 @@
         /// <summary>
         /// Initializes a new instance of the <see cref="GetTrytesRequest"/> class.
         /// </summary>
-        public GetTrytesRequest() : base(Command.GetTrytes)
+        public GetTrytesRequest() : base(Core.Command.GetTrytes)
         {
 
         }

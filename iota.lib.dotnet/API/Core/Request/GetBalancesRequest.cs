@@ -12,7 +12,7 @@ namespace Iota.Lib.CSharp.Api.Core
         /// </summary>
         /// <param name="addresses">The addresses.</param>
         /// <param name="threshold">The threshold.</param>
-        public GetBalancesRequest(List<string> addresses, long threshold = 100): base(Command.GetBalances)
+        public GetBalancesRequest(List<string> addresses, long threshold = 100): base(Core.Command.GetBalances)
         {
             Addresses = addresses;
             Threshold = threshold;

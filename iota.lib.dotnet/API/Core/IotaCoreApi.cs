@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Iota.Lib.CSharp.Api.Utils;
 
 namespace Iota.Lib.CSharp.Api.Core
@@ -53,17 +54,37 @@ namespace Iota.Lib.CSharp.Api.Core
         }
 
         /// <summary>
-        /// Finds the transactions using the specified arguments as search criteria
+        /// Find the transactions which match the specified input and return.
+        /// All input values are lists, for which a list of return values (transaction hashes), in the same order, is returned for all individual elements.
+        /// The input fields can either be bundles, addresses, tags or approvees.
+        /// Using multiple of these input fields returns the intersection of the values.
         /// </summary>
-        /// <param name="addresses">The addresses.</param>
-        /// <param name="tags">The tags.</param>
-        /// <param name="approves">The approves.</param>
-        /// <param name="bundles">The bundles.</param>
-        /// <returns>a FindTransactionsResponse, see <see cref="FindTransactionsResponse"/></returns>
-        public FindTransactionsResponse FindTransactions(List<string> addresses, List<string> tags, List<string> approves, List<string> bundles)
+        /// <param name="bundles">List of bundle hashes. The hashes need to be extended to 81chars by padding the hash with 9's.</param>
+        /// <param name="addresses">List of addresses.</param>
+        /// <param name="tags">List of transaction tags.</param>
+        /// <param name="approves">List of approves of a transaction.</param>
+        /// <returns>A <see cref="FindTransactionsResponse"/> that contains a list of hashes</returns>
+        public FindTransactionsResponse FindTransactions(List<string> bundles = null, List<string> addresses = null, List<string> tags = null, List<string> approves = null)
         {
             FindTransactionsRequest findTransactionsRequest = new FindTransactionsRequest(bundles, addresses, tags, approves);
             return  _genericIotaCoreApi.Request<FindTransactionsRequest, FindTransactionsResponse>(findTransactionsRequest);
+        }
+
+        /// <summary>
+        /// Find the transactions which match the specified input asynchronously and return.
+        /// All input values are lists, for which a list of return values (transaction hashes), in the same order, is returned for all individual elements.
+        /// The input fields can either be bundles, addresses, tags or approvees.
+        /// Using multiple of these input fields returns the intersection of the values.
+        /// </summary>
+        /// <param name="bundles">List of bundle hashes. The hashes need to be extended to 81chars by padding the hash with 9's.</param>
+        /// <param name="addresses">List of addresses.</param>
+        /// <param name="tags">List of transaction tags.</param>
+        /// <param name="approves">List of approves of a transaction.</param>
+        /// <returns>A <see cref="FindTransactionsResponse"/> that contains a list of hashes</returns>
+        public async Task<FindTransactionsResponse> FindTransactionsAsync(List<string> bundles = null, List<string> addresses = null, List<string> tags = null, List<string> approves = null)
+        {
+            FindTransactionsRequest findTransactionsRequest = new FindTransactionsRequest(bundles, addresses, tags, approves);
+            return await _genericIotaCoreApi.RequestAsync<FindTransactionsRequest, FindTransactionsResponse>(findTransactionsRequest);
         }
 
         /// <summary>
@@ -103,21 +124,39 @@ namespace Iota.Lib.CSharp.Api.Core
         }
 
         /// <summary>
-        /// Gets the node information.
+        /// Returns information about your node.
         /// </summary>
-        /// <returns>a <see cref="GetNodeInfoResponse"/> containing information about the node.</returns>
+        /// <returns>A <see cref="GetNodeInfoResponse"/> containing information about the node.</returns>
         public GetNodeInfoResponse GetNodeInfo()
         {
             return _genericIotaCoreApi.Request<GetNodeInfoRequest, GetNodeInfoResponse>(new GetNodeInfoRequest());
         }
 
         /// <summary>
-        /// Gets the tips.
+        /// Returns information about your node.
         /// </summary>
-        /// <returns>a <see cref="GetTipsResponse"/> containing a list of tips</returns>
+        /// <returns>A <see cref="GetNodeInfoResponse"/> containing information about the node.</returns>
+        public async Task<GetNodeInfoResponse> GetNodeInfoAsync()
+        {
+            return await _genericIotaCoreApi.RequestAsync<GetNodeInfoRequest, GetNodeInfoResponse>(new GetNodeInfoRequest());
+        }
+
+        /// <summary>
+        /// Returns the list of tips.
+        /// </summary>
+        /// <returns>A <see cref="GetTipsResponse"/> containing a list of tips</returns>
         public GetTipsResponse GetTips()
         {
             return _genericIotaCoreApi.Request<GetTipsRequest, GetTipsResponse>(new GetTipsRequest());
+        }
+
+        /// <summary>
+        /// Returns the list of tips asynchronously.
+        /// </summary>
+        /// <returns>A <see cref="GetTipsResponse"/> containing a list of tips</returns>
+        public async Task<GetTipsResponse> GetTipsAsync()
+        {
+            return await _genericIotaCoreApi.RequestAsync<GetTipsRequest, GetTipsResponse>(new GetTipsRequest());
         }
 
         /// <summary>
@@ -153,7 +192,7 @@ namespace Iota.Lib.CSharp.Api.Core
         }
 
         /// <summary>
-        /// Gets the neighbors the node is connected to
+        /// Returns the set of neighbors you are connected with, as well as their activity count. The activity counter is reset after restarting IRI.
         /// </summary>
         /// <returns>A <see cref="GetNeighborsResponse"/> containing the set of neighbors the node is connected to as well as their activity count. The activity counter is reset after restarting IRI.</returns>
         public GetNeighborsResponse GetNeighbors()
@@ -163,9 +202,19 @@ namespace Iota.Lib.CSharp.Api.Core
         }
 
         /// <summary>
-        /// Adds the neighbor(s) to the node.  It should be noted that this is only temporary, and the added neighbors will be removed from your set of neighbors after you relaunch IRI.
+        /// Returns the set of neighbors you are connected with asychronously, as well as their activity count. The activity counter is reset after restarting IRI.
         /// </summary>
-        /// <param name="uris">The uris of the neighbors to add. The URI (Unique Resource Identification) format is "udp://IPADDRESS:PORT" </param>
+        /// <returns>A <see cref="GetNeighborsResponse"/> containing the set of neighbors the node is connected to as well as their activity count. The activity counter is reset after restarting IRI.</returns>
+        public async Task<GetNeighborsResponse> GetNeighborsAsync()
+        {
+            GetNeighborsRequest getNeighborsRequest = new GetNeighborsRequest();
+            return await _genericIotaCoreApi.RequestAsync<GetNeighborsRequest, GetNeighborsResponse>(getNeighborsRequest);
+        }
+
+        /// <summary>
+        /// Add a list of neighbors to your node. It should be noted that this is only temporary, and the added neighbors will be removed from your set of neighbors after you relaunch IRI.
+        /// </summary>
+        /// <param name="uris">List of URI elements. The URI (Unique Resource Identification) for adding neighbors is: udp://IPADDRESS:PORT</param>
         /// <returns><see cref="AddNeighborsResponse"/> containing the number of added Neighbors</returns>
         public AddNeighborsResponse AddNeighbors(params string[] uris)
         {
@@ -173,13 +222,33 @@ namespace Iota.Lib.CSharp.Api.Core
         }
 
         /// <summary>
-        /// Removes the neighbor(s) from the node. 
+        /// Add a list of neighbors to your node asynchronously. It should be noted that this is only temporary, and the added neighbors will be removed from your set of neighbors after you relaunch IRI.
         /// </summary>
-        /// <param name="uris">The uris of the neighbors to add. The URI (Unique Resource Identification) format is "udp://IPADDRESS:PORT"</param>
+        /// <param name="uris">List of URI elements. The URI (Unique Resource Identification) for adding neighbors is: udp://IPADDRESS:PORT</param>
+        /// <returns><see cref="AddNeighborsResponse"/> containing the number of added Neighbors</returns>
+        public async Task<AddNeighborsResponse> AddNeighborsAsync(params string[] uris)
+        {
+            return await _genericIotaCoreApi.RequestAsync<AddNeighborsRequest, AddNeighborsResponse>(new AddNeighborsRequest(uris.ToList()));
+        }
+
+        /// <summary>
+        /// Removes a list of neighbors from your node. This is only temporary, and if you have your neighbors added via the command line, they will be retained after you restart your node. 
+        /// </summary>
+        /// <param name="uris">List of URI elements. The URI (Unique Resource Identification) format for removing neighbors is "udp://IPADDRESS:PORT"</param>
         /// <returns>A <see cref="RemoveNeighborsResponse"/> containing the number of removed neighbors</returns>
         public RemoveNeighborsResponse RemoveNeighbors(params string[] uris)
         {
             return _genericIotaCoreApi.Request<RemoveNeighborsRequest, RemoveNeighborsResponse>(new RemoveNeighborsRequest(uris.ToList()));
+        }
+
+        /// <summary>
+        /// Removes a list of neighbors from your node. This is only temporary, and if you have your neighbors added via the command line, they will be retained after you restart your node. 
+        /// </summary>
+        /// <param name="uris">List of URI elements. The URI (Unique Resource Identification) format for removing neighbors is "udp://IPADDRESS:PORT"</param>
+        /// <returns>A <see cref="RemoveNeighborsResponse"/> containing the number of removed neighbors</returns>
+        public async Task<RemoveNeighborsResponse> RemoveNeighborsAsync(params string[] uris)
+        {
+            return await _genericIotaCoreApi.RequestAsync<RemoveNeighborsRequest, RemoveNeighborsResponse>(new RemoveNeighborsRequest(uris.ToList()));
         }
     }
 }

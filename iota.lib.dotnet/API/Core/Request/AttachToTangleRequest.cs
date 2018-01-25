@@ -18,7 +18,7 @@ namespace Iota.Lib.CSharp.Api.Core
         /// <param name="branchTransaction">The branch transaction.</param>
         /// <param name="trytes">The trytes.</param>
         /// <param name="minWeightMagnitude">The minimum weight magnitude.</param>
-        public AttachToTangleRequest(string trunkTransaction, string branchTransaction, string[] trytes, int minWeightMagnitude = 18) : base(Command.AttachToTangle)
+        public AttachToTangleRequest(string trunkTransaction, string branchTransaction, string[] trytes, int minWeightMagnitude = 18) : base(Core.Command.AttachToTangle)
         {
             TrunkTransaction = trunkTransaction;
             BranchTransaction = branchTransaction;

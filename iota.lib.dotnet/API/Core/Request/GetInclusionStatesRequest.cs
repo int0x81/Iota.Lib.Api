@@ -10,7 +10,7 @@
         /// </summary>
         /// <param name="transactions">The transactions.</param>
         /// <param name="tips">The tips.</param>
-        public GetInclusionStatesRequest(string[] transactions, string[] tips) : base(Command.GetInclusionStates)
+        public GetInclusionStatesRequest(string[] transactions, string[] tips) : base(Core.Command.GetInclusionStates)
         {
             Transactions = transactions;
             Tips = tips;

@@ -9,9 +9,9 @@
         /// Initializes a new instance of the <see cref="IotaRequest"/> class.
         /// </summary>
         /// <param name="command">The command</param>
-        public IotaRequest(Command command)
+        public IotaRequest(Core.Command command)
         {
-            Command = command;
+            Command = command.GetCommandString();
         }
 
         /// <summary>
@@ -20,6 +20,6 @@
         /// <value>
         /// The command
         /// </value>
-        public Command Command { get; set; }
+        public string Command { get; set; }
     }
 }

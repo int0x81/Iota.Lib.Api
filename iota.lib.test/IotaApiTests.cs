@@ -11,11 +11,5 @@ namespace Iota.Lib.CSharpTests
     [TestClass]
     public class IotaApiTests
     {
-        IotaApi testMe;
-
-        public IotaApiTests()
-        {
-            testMe = new IotaApi("nodes.thetangle.org", 443);
-        }
     }
 }

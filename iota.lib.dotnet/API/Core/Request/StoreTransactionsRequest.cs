@@ -12,7 +12,7 @@ namespace Iota.Lib.CSharp.Api.Core
         /// Initializes a new instance of the <see cref="StoreTransactionsRequest"/> class.
         /// </summary>
         /// <param name="trytes">The trytes.</param>
-        public StoreTransactionsRequest(List<string> trytes) : base(Command.StoreTransactions)
+        public StoreTransactionsRequest(List<string> trytes) : base(Core.Command.StoreTransactions)
         {
             this.Trytes = trytes;
         }
