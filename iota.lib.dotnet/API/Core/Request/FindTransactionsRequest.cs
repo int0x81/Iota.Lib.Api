@@ -3,7 +3,7 @@
 namespace Iota.Lib.CSharp.Api.Core
 {
     /// <summary>
-    /// This class represents the core api request 'FindTransactions'
+    /// Represents the core api request 'FindTransactions'
     /// </summary>
     public class FindTransactionsRequest : IotaRequest
     {
@@ -14,8 +14,7 @@ namespace Iota.Lib.CSharp.Api.Core
         /// <param name="addresses">The addresses.</param>
         /// <param name="tags">The tags.</param>
         /// <param name="approvees">The approvees.</param>
-        public FindTransactionsRequest(List<string> bundles, List<string> addresses, List<string> tags,
-            List<string> approvees) : base(Core.Command.FindTransactions.GetCommandString())
+        public FindTransactionsRequest(List<string> bundles, List<string> addresses, List<string> tags, List<string> approvees) : base(Command.FindTransactions)
         {
             Bundles = bundles;
             Addresses = addresses;

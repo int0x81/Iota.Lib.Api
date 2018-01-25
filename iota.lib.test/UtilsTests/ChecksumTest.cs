@@ -19,7 +19,7 @@ namespace Iota.Lib.CSharpTests
         [TestMethod]
         public void TestAddChecksum()
         {
-            //Assert.AreEqual(TEST_ADDRESSES_WITH_CHECKSUM[0], Checksum.AddChecksum(TEST_ADDRESSES_WITHOUT_CHECKSUM[0]));
+            Assert.AreEqual(TEST_ADDRESSES_WITH_CHECKSUM[0], Checksum.AddChecksum(TEST_ADDRESSES_WITHOUT_CHECKSUM[0]));
             Assert.AreEqual(TEST_ADDRESSES_WITH_CHECKSUM[1], Checksum.AddChecksum(TEST_ADDRESSES_WITHOUT_CHECKSUM[1]));
         }
 
@@ -30,13 +30,13 @@ namespace Iota.Lib.CSharpTests
             Assert.AreEqual(Checksum.RemoveChecksum(TEST_ADDRESSES_WITH_CHECKSUM[1]), TEST_ADDRESSES_WITHOUT_CHECKSUM[1]);
         }
 
-        //[TestMethod]
-        //public void TestIsAddress()
-        //{
-        //    Assert.IsTrue(InputValidator.IsAddress(TEST_ADDRESSES_WITHOUT_CHECKSUM[0]));
-        //    Assert.IsTrue(InputValidator.IsAddress(TEST_ADDRESSES_WITHOUT_CHECKSUM[1]));
-        //    Assert.IsTrue(InputValidator.IsAddress(TEST_ADDRESSES_WITH_CHECKSUM[0]));
-        //    Assert.IsTrue(InputValidator.IsAddress(TEST_ADDRESSES_WITH_CHECKSUM[1]));
-        //}
+        [TestMethod]
+        public void TestIsAddress()
+        {
+            Assert.IsTrue(InputValidator.IsAddress(TEST_ADDRESSES_WITHOUT_CHECKSUM[0]));
+            Assert.IsTrue(InputValidator.IsAddress(TEST_ADDRESSES_WITHOUT_CHECKSUM[1]));
+            Assert.IsTrue(InputValidator.IsAddress(TEST_ADDRESSES_WITH_CHECKSUM[0]));
+            Assert.IsTrue(InputValidator.IsAddress(TEST_ADDRESSES_WITH_CHECKSUM[1]));
+        }
     }
 }

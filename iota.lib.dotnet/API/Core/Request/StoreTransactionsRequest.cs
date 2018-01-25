@@ -3,7 +3,7 @@
 namespace Iota.Lib.CSharp.Api.Core
 {
     /// <summary>
-    /// This class represents the core API request 'StoreTransactions'.
+    /// Represents the core API request 'StoreTransactions'.
     /// It stores transactions into the local storage. The trytes to be used for this call are returned by attachToTangle.
     /// </summary>
     public class StoreTransactionsRequest : IotaRequest
@@ -12,7 +12,7 @@ namespace Iota.Lib.CSharp.Api.Core
         /// Initializes a new instance of the <see cref="StoreTransactionsRequest"/> class.
         /// </summary>
         /// <param name="trytes">The trytes.</param>
-        public StoreTransactionsRequest(List<string> trytes) : base(Core.Command.StoreTransactions.GetCommandString())
+        public StoreTransactionsRequest(List<string> trytes) : base(Command.StoreTransactions)
         {
             this.Trytes = trytes;
         }

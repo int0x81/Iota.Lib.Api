@@ -1,9 +1,9 @@
 ﻿namespace Iota.Lib.CSharp.Api.Core
 {
     /// <summary>
-    /// This class represents the base class of different core API response classes
+    /// Base class for all api responses
     /// </summary>
-    public class IotaResponse
+    public abstract class IotaResponse
     {
         /// <summary>
         /// Gets or sets the duration.

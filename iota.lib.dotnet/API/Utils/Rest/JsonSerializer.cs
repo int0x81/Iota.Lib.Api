@@ -72,8 +72,6 @@ namespace Iota.Lib.CSharp.Api.Utils.Rest
             {
                 using (var jsonTextWriter = new JsonTextWriter(stringWriter))
                 {
-                    //jsonTextWriter.Formatting = Formatting.Indented;
-                    //jsonTextWriter.QuoteChar = '"';
                     _serializer.ContractResolver = new LowercaseContractResolver();
 
                     _serializer.Serialize(jsonTextWriter, obj);

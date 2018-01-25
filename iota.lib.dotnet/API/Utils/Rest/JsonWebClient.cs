@@ -3,6 +3,7 @@ using System.IO;
 using System.Net;
 using System.Net.Cache;
 using System.Text;
+using System.Threading.Tasks;
 using Iota.Lib.CSharp.Api.Core;
 using Iota.Lib.CSharp.Api.Exception;
 using Newtonsoft.Json;
@@ -11,11 +12,9 @@ namespace Iota.Lib.CSharp.Api.Utils.Rest
 {
     internal class JsonWebClient
     {
-        public TResponse GetPOSTResponseSync<TResponse>(Uri uri, string data)
+        public TResponse GetResponse<TResponse>(Uri uri, string data)
         {
-            Console.WriteLine("request: " + data);
-
-            HttpWebRequest request = (HttpWebRequest) WebRequest.Create(uri);
+            HttpWebRequest request = WebRequest.CreateHttp(uri);
 
             request.ContentType = "application/json";
             request.Accept = "application/json";
@@ -28,83 +27,49 @@ namespace Iota.Lib.CSharp.Api.Utils.Rest
             request.Timeout = 300000;
             request.ReadWriteTimeout = 300000;
 
-            UTF8Encoding encoding = new UTF8Encoding();
-            byte[] bytes = encoding.GetBytes(data);
-
-            request.ContentLength = bytes.Length;
-
-            Stream requestStream = request.GetRequestStream();
-            {
-                // Send the data.
-                requestStream.Write(bytes, 0, bytes.Length);
-            }
-
-            try
-            {
-                using (HttpWebResponse response = (HttpWebResponse) request.GetResponse())
-                {
-                    using (Stream stream = response.GetResponseStream())
-                    {
-                        StreamReader reader = new StreamReader(stream, Encoding.UTF8);
-                        string responseString = reader.ReadToEnd();
-
-                        if (response.StatusCode == HttpStatusCode.OK)
-                        {
-                            Console.WriteLine("response: " + responseString);
-                            return JsonConvert.DeserializeObject<TResponse>(responseString);
-                        }
-
-                        throw new IotaApiException(JsonConvert.DeserializeObject<ErrorResponse>(responseString).Error);
-                    }
-                }
-            }
-            catch (WebException ex)
-            {
-                Console.WriteLine("catched: " + ex.ToString() + ex.Message);
-
-                using (var stream = ex.Response.GetResponseStream())
-                using (var reader = new StreamReader(stream))
-                {
-                    String errorResponse = reader.ReadToEnd();
-                    throw new IotaApiException(JsonConvert.DeserializeObject<ErrorResponse>(errorResponse).Error);
-                }
-            }
-        }
-
-        public void GetPOSTResponseAsync<TResponse>(Uri uri, string data, Action<TResponse> callback)
-        {
-            HttpWebRequest request = (HttpWebRequest) HttpWebRequest.Create(uri);
-
-            request.Method = "POST";
-            request.ContentType = "application-type/json;charset=utf-8";
-
-            System.Text.UTF8Encoding encoding = new System.Text.UTF8Encoding();
-            byte[] bytes = encoding.GetBytes(data);
+            byte[] bytes = Encoding.UTF8.GetBytes(data);
 
             request.ContentLength = bytes.Length;
 
             using (Stream requestStream = request.GetRequestStream())
             {
-                // Send the data.
                 requestStream.Write(bytes, 0, bytes.Length);
             }
 
-            request.BeginGetResponse((x) =>
+            WebResponse response = request.GetResponse();
+
+            using (Stream responseStream = response.GetResponseStream())
             {
-                using (HttpWebResponse response = (HttpWebResponse) request.EndGetResponse(x))
-                {
-                    if (callback != null)
-                    {
-                        using (Stream stream = response.GetResponseStream())
-                        {
-                            StreamReader reader = new StreamReader(stream, Encoding.UTF8);
-                            string responseString = reader.ReadToEnd();
-                            callback(JsonConvert.DeserializeObject<TResponse>(responseString));
-                            ;
-                        }
-                    }
-                }
-            }, request);
+                StreamReader reader = new StreamReader(responseStream, Encoding.UTF8);
+                string responseString = reader.ReadToEnd();
+                return JsonConvert.DeserializeObject<TResponse>(responseString);
+            }
+        }
+
+        public async Task<TResponse> GetResponseAsync<TResponse>(Uri uri, string data) where TResponse : IotaResponse, new()
+        {
+            HttpWebRequest request = WebRequest.CreateHttp(uri);
+
+            request.Method = "POST";
+            request.ContentType = "application-type/json;charset=utf-8";
+
+            byte[] bytes = Encoding.UTF8.GetBytes(data);
+
+            request.ContentLength = bytes.Length;
+
+            using (Stream requestStream = request.GetRequestStream())
+            {
+                requestStream.Write(bytes, 0, bytes.Length);
+            }
+
+            WebResponse response = await request.GetResponseAsync();
+
+            using (Stream responseStream = response.GetResponseStream())
+            {
+                StreamReader reader = new StreamReader(responseStream, Encoding.UTF8);
+                string responseString = reader.ReadToEnd();
+                return JsonConvert.DeserializeObject<TResponse>(responseString);
+            }
         }
     }
 }

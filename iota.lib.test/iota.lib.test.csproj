@@ -64,6 +64,7 @@
     <Reference Include="System.Web" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="IotaApiTests.cs" />
     <Compile Include="UtilsTests\IotaApiUtilsTest.cs" />
     <Compile Include="UtilsTests\ChecksumTest.cs" />
     <Compile Include="UtilsTests\ConverterTest.cs" />

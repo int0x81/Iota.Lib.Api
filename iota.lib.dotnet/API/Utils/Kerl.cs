@@ -37,6 +37,7 @@ namespace Iota.Lib.CSharp.Api.Utils
 
         public ISponge Absorb(int[] trits, int offset, int length)
         {
+            trits = ArrayUtils.PadArrayWithZeros(trits, trits.Length + (trits.Length % HASH_LENGTH));
             while (offset < length)
             {
                 Array.Copy(trits, offset, tritState, 0, HASH_LENGTH);
@@ -58,7 +59,7 @@ namespace Iota.Lib.CSharp.Api.Utils
             return this;
         }
 
-        public int[] Squeeze(int length)
+        public int[] Squeeze(int length = HASH_LENGTH)
         {
             int[] digest = new int[length];
             int offset = 0;

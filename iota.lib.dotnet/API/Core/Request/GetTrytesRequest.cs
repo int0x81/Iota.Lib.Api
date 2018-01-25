@@ -1,17 +1,25 @@
 ﻿namespace Iota.Lib.CSharp.Api.Core
 {
     /// <summary>
-    /// This class represents the response of <see cref="RemoveNeighborsRequest"/>
+    /// Represents the core API request 'GetTrytes'
     /// </summary>
-    public class RemoveNeighborsResponse
+    public class GetTrytesRequest : IotaRequest
     {
         /// <summary>
-        /// Gets or sets the number of removed neighbors.
+        /// Initializes a new instance of the <see cref="GetTrytesRequest"/> class.
+        /// </summary>
+        public GetTrytesRequest() : base(Command.GetTrytes)
+        {
+
+        }
+
+        /// <summary>
+        /// Gets or sets the hashes.
         /// </summary>
         /// <value>
-        /// The removed neighbors.
+        /// The hashes.
         /// </value>
-        public long RemovedNeighbors { get; set; }
+        public string[] Hashes { get; set; }
 
         /// <summary>
         /// Returns a <see cref="System.String" /> that represents this instance.
@@ -21,7 +29,7 @@
         /// </returns>
         public override string ToString()
         {
-            return $"{nameof(RemovedNeighbors)}: {RemovedNeighbors}";
+            return $"{nameof(Hashes)}: {string.Join(",", Hashes)}";
         }
     }
 }

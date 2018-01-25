@@ -1,14 +1,15 @@
+using Iota.Lib.CSharp.Api.Utils;
+
 namespace Iota.Lib.CSharp.Api.Core
 {
 
     /// <summary>
-    /// This class represents the core API request 'AttachToTangle'.
+    /// Represents the core API request 'AttachToTangle'.
     /// It is used to attach trytes to the tangle.
     /// </summary>
     public class AttachToTangleRequest : IotaRequest
     {
-        private const int MinWeightMagnitudeMin = 18;
-        private int _minWeightMagnitude = MinWeightMagnitudeMin;
+        int _minWeightMagnitude = Constants.MIN_WEIGHT_MAGNITUDE;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AttachToTangleRequest"/> class.
@@ -17,8 +18,7 @@ namespace Iota.Lib.CSharp.Api.Core
         /// <param name="branchTransaction">The branch transaction.</param>
         /// <param name="trytes">The trytes.</param>
         /// <param name="minWeightMagnitude">The minimum weight magnitude.</param>
-        public AttachToTangleRequest(string trunkTransaction, string branchTransaction, string[] trytes,
-            int minWeightMagnitude = 18) : base(Core.Command.AttachToTangle.GetCommandString())
+        public AttachToTangleRequest(string trunkTransaction, string branchTransaction, string[] trytes, int minWeightMagnitude = 18) : base(Command.AttachToTangle)
         {
             TrunkTransaction = trunkTransaction;
             BranchTransaction = branchTransaction;
@@ -30,15 +30,17 @@ namespace Iota.Lib.CSharp.Api.Core
         }
 
         /// <summary>
-        /// Proof of Work intensity. Minimum value is 18
+        /// Proof of Work intensity.
         /// </summary>
         public int MinWeightMagnitude
         {
             get { return _minWeightMagnitude; }
             set
             {
-                if (value > MinWeightMagnitudeMin)
+                if (value > Constants.MIN_WEIGHT_MAGNITUDE)
+                {
                     _minWeightMagnitude = value;
+                }    
             }
         }
 

@@ -82,5 +82,10 @@ namespace Iota.Lib.CSharp.Api.Utils
         /// The number of trits in a tryte
         /// </summary>
         public static readonly int NUMBER_OF_TRITS_IN_A_TRYTE = 3;
+
+        /// <summary>
+        /// The minimum weight magnitutde that is considered as save
+        /// </summary>
+        public static readonly int MIN_WEIGHT_MAGNITUDE = 18;
     }
 }

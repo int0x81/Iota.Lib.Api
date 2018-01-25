@@ -34,13 +34,11 @@ namespace Iota.Lib.CSharp.Api.Core
         /// <returns>The returned value contains a different set of tryte values which you can input into broadcastTransactions and storeTransactions. 
         /// The returned tryte value, the last 243 trytes basically consist of the: trunkTransaction + branchTransaction + nonce. 
         /// These are valid trytes which are then accepted by the network.</returns>
-        public AttachToTangleResponse AttachToTangle(string trunkTransaction, string branchTransaction,
-            string[] trytes, int minWeightMagnitude = 18)
+        public AttachToTangleResponse AttachToTangle(string trunkTransaction, string branchTransaction, string[] trytes)
         {
             InputValidator.CheckIfArrayOfTrytes(trytes);
 
-            AttachToTangleRequest attachToTangleRequest = new AttachToTangleRequest(trunkTransaction, branchTransaction,
-                trytes, minWeightMagnitude);
+            AttachToTangleRequest attachToTangleRequest = new AttachToTangleRequest(trunkTransaction, branchTransaction, trytes, Constants.MIN_WEIGHT_MAGNITUDE);
             return _genericIotaCoreApi.Request<AttachToTangleRequest, AttachToTangleResponse>(attachToTangleRequest);
         }
 
@@ -51,9 +49,7 @@ namespace Iota.Lib.CSharp.Api.Core
         /// <returns>the BroadcastTransactionsResponse <see cref="BroadcastTransactionsResponse"/></returns>
         public BroadcastTransactionsResponse BroadcastTransactions(List<string> trytes)
         {
-            return
-                _genericIotaCoreApi.Request<BroadcastTransactionsRequest, BroadcastTransactionsResponse>(
-                    new BroadcastTransactionsRequest(trytes));
+            return _genericIotaCoreApi.Request<BroadcastTransactionsRequest, BroadcastTransactionsResponse>(new BroadcastTransactionsRequest(trytes));
         }
 
         /// <summary>
@@ -64,13 +60,10 @@ namespace Iota.Lib.CSharp.Api.Core
         /// <param name="approves">The approves.</param>
         /// <param name="bundles">The bundles.</param>
         /// <returns>a FindTransactionsResponse, see <see cref="FindTransactionsResponse"/></returns>
-        public FindTransactionsResponse FindTransactions(List<string> addresses, List<string> tags,
-            List<string> approves, List<string> bundles)
+        public FindTransactionsResponse FindTransactions(List<string> addresses, List<string> tags, List<string> approves, List<string> bundles)
         {
-            FindTransactionsRequest findTransactionsRequest = new FindTransactionsRequest(bundles, addresses, tags,
-                approves);
-            return
-                _genericIotaCoreApi.Request<FindTransactionsRequest, FindTransactionsResponse>(findTransactionsRequest);
+            FindTransactionsRequest findTransactionsRequest = new FindTransactionsRequest(bundles, addresses, tags, approves);
+            return  _genericIotaCoreApi.Request<FindTransactionsRequest, FindTransactionsResponse>(findTransactionsRequest);
         }
 
         /// <summary>
@@ -95,9 +88,7 @@ namespace Iota.Lib.CSharp.Api.Core
         /// <returns>a GetInclusionStatesResponse, see <see cref="GetInclusionStatesResponse"/></returns>
         public GetInclusionStatesResponse GetInclusionStates(string[] transactions, string[] milestones)
         {
-            return
-                _genericIotaCoreApi.Request<GetInclusionStatesRequest, GetInclusionStatesResponse>(
-                    new GetInclusionStatesRequest(transactions, milestones));
+            return _genericIotaCoreApi.Request<GetInclusionStatesRequest, GetInclusionStatesResponse>(new GetInclusionStatesRequest(transactions, milestones));
         }
 
         /// <summary>
@@ -108,8 +99,7 @@ namespace Iota.Lib.CSharp.Api.Core
         public StoreTransactionsResponse StoreTransactions(List<string> trytes)
         {
             return
-                _genericIotaCoreApi.Request<StoreTransactionsRequest, StoreTransactionsResponse>(
-                    new StoreTransactionsRequest(trytes));
+                _genericIotaCoreApi.Request<StoreTransactionsRequest, StoreTransactionsResponse>(new StoreTransactionsRequest(trytes));
         }
 
         /// <summary>
@@ -127,8 +117,7 @@ namespace Iota.Lib.CSharp.Api.Core
         /// <returns>a <see cref="GetTipsResponse"/> containing a list of tips</returns>
         public GetTipsResponse GetTips()
         {
-            GetTipsRequest getTipsRequest = new GetTipsRequest();
-            return _genericIotaCoreApi.Request<GetTipsRequest, GetTipsResponse>(getTipsRequest);
+            return _genericIotaCoreApi.Request<GetTipsRequest, GetTipsResponse>(new GetTipsRequest());
         }
 
         /// <summary>
@@ -139,10 +128,7 @@ namespace Iota.Lib.CSharp.Api.Core
         /// <returns> trunkTransaction and branchTransaction (result of the Tip selection)</returns>
         public GetTransactionsToApproveResponse GetTransactionsToApprove(int depth)
         {
-            GetTransactionsToApproveRequest getTransactionsToApproveRequest = new GetTransactionsToApproveRequest(depth);
-            return
-                _genericIotaCoreApi.Request<GetTransactionsToApproveRequest, GetTransactionsToApproveResponse>(
-                    getTransactionsToApproveRequest);
+            return _genericIotaCoreApi.Request<GetTransactionsToApproveRequest, GetTransactionsToApproveResponse>(new GetTransactionsToApproveRequest(depth));
         }
 
         /// <summary>
@@ -163,10 +149,7 @@ namespace Iota.Lib.CSharp.Api.Core
         /// <returns>an <see cref="InterruptAttachingToTangleResponse"/></returns>
         public InterruptAttachingToTangleResponse InterruptAttachingToTangle()
         {
-            InterruptAttachingToTangleRequest request = new InterruptAttachingToTangleRequest();
-            return
-                _genericIotaCoreApi.Request<InterruptAttachingToTangleRequest, InterruptAttachingToTangleResponse>(
-                    request);
+            return _genericIotaCoreApi.Request<InterruptAttachingToTangleRequest, InterruptAttachingToTangleResponse>(new InterruptAttachingToTangleRequest());
         }
 
         /// <summary>
@@ -186,9 +169,7 @@ namespace Iota.Lib.CSharp.Api.Core
         /// <returns><see cref="AddNeighborsResponse"/> containing the number of added Neighbors</returns>
         public AddNeighborsResponse AddNeighbors(params string[] uris)
         {
-            return
-                _genericIotaCoreApi.Request<AddNeighborsRequest, AddNeighborsResponse>(
-                    new AddNeighborsRequest(uris.ToList()));
+            return _genericIotaCoreApi.Request<AddNeighborsRequest, AddNeighborsResponse>(new AddNeighborsRequest(uris.ToList()));
         }
 
         /// <summary>
@@ -198,8 +179,7 @@ namespace Iota.Lib.CSharp.Api.Core
         /// <returns>A <see cref="RemoveNeighborsResponse"/> containing the number of removed neighbors</returns>
         public RemoveNeighborsResponse RemoveNeighbors(params string[] uris)
         {
-            RemoveNeighborsRequest removeNeighborsRequest = new RemoveNeighborsRequest(uris.ToList());
-            return _genericIotaCoreApi.Request<RemoveNeighborsRequest, RemoveNeighborsResponse>(removeNeighborsRequest);
+            return _genericIotaCoreApi.Request<RemoveNeighborsRequest, RemoveNeighborsResponse>(new RemoveNeighborsRequest(uris.ToList()));
         }
     }
 }

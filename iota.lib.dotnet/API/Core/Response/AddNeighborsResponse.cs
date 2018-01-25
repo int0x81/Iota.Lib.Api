@@ -4,7 +4,7 @@
     /// <summary>
     /// Response of <see cref="AddNeighborsRequest"/>
     /// </summary>
-    public class AddNeighborsResponse
+    public class AddNeighborsResponse : IotaResponse
     {
         /// <summary>
         /// Gets the number of added neighbors.

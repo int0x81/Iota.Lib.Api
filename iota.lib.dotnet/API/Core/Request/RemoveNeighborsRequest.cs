@@ -3,7 +3,7 @@
 namespace Iota.Lib.CSharp.Api.Core
 {
     /// <summary>
-    /// This class represents the core api request 'RemoveNeighbors'
+    /// Represents the core api request 'RemoveNeighbors'
     /// </summary>
     /// <seealso cref="Iota.Lib.CSharp.Api.Core.IotaRequest" />
     public class RemoveNeighborsRequest : IotaRequest
@@ -12,7 +12,7 @@ namespace Iota.Lib.CSharp.Api.Core
         /// Initializes a new instance of the <see cref="RemoveNeighborsRequest"/> class.
         /// </summary>
         /// <param name="uris">The uris.</param>
-        public RemoveNeighborsRequest(List<string> uris) : base(Core.Command.RemoveNeighbors.GetCommandString())
+        public RemoveNeighborsRequest(List<string> uris) : base(Command.RemoveNeighbors)
         {
             Uris = uris;
         }

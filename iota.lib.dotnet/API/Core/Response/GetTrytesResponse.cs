@@ -3,17 +3,18 @@
 namespace Iota.Lib.CSharp.Api.Core
 {
     /// <summary>
-    /// Response of <see cref="FindTransactionsRequest"/>
+    /// This class represents the response of <see cref="GetTrytesRequest"/>
     /// </summary>
-    public class FindTransactionsResponse
+    public class GetTrytesResponse : IotaResponse
     {
+
         /// <summary>
-        /// Gets or sets the hashes.
+        /// Gets or sets the trytes.
         /// </summary>
         /// <value>
-        /// The hashes.
+        /// The trytes.
         /// </value>
-        public List<string> Hashes { get; set; }
+        public List<string> Trytes { get; set; }
 
         /// <summary>
         /// Returns a <see cref="System.String" /> that represents this instance.
@@ -23,7 +24,7 @@ namespace Iota.Lib.CSharp.Api.Core
         /// </returns>
         public override string ToString()
         {
-            return $"{nameof(Hashes)}: {string.Join(",",Hashes)}";
+            return $"{nameof(Trytes)}: {string.Join(",", Trytes)}";
         }
     }
 }

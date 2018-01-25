@@ -1,9 +1,10 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 namespace Iota.Lib.CSharp.Api.Core
 {
     /// <summary>
-    /// This interface abstracts a generic version of the core api that is used internally.
+    /// Abstracts a generic version of the core api that is used internally.
     /// </summary>
     public interface IGenericIotaCoreApi
     {
@@ -29,8 +30,8 @@ namespace Iota.Lib.CSharp.Api.Core
         /// <typeparam name="TRequest">The type of the request.</typeparam>
         /// <typeparam name="TResponse">The type of the response.</typeparam>
         /// <param name="request">The request.</param>
-        /// <returns></returns>
-        TResponse Request<TRequest, TResponse>(TRequest request) where TResponse : new();
+        /// <returns>A <see cref="IotaResponse"/></returns>
+        TResponse Request<TRequest, TResponse>(TRequest request) where TRequest : IotaRequest where TResponse : IotaResponse, new();
 
         /// <summary>
         /// Requests the specified request asynchronously
@@ -38,8 +39,7 @@ namespace Iota.Lib.CSharp.Api.Core
         /// <typeparam name="TRequest">The type of the request.</typeparam>
         /// <typeparam name="TResponse">The type of the response.</typeparam>
         /// <param name="request">The request.</param>
-        /// <param name="responseAction">The response action.</param>
-        void RequestAsync<TRequest, TResponse>(TRequest request, Action<TResponse> responseAction)
-            where TResponse : new();
+        /// <returns>A task that works on a <see cref="IotaResponse"/></returns>
+        Task<TResponse> RequestAsync<TRequest, TResponse>(TRequest request) where TRequest : IotaRequest where TResponse : IotaResponse, new();
     }
 }

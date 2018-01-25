@@ -3,13 +3,22 @@
 namespace Iota.Lib.CSharp.Api.Core
 {
     /// <summary>
-    /// This class represents the response of <see cref="GetTrytesRequest"/>
+    /// Represents the core API request 'BroadcastTransactions'.
+    /// Broadcast a list of transactions to all neighbors. The input trytes for this call are provided by attachToTangle
     /// </summary>
-    public class GetTrytesResponse
+    public class BroadcastTransactionsRequest : IotaRequest
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="BroadcastTransactionsRequest"/> class.
+        /// </summary>
+        /// <param name="trytes">The trytes.</param>
+        public BroadcastTransactionsRequest(List<string> trytes) : base(Command.BroadcastTransactions)
+        {
+            Trytes = trytes;
+        }
 
         /// <summary>
-        /// Gets or sets the trytes.
+        /// Gets or sets the trytes representing the transactions
         /// </summary>
         /// <value>
         /// The trytes.

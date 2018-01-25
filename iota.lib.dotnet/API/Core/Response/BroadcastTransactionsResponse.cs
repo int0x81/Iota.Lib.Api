@@ -3,8 +3,8 @@
     /// <summary>
     /// Response of <see cref="BroadcastTransactionsRequest"/>
     /// </summary>
-    public class BroadcastTransactionsResponse
+    public class BroadcastTransactionsResponse : IotaResponse
     {
-        // empty
+        
     }
 }

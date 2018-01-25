@@ -1,7 +1,7 @@
 ﻿namespace Iota.Lib.CSharp.Api.Exception
 {
     /// <summary>
-    /// This exception encapsulates an error that occured while communicating with the node (for example during a core API call)
+    /// Occures when the communication with a node fails
     /// </summary>
     /// <seealso cref="System.Exception" />
     public class IotaApiException : System.Exception

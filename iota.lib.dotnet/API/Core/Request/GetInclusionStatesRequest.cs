@@ -1,9 +1,8 @@
 ﻿namespace Iota.Lib.CSharp.Api.Core
 {
     /// <summary>
-    /// This class represents the core API request 'GetInclusionStates'
+    /// Represents the core API request 'GetInclusionStates'
     /// </summary>
-    /// <seealso cref="Iota.Lib.CSharp.Api.Core.IotaRequest" />
     public class GetInclusionStatesRequest : IotaRequest
     {
         /// <summary>
@@ -11,8 +10,7 @@
         /// </summary>
         /// <param name="transactions">The transactions.</param>
         /// <param name="tips">The tips.</param>
-        public GetInclusionStatesRequest(string[] transactions, string[] tips)
-            : base(Core.Command.GetInclusionStates.GetCommandString())
+        public GetInclusionStatesRequest(string[] transactions, string[] tips) : base(Command.GetInclusionStates)
         {
             Transactions = transactions;
             Tips = tips;

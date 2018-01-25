@@ -1,16 +1,18 @@
 ﻿using System;
+using System.Threading.Tasks;
 using Iota.Lib.CSharp.Api.Utils.Rest;
 
 namespace Iota.Lib.CSharp.Api.Core
 {
     /// <summary>
-    /// This class represents a generic version of the core API that is used internally 
+    /// Represents a generic version of the core API that is used internally 
     /// </summary>
     /// <seealso cref="Iota.Lib.CSharp.Api.Core.IGenericIotaCoreApi" />
     public class GenericIotaCoreApi : IGenericIotaCoreApi
     {
-        private string host;
-        private int port;
+        string _host;
+        int _port;
+        JsonWebClient jsonWebClient = new JsonWebClient();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="GenericIotaCoreApi"/> class.
@@ -19,8 +21,8 @@ namespace Iota.Lib.CSharp.Api.Core
         /// <param name="port">The port.</param>
         public GenericIotaCoreApi(string host, int port)
         {
-            this.host = host;
-            this.port = port;
+            _host = host;
+            _port = port;
         }
 
         /// <summary>
@@ -31,7 +33,7 @@ namespace Iota.Lib.CSharp.Api.Core
         /// </value>
         public string Hostname
         {
-            get { return host; }
+            get { return _host; }
         }
 
         /// <summary>
@@ -42,7 +44,7 @@ namespace Iota.Lib.CSharp.Api.Core
         /// </value>
         public int Port
         {
-            get { return port; }
+            get { return _port; }
         }
 
         /// <summary>
@@ -52,31 +54,19 @@ namespace Iota.Lib.CSharp.Api.Core
         /// <typeparam name="TResponse">The type of the response.</typeparam>
         /// <param name="request">The request.</param>
         /// <returns></returns>
-        public TResponse Request<TRequest, TResponse>(TRequest request) where TResponse : new()
+        public TResponse Request<TRequest, TResponse>(TRequest request) where TRequest: IotaRequest where TResponse : IotaResponse, new()
         {
-            JsonWebClient jsonWebClient = new JsonWebClient();
-            return jsonWebClient.GetPOSTResponseSync<TResponse>(new Uri(CreateBaseUrl()),
-                new JsonSerializer().Serialize(request));
+            return jsonWebClient.GetResponse<TResponse>(new Uri(CreateBaseUrl()), new JsonSerializer().Serialize(request));
         }
 
-        /// <summary>
-        /// Requests the specified request asynchronously
-        /// </summary>
-        /// <typeparam name="TRequest">The type of the request.</typeparam>
-        /// <typeparam name="TResponse">The type of the response.</typeparam>
-        /// <param name="request">The request.</param>
-        /// <param name="responseAction">The response action.</param>
-        public void RequestAsync<TRequest, TResponse>(TRequest request, Action<TResponse> responseAction)
-            where TResponse : new()
+        public Task<TResponse> RequestAsync<TRequest, TResponse>(TRequest request) where TRequest : IotaRequest where TResponse : IotaResponse, new()
         {
-            JsonWebClient jsonWebClient = new JsonWebClient();
-            jsonWebClient.GetPOSTResponseAsync<TResponse>(new Uri(CreateBaseUrl()),
-                new JsonSerializer().Serialize(request), responseAction);
+            return jsonWebClient.GetResponseAsync<TResponse>(new Uri(CreateBaseUrl()), new JsonSerializer().Serialize(request));
         }
 
         private string CreateBaseUrl()
         {
-            return "http://" + host + ":" + port;
+            return "https://" + _host + ":" + _port;
         }
     }
 }

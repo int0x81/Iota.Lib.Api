@@ -7,13 +7,20 @@ namespace Iota.Lib.CSharp.Api.Utils
 {
     public static class Signing
     {
-        static ISponge kerl;
+        static Kerl kerl;
 
         static Signing()
         {
             kerl = new Kerl();
         }
 
+        /// <summary>
+        /// Creates a private key
+        /// </summary>
+        /// <param name="seed">The seed</param>
+        /// <param name="index">The index</param>
+        /// <param name="securityLevel">The security level</param>
+        /// <returns>The private key as trit-array</returns>
         public static int[] Key(int[] seed, int index, int securityLevel)
         {
             int[] filledSeed = FillSeed(seed);
@@ -64,7 +71,7 @@ namespace Iota.Lib.CSharp.Api.Utils
                     {
                         kerl.Reset();
                         kerl.Absorb(buffer);
-                        buffer = kerl.Squeeze(Kerl.HASH_LENGTH);
+                        buffer = kerl.Squeeze();
                     }
                     for (int k = 0; k < 243; k++)
                     {
@@ -74,7 +81,7 @@ namespace Iota.Lib.CSharp.Api.Utils
 
                 kerl.Reset();
                 kerl.Absorb(keyFragment);
-                buffer = kerl.Squeeze(Kerl.HASH_LENGTH);
+                buffer = kerl.Squeeze();
 
                 for (int j = 0; j < 243; j++)
                 {
@@ -93,18 +100,18 @@ namespace Iota.Lib.CSharp.Api.Utils
             {
                 buffer = ArrayUtils.SubArray(signatureFragment, i*243, 243);
 
-                ISponge jKerl = new Kerl();
+                Kerl jKerl = new Kerl();
 
                 for (int j = normalizedBundleFragment[i] + 13; j-- > 0;)
                 {
                     jKerl.Reset();
                     jKerl.Absorb(buffer);
-                    buffer = jKerl.Squeeze(Kerl.HASH_LENGTH);
+                    buffer = jKerl.Squeeze();
                 }
                 kerl.Absorb(buffer);
             }
 
-            return kerl.Squeeze(Kerl.HASH_LENGTH);
+            return kerl.Squeeze();
         }
 
         public static int[] Address(int[] digests)
@@ -112,7 +119,7 @@ namespace Iota.Lib.CSharp.Api.Utils
             kerl.Reset();
             kerl.Absorb(digests);
 
-            return kerl.Squeeze(Kerl.HASH_LENGTH);
+            return kerl.Squeeze();
         }
 
         public static int[] SignatureFragment(int[] normalizedBundleFragment, int[] keyFragment)
@@ -127,7 +134,7 @@ namespace Iota.Lib.CSharp.Api.Utils
                 {
                     kerl.Reset();
                     kerl.Absorb(hash);
-                    hash = kerl.Squeeze(Kerl.HASH_LENGTH);
+                    hash = kerl.Squeeze();
                 }
 
                 for (int j = 0; j < 243; j++)

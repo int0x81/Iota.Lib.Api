@@ -1,10 +1,16 @@
 ﻿namespace Iota.Lib.CSharp.Api.Exception
 {
     /// <summary>
-    ///  This exception occurs when invalid trytes are encountered
+    /// Occurs when invalid trytes are encountered
     /// </summary>
     public class InvalidTryteException : System.Exception
     {
-
+        /// <summary>
+        /// Initializes a new instance of the <see cref="InvalidTryteException"/> class.
+        /// </summary>
+        /// <param name="error">The error</param>
+        public InvalidTryteException() : base("Provided string is no array of trytes")
+        {
+        }
     }
 }

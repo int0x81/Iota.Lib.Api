@@ -1,7 +1,7 @@
 ﻿namespace Iota.Lib.CSharp.Api.Core
 {
     /// <summary>
-    /// This class represents the core API call 'GetTransactionsToApprove'
+    /// Represents the core API call 'GetTransactionsToApprove'
     /// </summary>
     public class GetTransactionsToApproveRequest : IotaRequest
     {
@@ -9,8 +9,7 @@
         /// Initializes a new instance of the <see cref="GetTransactionsToApproveRequest"/> class.
         /// </summary>
         /// <param name="depth">The depth.</param>
-        public GetTransactionsToApproveRequest(int depth)
-            : base(Core.Command.GetTransactionsToApprove.GetCommandString())
+        public GetTransactionsToApproveRequest(int depth) : base(Command.GetTransactionsToApprove)
         {
             Depth = depth;
         }

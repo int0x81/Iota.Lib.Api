@@ -1,7 +1,7 @@
 ﻿namespace Iota.Lib.CSharp.Api.Exception
 {
     /// <summary>
-    /// This exception occurs when a transfer fails because their is not enough balance to perform the transfer
+    /// Occurs when a transfer fails because their is not enough balance to perform the transfer
     /// </summary>
     /// <seealso cref="System.Exception" />
     public class NotEnoughBalanceException : System.Exception
@@ -19,7 +19,6 @@
         /// <param name="totalValue">The total value.</param>
         public NotEnoughBalanceException(long totalValue) : base("Not enough balance to transfer " + totalValue + " iota")
         {
-
         }
     }
 }

@@ -14,28 +14,17 @@ namespace Iota.Lib.CSharp.Api
     /// </summary>
     public class IotaApi : IotaCoreApi
     {
-        private ISponge curl;
+        Kerl kerl;
+        const int MAX_KEY_INDEX = 10; //The maximum for generating addresses; Increasing this value can decrease performance because more addresses have to be queried
 
         /// <summary>
-        /// Creates an api object that uses the specified connection settings to connect to a node
+        /// Creates an api object that can interact with a specific Node
         /// </summary>
-        /// <param name="host">hostname or API address of a node to interact with</param>
-        /// <param name="port">tcp/udp port</param>
-        public IotaApi(string host, int port) : this(host, port, new Curl())
+        /// <param name="host">The host address</param>
+        /// <param name="port">The port</param>
+        public IotaApi(string host, int port) : base(host, port)
         {
-        }
-
-        /// <summary>
-        /// Creates an api object that uses the specified connection settings to connect to a node
-        /// </summary>
-        /// <param name="host">hostname or API address of a node to interact with</param>
-        /// <param name="port">tcp/udp port</param>
-        /// <param name="curl">a custom curl implementation to be used to perform the pow. Use the other constructor in order to use the default curl implementation provided by the library </param>
-        public IotaApi(string host, int port, ISponge curl) : base(host, port)
-        {
-            if(curl == null)
-                throw new ArgumentNullException(nameof(curl));
-            this.curl = curl;
+            kerl = new Kerl();
         }
 
         /// <summary>
@@ -43,99 +32,52 @@ namespace Iota.Lib.CSharp.Api
         /// This is either done deterministically (by genearating all addresses until findTransactions is empty and doing getBalances),
         /// or by providing a key range to use for searching through.
         /// </summary>
-        /// <param name="seed">tryte-encoded seed. It should be noted that this seed is not transferred</param>
+        /// <param name="seed">The seed</param>
         /// <param name="start">Starting key index</param>
         /// <param name="end">Ending key index</param>
-        /// <param name="threshold">The minimum threshold of accumulated balances from the inputs that is required</param>
-        /// <returns>The inputs (see <see cref="Input"/>) </returns>
-        public Inputs GetInputs(string seed, int start, int end, long threshold = 100)
+        /// <returns>The inputs (see <see cref="Inputs"/>)</returns>
+        public Inputs GetInputs(string seed, int start = 0, int end = MAX_KEY_INDEX, int securityLevel = 0)
         {
             InputValidator.CheckIfValidSeed(seed);
 
             seed = InputValidator.PadSeedIfNecessary(seed);
 
-            // If start value bigger than end, return error
             if (start > end)
-                throw new ArgumentException("start must be smaller than end", "start");
-
-            // or if difference between end and start is bigger than 500 keys
-            if (end - start > 500)
-                throw new ArgumentException("total number of keys exceeded 500");
-
-            //  Case 1: start and end
-            //
-            //  If start and end is defined by the user, simply iterate through the keys
-            //  and call getBalances
-            if (end != 0)
             {
-                string[] allAddresses = new string[end - start];
-
-                for (int i = start; i < end; i++)
-                {
-                    string address = IotaApiUtils.CreateNewAddress(seed, i, 2, false);
-                    allAddresses[i] = address;
-                }
-
-                return GetBalanceAndFormat(allAddresses, start, threshold);
+                throw new ArgumentException("Start index must be smaller than end index");
             }
 
-            //  Case 2: iterate till threshold || end
-            //
-            //  Either start from index: 0 or start (if defined) until threshold is reached.
-            //  Calls getNewAddress and deterministically generates and returns all addresses
-            //  We then do getBalance, format the output and return it
-            else
+            if (end - start > MAX_KEY_INDEX)
             {
-                string[] addresses = GetNewAddress(seed, start, 2, true, 0, true);
-                return GetBalanceAndFormat(addresses, start, threshold);
+                throw new ArgumentException($"Can't generate more than {MAX_KEY_INDEX} addresses");
             }
-        }
 
-        /// <summary>
-        /// Gets the balances of the specified addresses and calculates the total balance till the threshold is reached.
-        /// </summary>
-        /// <param name="addresses">addresses</param>
-        /// <param name="start">start index</param>
-        /// <param name="threshold">the threshold </param>
-        /// <returns>an Inputs object</returns>
-        /// <exception cref="NotEnoughBalanceException">is thrown if threshold exceeds the sum of balance of the specified addresses</exception>
-        private Inputs GetBalanceAndFormat(string[] addresses, int start, long threshold = 100)
-        {
-            GetBalancesResponse getBalancesResponse = GetBalances(addresses.ToList(), 100);
-
-            List<long> balances = getBalancesResponse.Balances;
-
-            Inputs inputs = new Inputs() {InputsList = new List<Input>(), TotalBalance = 0};
-
-            bool threshholdReached = false;
-
-            for (int i = 0; i < addresses.Length; i++)
+            if(securityLevel < 0 || securityLevel > 3)
             {
-                if (balances[i] > 0)
+                throw new ArgumentException("SecurityLevel may only be 0, 1, 2 or 3", "securityLevel");
+            }
+
+            List<string> allAddresses = new List<string>();
+
+            for (int keyIndex = start; keyIndex < end; keyIndex++)
+            {
+                if (securityLevel == 0) //If no security Level is specified the addresses for all three levels gonna be queried
                 {
-                    inputs.InputsList.Add(new Input()
+                    for (int seclvlIndex = 0; seclvlIndex < 3; seclvlIndex++)
                     {
-                        Address = addresses[i],
-                        Balance = balances[i],
-                        KeyIndex = start + i
-                    });
-
-                    inputs.TotalBalance += balances[i];
-
-                    if (inputs.TotalBalance >= threshold)
-                    {
-                        threshholdReached = true;
-                        break;
+                        string address = IotaApiUtils.CreateNewAddress(seed, keyIndex, seclvlIndex, false);
+                        allAddresses.Add(address);
                     }
                 }
+                else
+                {
+                    string address = IotaApiUtils.CreateNewAddress(seed, keyIndex, securityLevel, false);
+                    allAddresses.Add(address);
+                }
+
             }
 
-            if (threshholdReached)
-            {
-                return inputs;
-            }
-
-            throw new NotEnoughBalanceException();
+            return GetBalanceAndFormat(allAddresses.ToArray(), start);
         }
 
         /// <summary>
@@ -147,8 +89,7 @@ namespace Iota.Lib.CSharp.Api
         /// <param name="inputs">Optional (default null). The inputs</param>
         /// <param name="remainderAddress">Optional (default null). if defined, this address will be used for sending the remainder value (of the inputs) to.</param>
         /// <returns>a list containing the trytes of the new bundle</returns>
-        public List<string> PrepareTransfers(string seed, Transfer[] transfers, List<Input> inputs = null,
-            string remainderAddress = null)
+        public List<string> PrepareTransfers(string seed, Transfer[] transfers, List<Input> inputs = null, string remainderAddress = null)
         {
             InputValidator.CheckTransferArray(transfers);
 
@@ -285,7 +226,7 @@ namespace Iota.Lib.CSharp.Api
             else
             {
                 // If no input required, don't sign and simply finalize the bundle
-                bundle.FinalizeBundle(curl);
+                bundle.FinalizeBundle(kerl);
                 bundle.AddTrytes(signatureFragments);
 
                 List<String> bundleTrytes = new List<string>();
@@ -296,67 +237,6 @@ namespace Iota.Lib.CSharp.Api
             }
         }
 
-
-        private List<string> AddRemainder(string seed, List<Input> inputs, Bundle bundle, string tag, long totalValue,
-            string remainderAddress, List<string> signatureFragments)
-        {
-            long totalTransferValue = totalValue;
-
-            foreach (Input input in inputs)
-            {
-                var thisBalance = input.Balance;
-                var toSubtract = 0 - thisBalance;
-                var timestamp = IotaApiUtils.CreateTimeStampNow();
-
-                // Add input as bundle entry
-                bundle.AddEntry(2, input.Address, toSubtract, tag, timestamp);
-                // If there is a remainder value
-                // Add extra output to send remaining funds to
-
-                if (thisBalance >= totalTransferValue)
-                {
-                    var remainder = thisBalance - totalTransferValue;
-
-                    // If user has provided remainder address
-                    // Use it to send remaining funds to
-                    if (remainder > 0 && remainderAddress != null)
-                    {
-                        // Remainder bundle entry
-                        bundle.AddEntry(1, remainderAddress, remainder, tag, timestamp);
-
-                        // function for signing inputs
-                        IotaApiUtils.SignInputsAndReturn(seed, inputs, bundle, signatureFragments, curl);
-                    }
-                    else if (remainder > 0)
-                    {
-                        // Generate a new Address by calling getNewAddress
-                        string address = GetNewAddress(seed)[0];
-
-                        // Remainder bundle entry
-                        bundle.AddEntry(1, address, remainder, tag, timestamp);
-
-                        // function for signing inputs
-                        return IotaApiUtils.SignInputsAndReturn(seed, inputs, bundle, signatureFragments, curl);
-                    }
-                    else
-                    {
-                        // If there is no remainder, do not add transaction to bundle
-                        // simply sign and return
-                        return IotaApiUtils.SignInputsAndReturn(seed, inputs, bundle, signatureFragments, curl);
-                    }
-                }
-                // If multiple inputs provided, subtract the totalTransferValue by
-                // the inputs balance
-                else
-                {
-                    totalTransferValue -= thisBalance;
-                }
-            }
-
-            throw new NotEnoughBalanceException(totalValue);
-        }
-
-
         /// <summary>
         /// Generates a new address from a seed and returns the remainderAddress. This is either done deterministically, or by providing the index of the new remainderAddress 
         /// </summary>
@@ -366,7 +246,7 @@ namespace Iota.Lib.CSharp.Api
         /// <param name="total">Optional (default 1)Total number of addresses to generate.</param>
         /// <param name="returnAll">If true, it returns all addresses which were deterministically generated (until findTransactions returns null)</param>
         /// <returns>an array of strings with the specifed number of addresses</returns>
-        public string[] GetNewAddress(string seed, int index = 0, int securityLevel = 2, bool checksum = false, int total = 0, bool returnAll = false)
+        public string[] GetNewAddress(string seed, int index = 0, int securityLevel = 0, bool checksum = false, int total = 0, bool returnAll = false)
         {
             //Validate all parameters
 
@@ -453,6 +333,343 @@ namespace Iota.Lib.CSharp.Api
             return bundles;
         }
 
+        /// <summary>
+        /// Finds the transaction objects.
+        /// </summary>
+        /// <param name="adresses">The adresses.</param>
+        /// <returns>a list of transactions</returns>
+        public List<Transaction> FindTransactionObjects(string[] adresses)
+        {
+            FindTransactionsResponse ftr = FindTransactions(adresses.ToList(), null, null, null);
+            if (ftr == null || ftr.Hashes == null)
+                return null;
+
+            // get the transaction objects of the transactions
+            return GetTransactionsObjects(ftr.Hashes.ToArray());
+        }
+
+        /// <summary>
+        /// Gets the transactions objects.
+        /// </summary>
+        /// <param name="hashes">The hashes in trytes</param>
+        /// <returns>a list of transactions</returns>
+        public List<Transaction> GetTransactionsObjects(string[] hashes)
+        {
+            if (!InputValidator.IsArrayOfHashes(hashes))
+            {
+                throw new IllegalStateException("Not an Array of Hashes: " + hashes.ToString());
+            }
+
+            GetTrytesResponse trytesResponse = GetTrytes(hashes);
+
+            List<Transaction> trxs = new List<Transaction>();
+
+            foreach (string tryte in trytesResponse.Trytes)
+            {
+                trxs.Add(new Transaction(tryte, kerl));
+            }
+            return trxs;
+        }
+
+        /// <summary>
+        /// Finds the transaction objects by bundle.
+        /// </summary>
+        /// <param name="bundles">The bundles.</param>
+        /// <returns>a list of Transaction objects</returns>
+        public List<Transaction> FindTransactionObjectsByBundle(string[] bundles)
+        {
+            FindTransactionsResponse ftr = FindTransactions(null, null, null, bundles.ToList());
+            if (ftr == null || ftr.Hashes == null)
+                return null;
+
+            // get the transaction objects of the transactions
+            return GetTransactionsObjects(ftr.Hashes.ToArray());
+        }
+
+        /// <summary>
+        /// Replays the bundle.
+        /// </summary>
+        /// <param name="transaction">The transaction.</param>
+        /// <param name="depth">The depth.</param>
+        /// <param name="minWeightMagnitude">The minimum weight magnitude.</param>
+        /// <returns>an array of boolean that indicate which transactions have been replayed successfully</returns>
+        public bool[] ReplayBundle(string transaction, int depth, int minWeightMagnitude)
+        {
+            //StopWatch stopWatch = new StopWatch();
+
+            List<string> bundleTrytes = new List<string>();
+
+            Bundle bundle = GetBundle(transaction);
+
+            bundle.Transactions.ForEach((t) => bundleTrytes.Add(t.ToTransactionTrytes()));
+
+            List<Transaction> trxs = SendTrytes(bundleTrytes.ToArray(), depth).ToList();
+
+            bool[] successful = new bool[trxs.Count];
+
+            for (int i = 0; i < trxs.Count; i++)
+            {
+                FindTransactionsResponse response = FindTransactionsByBundles(trxs[i].Bundle);
+                successful[i] = response.Hashes.Count != 0;
+            }
+
+            return successful;
+        }
+
+        /// <summary>
+        /// Finds the transactions by bundles.
+        /// </summary>
+        /// <param name="bundles">The bundles.</param>
+        /// <returns>a FindTransactionsResponse containing the transactions, see <see cref="FindTransactionsResponse"/></returns>
+        public FindTransactionsResponse FindTransactionsByBundles(params string[] bundles)
+        {
+            return FindTransactions(null, null, null, bundles.ToList());
+        }
+
+        /// <summary>
+        /// Finds the transactions by approvees.
+        /// </summary>
+        /// <param name="approvees">The approvees.</param>
+        /// <returns>a FindTransactionsResponse containing the transactions, see <see cref="FindTransactionsResponse"/></returns>
+        public FindTransactionsResponse FindTransactionsByApprovees(params string[] approvees)
+        {
+            return FindTransactions(null, null, approvees.ToList(), null);
+        }
+
+        /// <summary>
+        /// Finds the transactions by digests.
+        /// </summary>
+        /// <param name="bundles">The bundles.</param>
+        /// <returns>a FindTransactionsResponse containing the transactions, see <see cref="FindTransactionsResponse"/></returns>
+        public FindTransactionsResponse FindTransactionsByDigests(params string[] bundles)
+        {
+            return FindTransactions(null, bundles.ToList(), null, null);
+        }
+
+        /// <summary>
+        /// Finds the transactions by addresses.
+        /// </summary>
+        /// <param name="addresses">The addresses.</param>
+        /// <returns>a FindTransactionsResponse containing the transactions, see <see cref="FindTransactionsResponse"/></returns>
+        public FindTransactionsResponse FindTransactionsByAddresses(params string[] addresses)
+        {
+            return FindTransactions(addresses.ToList(), null, null, null);
+        }
+
+        /// <summary>
+        /// Gets the latest inclusion.
+        /// </summary>
+        /// <param name="hashes">The hashes.</param>
+        /// <returns>a GetInclusionStatesResponse cotaining the inclusion state of the specified hashes</returns>
+        public GetInclusionStatesResponse GetLatestInclusion(string[] hashes)
+        {
+            string[] latestMilestone = { GetNodeInfo().LatestSolidSubtangleMilestone };
+            return GetInclusionStates(hashes, latestMilestone);
+        }
+
+        /// <summary>
+        /// Wrapper function that basically does prepareTransfers, as well as attachToTangle and finally, it broadcasts and stores the transactions locally.
+        /// </summary>
+        /// <param name="seed">tryte-encoded seed</param>
+        /// <param name="depth">depth</param>
+        /// <param name="minWeightMagnitude">The minimum weight magnitude</param>
+        /// <param name="transfers">Array of transfer objects</param>
+        /// <param name="inputs">Optional (default null). List of inputs used for funding the transfer</param>
+        /// <param name="address">Optional (default null). If defined, this address will be used for sending the remainder value (of the inputs) to</param>
+        /// <returns> an array of the boolean that indicates which Transactions where sent successully</returns>
+        public bool[] SendTransfer(string seed, int depth, int minWeightMagnitude, Transfer[] transfers, Input[] inputs = null, string address = null)
+        {
+            List<string> trytes = PrepareTransfers(seed, transfers, inputs?.ToList(), address);
+            Transaction[] trxs = SendTrytes(trytes.ToArray(), depth);
+
+            bool[] successful = new bool[trxs.Length];
+
+            for (int i = 0; i < trxs.Length; i++)
+            {
+                FindTransactionsResponse response = FindTransactionsByBundles(trxs[i].Bundle);
+
+                successful[i] = response.Hashes.Count != 0;
+            }
+
+            return successful;
+        }
+
+        /// <summary>
+        /// Sends the trytes.
+        /// </summary>
+        /// <param name="trytes">The trytes.</param>
+        /// <param name="depth">The depth.</param>
+        /// <returns>an Array of Transactions</returns>
+        public Transaction[] SendTrytes(string[] trytes, int depth)
+        {
+            GetTransactionsToApproveResponse transactionsToApproveResponse = GetTransactionsToApprove(depth);
+
+            AttachToTangleResponse attachToTangleResponse = AttachToTangle(transactionsToApproveResponse.TrunkTransaction, transactionsToApproveResponse.BranchTransaction, trytes);
+            try
+            {
+                BroadcastAndStore(attachToTangleResponse.Trytes);
+            }
+            catch (System.Exception)
+            {
+                return new Transaction[0];
+            }
+
+            List<Transaction> trx = new List<Transaction>();
+
+            foreach (string tx in attachToTangleResponse.Trytes)
+            {
+                trx.Add(new Transaction(tx, kerl));
+            }
+            return trx.ToArray();
+        }
+
+        /// <summary>
+        /// This function returns the bundle which is associated with a transaction. Input can by any type of transaction (tail and non-tail). 
+        /// If there are conflicting bundles (because of a replay for example) it will return multiple bundles. 
+        /// It also does important validation checking (signatures, sum, order) to ensure that the correct bundle is returned.
+        /// </summary>
+        /// <param name="transaction">the transaction encoded in trytes</param>
+        /// <returns>an array of bundle, if there are multiple arrays it means that there are conflicting bundles.</returns>
+        public Bundle GetBundle(string transaction)
+        {
+            Bundle bundle = TraverseBundle(transaction, null, new Bundle());
+
+            if (bundle == null)
+                throw new ArgumentException("Unknown Bundle");
+
+            long totalSum = 0;
+            string bundleHash = bundle.Transactions[0].Bundle;
+
+            kerl.Reset();
+
+            List<Signature> signaturesToValidate = new List<Signature>();
+
+            for (int index = 0; index < bundle.Transactions.Count; index++)
+            {
+                Transaction bundleTransaction = bundle.Transactions[index];
+                long bundleValue = long.Parse(bundleTransaction.Value);
+                totalSum += bundleValue;
+
+                if (long.Parse(bundleTransaction.CurrentIndex) != index)
+                    throw new InvalidBundleException("The index of the bundle " + bundleTransaction.CurrentIndex + " did not match the expected index " + index);
+
+                // Get the transaction trytes
+                string thisTxTrytes = bundleTransaction.ToTransactionTrytes().Substring(2187, 162);
+
+                // Absorb bundle hash + value + timestamp + lastIndex + currentIndex trytes.
+                kerl.Absorb(Converter.ConvertTrytesToTrits(thisTxTrytes));
+
+                // Check if input transaction
+                if (bundleValue < 0)
+                {
+                    string address = bundleTransaction.Address;
+                    Signature sig = new Signature();
+                    sig.Address = address;
+                    sig.SignatureFragments.Add(bundleTransaction.SignatureFragment);
+
+                    // Find the subsequent txs with the remaining signature fragment
+                    for (int i = index; i < bundle.Length - 1; i++)
+                    {
+                        var newBundleTx = bundle[i + 1];
+
+                        // Check if new tx is part of the signature fragment
+                        if (newBundleTx.Address == address && long.Parse(newBundleTx.Value) == 0)
+                        {
+                            sig.SignatureFragments.Add(newBundleTx.SignatureFragment);
+                        }
+                    }
+
+                    signaturesToValidate.Add(sig);
+                }
+            }
+
+            // Check for total sum, if not equal 0 return error
+            if (totalSum != 0)
+                throw new InvalidBundleException("Invalid Bundle Sum");
+
+            int[] bundleFromTrxs = new int[243];
+            bundleFromTrxs = kerl.Squeeze(243);
+            string bundleFromTxString = Converter.ConvertTritsToTrytes(bundleFromTrxs);
+
+            // Check if bundle hash is the same as returned by tx object
+            if (!bundleFromTxString.Equals(bundleHash))
+                throw new InvalidBundleException("Invalid Bundle Hash");
+            // Last tx in the bundle should have currentIndex === lastIndex
+            bundle.Length = bundle.Transactions.Count;
+            if (
+                !bundle.Transactions[bundle.Length - 1].CurrentIndex.Equals(
+                    bundle.Transactions[bundle.Length - 1].LastIndex))
+                throw new InvalidBundleException("Invalid Bundle");
+
+            // Validate the signatures
+            foreach (Signature aSignaturesToValidate in signaturesToValidate)
+            {
+                String[] signatureFragments = aSignaturesToValidate.SignatureFragments.ToArray();
+                string address = aSignaturesToValidate.Address;
+                bool isValidSignature = Signing.ValidateSignatures(address, signatureFragments, bundleHash);
+
+                if (!isValidSignature)
+                    throw new InvalidSignatureException();
+            }
+
+            return bundle;
+        }
+
+        /// <summary>
+        /// Wrapper function that broadcasts and stores the specified trytes
+        /// </summary>
+        /// <param name="trytes">trytes</param>
+        public void BroadcastAndStore(List<string> trytes)
+        {
+            BroadcastTransactions(trytes);
+            StoreTransactions(trytes);
+        }
+
+        private Bundle TraverseBundle(string trunkTransaction, string bundleHash, Bundle bundle)
+        {
+            GetTrytesResponse gtr = GetTrytes(trunkTransaction);
+
+            if (gtr.Trytes.Count == 0)
+                throw new InvisibleBundleTransactionException();
+
+            string trytes = gtr.Trytes[0];
+
+            Transaction transaction = new Transaction(trytes, kerl);
+
+            // If first transaction to search is not a tail, return error
+            if (bundleHash == null && transaction.Index != 0)
+            {
+                throw new InvalidTailTransactionException();
+            }
+
+            // If no bundle hash, define it
+            if (bundleHash == null)
+            {
+                bundleHash = transaction.Bundle;
+            }
+
+            // If different bundle hash, return with bundle
+            if (bundleHash != transaction.Bundle)
+            {
+                return bundle;
+            }
+
+            // If only one bundle element, return
+            if (long.Parse(transaction.LastIndex) == 0 && long.Parse(transaction.CurrentIndex) == 0)
+            {
+                return new Bundle(new List<Transaction>() { transaction }, 1);
+            }
+
+            // Define new trunkTransaction for search
+            var trunkTx = transaction.TrunkTransaction;
+
+            // Add transaction object to bundle
+            bundle.Transactions.Add(transaction);
+
+            // Continue traversing with new trunkTx
+            return TraverseBundle(trunkTx, bundleHash, bundle);
+        }
+
         private Bundle[] BundlesFromAddresses(string[] addresses, bool inclusionStates)
         {
             List<Transaction> trxs = FindTransactionObjects(addresses);
@@ -501,7 +718,7 @@ namespace Iota.Lib.CSharp.Api
                 {
                     gisr = GetLatestInclusion(tailTxArray);
                 }
-                catch (IllegalAccessError)
+                catch (IllegalAccessException)
                 {
                     // suppress exception (the check is done below)
                 }
@@ -543,349 +760,110 @@ namespace Iota.Lib.CSharp.Api
             return returnValue;
         }
 
-        /// <summary>
-        /// Finds the transaction objects.
-        /// </summary>
-        /// <param name="adresses">The adresses.</param>
-        /// <returns>a list of transactions</returns>
-        public List<Transaction> FindTransactionObjects(string[] adresses)
+        private List<string> AddRemainder(string seed, List<Input> inputs, Bundle bundle, string tag, long totalValue, string remainderAddress, List<string> signatureFragments)
         {
-            FindTransactionsResponse ftr = FindTransactions(adresses.ToList(), null, null, null);
-            if (ftr == null || ftr.Hashes == null)
-                return null;
+            long totalTransferValue = totalValue;
 
-            // get the transaction objects of the transactions
-            return GetTransactionsObjects(ftr.Hashes.ToArray());
-        }
-
-        /// <summary>
-        /// Gets the transactions objects.
-        /// </summary>
-        /// <param name="hashes">The hashes in trytes</param>
-        /// <returns>a list of transactions</returns>
-        public List<Transaction> GetTransactionsObjects(string[] hashes)
-        {
-            if (!InputValidator.IsArrayOfHashes(hashes))
+            foreach (Input input in inputs)
             {
-                throw new IllegalStateException("Not an Array of Hashes: " + hashes.ToString());
-            }
+                var thisBalance = input.Balance;
+                var toSubtract = 0 - thisBalance;
+                var timestamp = IotaApiUtils.CreateTimeStampNow();
 
-            GetTrytesResponse trytesResponse = GetTrytes(hashes);
+                // Add input as bundle entry
+                bundle.AddEntry(2, input.Address, toSubtract, tag, timestamp);
+                // If there is a remainder value
+                // Add extra output to send remaining funds to
 
-            List<Transaction> trxs = new List<Transaction>();
-
-            foreach (string tryte in trytesResponse.Trytes)
-            {
-                trxs.Add(new Transaction(tryte, curl));
-            }
-            return trxs;
-        }
-
-        /// <summary>
-        /// Finds the transaction objects by bundle.
-        /// </summary>
-        /// <param name="bundles">The bundles.</param>
-        /// <returns>a list of Transaction objects</returns>
-        public List<Transaction> FindTransactionObjectsByBundle(string[] bundles)
-        {
-            FindTransactionsResponse ftr = FindTransactions(null, null, null, bundles.ToList());
-            if (ftr == null || ftr.Hashes == null)
-                return null;
-
-            // get the transaction objects of the transactions
-            return GetTransactionsObjects(ftr.Hashes.ToArray());
-        }
-
-
-        /// <summary>
-        /// Replays the bundle.
-        /// </summary>
-        /// <param name="transaction">The transaction.</param>
-        /// <param name="depth">The depth.</param>
-        /// <param name="minWeightMagnitude">The minimum weight magnitude.</param>
-        /// <returns>an array of boolean that indicate which transactions have been replayed successfully</returns>
-        public bool[] ReplayBundle(string transaction, int depth, int minWeightMagnitude)
-        {
-            //StopWatch stopWatch = new StopWatch();
-
-            List<string> bundleTrytes = new List<string>();
-
-            Bundle bundle = GetBundle(transaction);
-
-            bundle.Transactions.ForEach((t) => bundleTrytes.Add(t.ToTransactionTrytes()));
-
-            List<Transaction> trxs = SendTrytes(bundleTrytes.ToArray(), depth, minWeightMagnitude).ToList();
-
-            bool[] successful = new bool[trxs.Count];
-
-            for (int i = 0; i < trxs.Count; i++)
-            {
-                FindTransactionsResponse response = FindTransactionsByBundles(trxs[i].Bundle);
-                successful[i] = response.Hashes.Count != 0;
-            }
-
-            return successful;
-        }
-
-        /// <summary>
-        /// Finds the transactions by bundles.
-        /// </summary>
-        /// <param name="bundles">The bundles.</param>
-        /// <returns>a FindTransactionsResponse containing the transactions, see <see cref="FindTransactionsResponse"/></returns>
-        public FindTransactionsResponse FindTransactionsByBundles(params string[] bundles)
-        {
-            return FindTransactions(null, null, null, bundles.ToList());
-        }
-
-        /// <summary>
-        /// Finds the transactions by approvees.
-        /// </summary>
-        /// <param name="approvees">The approvees.</param>
-        /// <returns>a FindTransactionsResponse containing the transactions, see <see cref="FindTransactionsResponse"/></returns>
-        public FindTransactionsResponse FindTransactionsByApprovees(params string[] approvees)
-        {
-            return FindTransactions(null, null, approvees.ToList(), null);
-        }
-
-
-        /// <summary>
-        /// Finds the transactions by digests.
-        /// </summary>
-        /// <param name="bundles">The bundles.</param>
-        /// <returns>a FindTransactionsResponse containing the transactions, see <see cref="FindTransactionsResponse"/></returns>
-        public FindTransactionsResponse FindTransactionsByDigests(params string[] bundles)
-        {
-            return FindTransactions(null, bundles.ToList(), null, null);
-        }
-
-        /// <summary>
-        /// Finds the transactions by addresses.
-        /// </summary>
-        /// <param name="addresses">The addresses.</param>
-        /// <returns>a FindTransactionsResponse containing the transactions, see <see cref="FindTransactionsResponse"/></returns>
-        public FindTransactionsResponse FindTransactionsByAddresses(params string[] addresses)
-        {
-            return FindTransactions(addresses.ToList(), null, null, null);
-        }
-
-        /// <summary>
-        /// Gets the latest inclusion.
-        /// </summary>
-        /// <param name="hashes">The hashes.</param>
-        /// <returns>a GetInclusionStatesResponse cotaining the inclusion state of the specified hashes</returns>
-        public GetInclusionStatesResponse GetLatestInclusion(string[] hashes)
-        {
-            string[] latestMilestone = { GetNodeInfo().LatestSolidSubtangleMilestone };
-            return GetInclusionStates(hashes, latestMilestone);
-        }
-
-
-        /// <summary>
-        /// Wrapper function that basically does prepareTransfers, as well as attachToTangle and finally, it broadcasts and stores the transactions locally.
-        /// </summary>
-        /// <param name="seed">tryte-encoded seed</param>
-        /// <param name="depth">depth</param>
-        /// <param name="minWeightMagnitude">The minimum weight magnitude</param>
-        /// <param name="transfers">Array of transfer objects</param>
-        /// <param name="inputs">Optional (default null). List of inputs used for funding the transfer</param>
-        /// <param name="address">Optional (default null). If defined, this address will be used for sending the remainder value (of the inputs) to</param>
-        /// <returns> an array of the boolean that indicates which Transactions where sent successully</returns>
-        public bool[] SendTransfer(string seed, int depth, int minWeightMagnitude, Transfer[] transfers,
-            Input[] inputs = null, string address = null)
-        {
-            List<string> trytes = PrepareTransfers(seed, transfers, inputs?.ToList(), address);
-            Transaction[] trxs = SendTrytes(trytes.ToArray(), depth, minWeightMagnitude);
-
-            bool[] successful = new bool[trxs.Length];
-
-            for (int i = 0; i < trxs.Length; i++)
-            {
-                FindTransactionsResponse response = FindTransactionsByBundles(trxs[i].Bundle);
-
-                successful[i] = response.Hashes.Count != 0;
-            }
-
-            return successful;
-        }
-
-        /// <summary>
-        /// Sends the trytes.
-        /// </summary>
-        /// <param name="trytes">The trytes.</param>
-        /// <param name="depth">The depth.</param>
-        /// <param name="minWeightMagnitude">Optional (default 18). The minimum weight magnitude.</param>
-        /// <returns>an Array of Transactions</returns>
-        public Transaction[] SendTrytes(string[] trytes, int depth, int minWeightMagnitude = 18)
-        {
-            GetTransactionsToApproveResponse transactionsToApproveResponse = GetTransactionsToApprove(depth);
-
-            AttachToTangleResponse attachToTangleResponse =
-                AttachToTangle(transactionsToApproveResponse.TrunkTransaction,
-                    transactionsToApproveResponse.BranchTransaction, trytes, minWeightMagnitude);
-            try
-            {
-                BroadcastAndStore(attachToTangleResponse.Trytes);
-            }
-            catch (System.Exception)
-            {
-                return new Transaction[0];
-            }
-
-            List<Transaction> trx = new List<Transaction>();
-
-            foreach (string tx in attachToTangleResponse.Trytes)
-            {
-                trx.Add(new Transaction(tx, curl));
-            }
-            return trx.ToArray();
-        }
-
-        /// <summary>
-        /// This function returns the bundle which is associated with a transaction. Input can by any type of transaction (tail and non-tail). 
-        /// If there are conflicting bundles (because of a replay for example) it will return multiple bundles. 
-        /// It also does important validation checking (signatures, sum, order) to ensure that the correct bundle is returned.
-        /// </summary>
-        /// <param name="transaction">the transaction encoded in trytes</param>
-        /// <returns>an array of bundle, if there are multiple arrays it means that there are conflicting bundles.</returns>
-        public Bundle GetBundle(string transaction)
-        {
-            Bundle bundle = TraverseBundle(transaction, null, new Bundle());
-
-            if (bundle == null)
-                throw new ArgumentException("Unknown Bundle");
-
-            long totalSum = 0;
-            string bundleHash = bundle.Transactions[0].Bundle;
-
-            curl.Reset();
-
-            List<Signature> signaturesToValidate = new List<Signature>();
-
-            for (int index = 0; index < bundle.Transactions.Count; index++)
-            {
-                Transaction bundleTransaction = bundle.Transactions[index];
-                long bundleValue = long.Parse(bundleTransaction.Value);
-                totalSum += bundleValue;
-
-                if (long.Parse(bundleTransaction.CurrentIndex) != index)
-                    throw new InvalidBundleException("The index of the bundle " + bundleTransaction.CurrentIndex + " did not match the expected index " + index);
-
-                // Get the transaction trytes
-                string thisTxTrytes = bundleTransaction.ToTransactionTrytes().Substring(2187, 162);
-
-                // Absorb bundle hash + value + timestamp + lastIndex + currentIndex trytes.
-                curl.Absorb(Converter.ConvertTrytesToTrits(thisTxTrytes));
-
-                // Check if input transaction
-                if (bundleValue < 0)
+                if (thisBalance >= totalTransferValue)
                 {
-                    string address = bundleTransaction.Address;
-                    Signature sig = new Signature();
-                    sig.Address = address;
-                    sig.SignatureFragments.Add(bundleTransaction.SignatureFragment);
+                    var remainder = thisBalance - totalTransferValue;
 
-                    // Find the subsequent txs with the remaining signature fragment
-                    for (int i = index; i < bundle.Length - 1; i++)
+                    // If user has provided remainder address
+                    // Use it to send remaining funds to
+                    if (remainder > 0 && remainderAddress != null)
                     {
-                        var newBundleTx = bundle[i + 1];
+                        // Remainder bundle entry
+                        bundle.AddEntry(1, remainderAddress, remainder, tag, timestamp);
 
-                        // Check if new tx is part of the signature fragment
-                        if (newBundleTx.Address == address && long.Parse(newBundleTx.Value) == 0)
-                        {
-                            sig.SignatureFragments.Add(newBundleTx.SignatureFragment);
-                        }
+                        // function for signing inputs
+                        IotaApiUtils.SignInputsAndReturn(seed, inputs, bundle, signatureFragments, kerl);
                     }
+                    else if (remainder > 0)
+                    {
+                        // Generate a new Address by calling getNewAddress
+                        string address = GetNewAddress(seed)[0];
 
-                    signaturesToValidate.Add(sig);
+                        // Remainder bundle entry
+                        bundle.AddEntry(1, address, remainder, tag, timestamp);
+
+                        // function for signing inputs
+                        return IotaApiUtils.SignInputsAndReturn(seed, inputs, bundle, signatureFragments, kerl);
+                    }
+                    else
+                    {
+                        // If there is no remainder, do not add transaction to bundle
+                        // simply sign and return
+                        return IotaApiUtils.SignInputsAndReturn(seed, inputs, bundle, signatureFragments, kerl);
+                    }
+                }
+                // If multiple inputs provided, subtract the totalTransferValue by
+                // the inputs balance
+                else
+                {
+                    totalTransferValue -= thisBalance;
                 }
             }
 
-            // Check for total sum, if not equal 0 return error
-            if (totalSum != 0)
-                throw new InvalidBundleException("Invalid Bundle Sum");
-
-            int[] bundleFromTrxs = new int[243];
-            bundleFromTrxs = curl.Squeeze(243);
-            string bundleFromTxString = Converter.ConvertTritsToTrytes(bundleFromTrxs);
-
-            // Check if bundle hash is the same as returned by tx object
-            if (!bundleFromTxString.Equals(bundleHash))
-                throw new InvalidBundleException("Invalid Bundle Hash");
-            // Last tx in the bundle should have currentIndex === lastIndex
-            bundle.Length = bundle.Transactions.Count;
-            if (
-                !bundle.Transactions[bundle.Length - 1].CurrentIndex.Equals(
-                    bundle.Transactions[bundle.Length - 1].LastIndex))
-                throw new InvalidBundleException("Invalid Bundle");
-
-            // Validate the signatures
-            foreach (Signature aSignaturesToValidate in signaturesToValidate)
-            {
-                String[] signatureFragments = aSignaturesToValidate.SignatureFragments.ToArray();
-                string address = aSignaturesToValidate.Address;
-                bool isValidSignature = Signing.ValidateSignatures(address, signatureFragments, bundleHash);
-
-                if (!isValidSignature)
-                    throw new InvalidSignatureException();
-            }
-
-            return bundle;
-        }
-
-
-        private Bundle TraverseBundle(string trunkTransaction, string bundleHash, Bundle bundle)
-        {
-            GetTrytesResponse gtr = GetTrytes(trunkTransaction);
-
-            if (gtr.Trytes.Count == 0)
-                throw new InvisibleBundleTransactionException();
-
-            string trytes = gtr.Trytes[0];
-
-            Transaction transaction = new Transaction(trytes, curl);
-
-            // If first transaction to search is not a tail, return error
-            if (bundleHash == null && transaction.Index != 0)
-            {
-                throw new InvalidTailTransactionException();
-            }
-
-            // If no bundle hash, define it
-            if (bundleHash == null)
-            {
-                bundleHash = transaction.Bundle;
-            }
-
-            // If different bundle hash, return with bundle
-            if (bundleHash != transaction.Bundle)
-            {
-                return bundle;
-            }
-
-            // If only one bundle element, return
-            if (long.Parse(transaction.LastIndex) == 0 && long.Parse(transaction.CurrentIndex) == 0)
-            {
-                return new Bundle(new List<Transaction>() {transaction}, 1);
-            }
-
-            // Define new trunkTransaction for search
-            var trunkTx = transaction.TrunkTransaction;
-
-            // Add transaction object to bundle
-            bundle.Transactions.Add(transaction);
-
-            // Continue traversing with new trunkTx
-            return TraverseBundle(trunkTx, bundleHash, bundle);
+            throw new NotEnoughBalanceException(totalValue);
         }
 
         /// <summary>
-        /// Wrapper function that broadcasts and stores the specified trytes
+        /// Gets the balances of the specified addresses and calculates the total balance till the threshold is reached.
         /// </summary>
-        /// <param name="trytes">trytes</param>
-        public void BroadcastAndStore(List<string> trytes)
+        /// <param name="addresses">addresses</param>
+        /// <param name="start">start index</param>
+        /// <param name="threshold">the threshold </param>
+        /// <returns>an Inputs object</returns>
+        /// <exception cref="NotEnoughBalanceException">is thrown if threshold exceeds the sum of balance of the specified addresses</exception>
+        private Inputs GetBalanceAndFormat(string[] addresses, int start, long threshold = 100)
         {
-            BroadcastTransactions(trytes);
-            StoreTransactions(trytes);
+            GetBalancesResponse getBalancesResponse = GetBalances(addresses.ToList(), 100);
+
+            List<long> balances = getBalancesResponse.Balances;
+
+            Inputs inputs = new Inputs() { InputsList = new List<Input>(), TotalBalance = 0 };
+
+            bool threshholdReached = false;
+
+            for (int i = 0; i < addresses.Length; i++)
+            {
+                if (balances[i] > 0)
+                {
+                    inputs.InputsList.Add(new Input()
+                    {
+                        Address = addresses[i],
+                        Balance = balances[i],
+                        KeyIndex = start + i
+                    });
+
+                    inputs.TotalBalance += balances[i];
+
+                    if (inputs.TotalBalance >= threshold)
+                    {
+                        threshholdReached = true;
+                        break;
+                    }
+                }
+            }
+
+            if (threshholdReached)
+            {
+                return inputs;
+            }
+
+            throw new NotEnoughBalanceException();
         }
+
     }
 }

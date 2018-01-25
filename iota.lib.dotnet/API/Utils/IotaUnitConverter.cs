@@ -3,7 +3,7 @@
 namespace Iota.Lib.CSharp.Api.Utils
 {
     /// <summary>
-    /// This class provides methods to convert Iota to different units
+    /// Provides methods to convert Iota to different units
     /// </summary>
     public class IotaUnitConverter
     {
@@ -37,7 +37,6 @@ namespace Iota.Lib.CSharp.Api.Utils
 
             if (amount < 0)
             {
-                // do not count "-" sign
                 length -= 1;
             }
 

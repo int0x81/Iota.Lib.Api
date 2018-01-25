@@ -1,10 +1,16 @@
 ﻿namespace Iota.Lib.CSharp.Api.Exception
 {
     /// <summary>
-    /// This exception is thrown when an invalid tail transaction was encountered
+    /// Occurs when an invalid tail transaction was encountered
     /// </summary>
     /// <seealso cref="System.Exception" />
     public class InvalidTailTransactionException : System.Exception
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="InvalidTailTransactionException"/> class.
+        /// </summary>
+        public InvalidTailTransactionException() : base()
+        {
+        }
     }
 }
