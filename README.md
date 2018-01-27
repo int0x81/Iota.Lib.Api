@@ -29,5 +29,5 @@ Special Thanks to:
 - [Official Library](https://github.com/iotaledger/iota.lib.csharp): The Official library served as skeleton for this API.
 - [Felandil](https://github.com/Felandil): He created a C# library based on .NET Framework where I was able to adapt some functions.
 
-# Donate: 
+## Donate: 
 ESEQEIEMRHISAUWIZUPIVPSIGDPVSGNBDBSZWUMCUPYDFHYFQAKBXJVQWRUXBKBJDGUWOCDW9SVQDVFH9PAFZJDVYZ
