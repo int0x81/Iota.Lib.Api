@@ -29,7 +29,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using RestSharp.Serializers;
 
-[assembly: InternalsVisibleTo("Iota.Lib.CSharpTests")]
+[assembly: InternalsVisibleTo("Iota.Lib.Test")]
 
 namespace Iota.Lib.Api.Utils
 {

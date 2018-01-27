@@ -3,7 +3,7 @@ using System.ComponentModel;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("Iota.Lib.CSharpTests")]
+[assembly: InternalsVisibleTo("Iota.Lib.Test")]
 
 namespace Iota.Lib.Api.Utils
 {

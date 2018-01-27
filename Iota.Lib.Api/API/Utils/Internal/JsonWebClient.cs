@@ -8,7 +8,7 @@ using Iota.Lib.Api.Core;
 using Iota.Lib.Api.Exception;
 using Newtonsoft.Json;
 
-[assembly: InternalsVisibleTo("Iota.Lib.CSharpTests")]
+[assembly: InternalsVisibleTo("Iota.Lib.Test")]
 
 namespace Iota.Lib.Api.Utils
 {

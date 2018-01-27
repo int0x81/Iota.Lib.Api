@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("Iota.Lib.CSharpTests")]
+[assembly: InternalsVisibleTo("Iota.Lib.Test")]
 
 namespace Iota.Lib.Api.Utils
 {
