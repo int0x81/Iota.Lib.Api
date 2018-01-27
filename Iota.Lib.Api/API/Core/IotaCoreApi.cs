@@ -102,14 +102,27 @@ namespace Iota.Lib.Api.Core
         }
 
         /// <summary>
-        /// Gets the inclusion states of the specified transactions
+        /// Returns a list of boolean values in the same order as the transaction list you submitted,
+        /// thus you get a true/false whether a transaction is confirmed or not.
         /// </summary>
-        /// <param name="transactions">The transactions.</param>
-        /// <param name="milestones">The milestones.</param>
+        /// <param name="transactions">List of transactions you want to get the inclusion state for.</param>
+        /// <param name="tips">List of tips (including milestones) you want to search for the inclusion state.</param>
         /// <returns>a GetInclusionStatesResponse, see <see cref="GetInclusionStatesResponse"/></returns>
-        public GetInclusionStatesResponse GetInclusionStates(string[] transactions, string[] milestones)
+        public GetInclusionStatesResponse GetInclusionStates(string[] transactions, string[] tips)
         {
-            return _genericIotaCoreApi.Request<GetInclusionStatesRequest, GetInclusionStatesResponse>(new GetInclusionStatesRequest(transactions, milestones));
+            return _genericIotaCoreApi.Request<GetInclusionStatesRequest, GetInclusionStatesResponse>(new GetInclusionStatesRequest(transactions, tips));
+        }
+
+        /// <summary>
+        /// Returns a list of boolean values asynchronously in the same order as the transaction list you submitted,
+        /// thus you get a true/false whether a transaction is confirmed or not.
+        /// </summary>
+        /// <param name="transactions">List of transactions you want to get the inclusion state for.</param>
+        /// <param name="tips">List of tips (including milestones) you want to search for the inclusion state.</param>
+        /// <returns>a GetInclusionStatesResponse, see <see cref="GetInclusionStatesResponse"/></returns>
+        public async Task<GetInclusionStatesResponse> GetInclusionStatesAsync(string[] transactions, string[] tips)
+        {
+            return await _genericIotaCoreApi.RequestAsync<GetInclusionStatesRequest, GetInclusionStatesResponse>(new GetInclusionStatesRequest(transactions, tips));
         }
 
         /// <summary>
@@ -171,15 +184,25 @@ namespace Iota.Lib.Api.Core
         }
 
         /// <summary>
-        /// Gets the raw transaction data (trytes) of a specific transaction.
-        /// These trytes can then be easily converted into the actual transaction object using the constructor of Transaction
+        /// Returns the raw transaction data (trytes) of a specific transaction.
         /// </summary>
         /// <param name="hashes">The hashes of the transactions</param>
-        /// <returns>a <see cref="GetTrytesResponse"/> containing a list of trytes</returns>
+        /// <returns>A <see cref="GetTrytesResponse"/> containing a list of trytes</returns>
         public GetTrytesResponse GetTrytes(params string[] hashes)
         {
             GetTrytesRequest getTrytesRequest = new GetTrytesRequest() {Hashes = hashes};
             return _genericIotaCoreApi.Request<GetTrytesRequest, GetTrytesResponse>(getTrytesRequest);
+        }
+
+        /// <summary>
+        /// Returns the raw transaction data (trytes) of a specific transaction asynchronously.
+        /// </summary>
+        /// <param name="hashes">The hashes of the transactions</param>
+        /// <returns>A <see cref="GetTrytesResponse"/> containing a list of trytes</returns>
+        public async Task<GetTrytesResponse> GetTrytesAsync(params string[] hashes)
+        {
+            GetTrytesRequest getTrytesRequest = new GetTrytesRequest() { Hashes = hashes };
+            return await _genericIotaCoreApi.RequestAsync<GetTrytesRequest, GetTrytesResponse>(getTrytesRequest);
         }
 
         /// <summary>

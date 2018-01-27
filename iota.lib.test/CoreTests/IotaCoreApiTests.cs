@@ -106,5 +106,44 @@ namespace Iota.Lib.Test
             Assert.IsTrue(response.StatusCode == OK);
             Assert.IsTrue(response.Hashes.Count >= 0);
         }
+
+        [TestMethod, Timeout(TIMEOUT)]
+        public void TestGetTrytes()
+        {
+            List<string> hashes = new List<string>()
+            {
+                "OAATQS9VQLSXCLDJVJJVYUGONXAXOFMJOZNSYWRZSWECMXAQQURHQBJNLD9IOFEPGZEPEMPXCIVRX9999"
+            };
+
+            var response = api.GetTrytes(hashes.ToArray());
+            Assert.IsTrue(response.StatusCode == OK);
+            Assert.IsTrue(response.Trytes.Count >= 0);
+
+            response = api.GetTrytesAsync().GetAwaiter().GetResult();
+            Assert.IsTrue(response.StatusCode == OK);
+            Assert.IsTrue(response.Trytes.Count >= 0);
+        }
+
+        [TestMethod, Timeout(TIMEOUT)]
+        public void TestGetInclusionStates()
+        {
+            string[] transactions =
+            {
+                "QHBYXQWRAHQJZEIARWSQGZJTAIITOZRMBFICIPAVD9YRJMXFXBDPFDTRAHHHP9YPDUVTNOFWZGFGWMYHEKNAGNJHMW"
+            };
+
+            string[] tips =
+            {
+                "ZIJGAJ9AADLRPWNCYNNHUHRRAC9QOUDATEDQUMTNOTABUVRPTSTFQDGZKFYUUIE9ZEBIVCCXXXLKX9999"
+            };
+
+            var response = api.GetInclusionStates(transactions, tips);
+            Assert.IsTrue(response.StatusCode == OK);
+            Assert.IsTrue(response.States.Count > 0);
+
+            response = api.GetInclusionStatesAsync(transactions, tips).GetAwaiter().GetResult();
+            Assert.IsTrue(response.StatusCode == OK);
+            Assert.IsTrue(response.States.Count > 0);
+        }
     }
 }
