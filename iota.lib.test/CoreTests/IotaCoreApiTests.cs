@@ -1,15 +1,10 @@
-﻿using Iota.Lib.CSharp.Api.Core;
-using Iota.Lib.CSharp.Api.Exception;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 using static System.Net.HttpStatusCode;
 
-namespace Iota.Lib.CSharpTests.CoreTests
+namespace Iota.Lib.Test
 {
     [TestClass]
     public class IotaCoreApiTests

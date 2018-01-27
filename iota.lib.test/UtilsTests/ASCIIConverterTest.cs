@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Linq;
-using Iota.Lib.CSharp.Api.Utils;
+using Iota.Lib.Api.Utils;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Iota.Lib.CSharpTests
+namespace Iota.Lib.Test
 {
     [TestClass]
     public class ASCIIConverterTest

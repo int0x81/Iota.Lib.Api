@@ -1,10 +1,10 @@
-﻿using Iota.Lib.CSharp.Api.Utils;
+﻿using Iota.Lib.Api.Utils;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Numerics;
 
-using static Iota.Lib.CSharp.Api.Utils.Converter;
+using static Iota.Lib.Api.Utils.Converter;
 
-namespace Iota.Lib.CSharpTests
+namespace Iota.Lib.Test
 {
     [TestClass]
     public class ConverterTest

@@ -5,9 +5,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-using static Iota.Lib.CSharp.Api.Utils.IotaApiUtils;
+using static Iota.Lib.Api.Utils.IotaApiUtils;
 
-namespace Iota.Lib.CSharpTests
+namespace Iota.Lib.Test
 {
     [TestClass]
     public class AddressGenerationTest

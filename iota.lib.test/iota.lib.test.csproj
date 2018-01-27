@@ -7,8 +7,8 @@
     <ProjectGuid>{DBEFAC87-79B2-46C4-8A21-120C975C34EC}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Iota.Lib.CSharpTests</RootNamespace>
-    <AssemblyName>Iota.Lib.CSharpTests</AssemblyName>
+    <RootNamespace>Iota.Lib.Test</RootNamespace>
+    <AssemblyName>Iota.Lib.Test</AssemblyName>
     <TargetFrameworkVersion>v4.7.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
@@ -77,13 +77,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\iota.lib.dotnet\iota.lib.dotnet.csproj">
-      <Project>{b30e4377-fcde-4b07-bdec-8c2beb7ab606}</Project>
-      <Name>iota.lib.dotnet</Name>
-      <Private>True</Private>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets" Condition="Exists('$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets')" />

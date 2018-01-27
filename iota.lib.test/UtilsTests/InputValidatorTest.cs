@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
-using Iota.Lib.CSharp.Api.Model;
-using Iota.Lib.CSharp.Api.Utils;
+using Iota.Lib.Api.Model;
+using Iota.Lib.Api.Utils;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Iota.Lib.CSharpTests
+namespace Iota.Lib.Test
 {
     [TestClass]
     public class InputValidatorTest
