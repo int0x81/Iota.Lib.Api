@@ -1,8 +1,8 @@
 # IOTA C# Library
 
-This is an unofficial C#-Library that targets .NET Standard 2.0. That means it can be used within .NET Framework-, .NET Core- and Xamarin-Projects. It supports all 14 [[Core API calls]](https://iota.readme.io/docs/getnodeinfo) as well as the [[Proposed calls]](https://github.com/iotaledger/wiki/blob/master/api-proposal.md). The Core-API calls are also available as asynchronous methods. The propose calls will be available asynchronous in the near future.
+This is an unofficial C#-Library that targets .NET Standard 2.0. That means it can be used within .NET Framework-, .NET Core- and Xamarin-Projects. It supports all 14 [Core API calls](https://iota.readme.io/docs/getnodeinfo). The [Proposed calls](https://github.com/iotaledger/wiki/blob/master/api-proposal.md) will be available in the near future. All API calls are also available as asynchronous methods.
 
-This libary is actively supported (as of 2017-01-26). I will try to implement all upcoming Iota-Features as soon as possible.
+This library is actively supported (as of 2017-01-29). I will try to implement all upcoming Iota-Features as soon as possible.
 
 ## Getting Started
 
