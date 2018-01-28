@@ -41,51 +41,51 @@ namespace Iota.Lib.Api.Utils
         /// <summary>
         /// The maximum seed length
         /// </summary>
-        public static readonly int SEED_MAX_LENGTH = 81;
+        public const int SEED_MAX_LENGTH = 81;
 
         /// <summary>
         /// This string represents an empty hash consisting of '9'
         /// </summary>
-        public static readonly string EMPTY_HASH = "999999999999999999999999999999999999999999999999999999999999999999999999999999999";
+        public const string EMPTY_HASH = "999999999999999999999999999999999999999999999999999999999999999999999999999999999";
 
         /// <summary>
         /// The length of an address without checksum
         /// </summary>
-        public static readonly int ADDRESSLENGTH_WITHOUT_CHECKSUM = 81;
+        public const int ADDRESSLENGTH_WITHOUT_CHECKSUM = 81;
 
         /// <summary>
         /// The length of an address with checksum
         /// </summary>
-        public static readonly int ADDRESSLENGTH_WITH_CHECKSUM = 90;
+        public const int ADDRESSLENGTH_WITH_CHECKSUM = 90;
 
         /// <summary>
         /// The radix of Iotas trinary system
         /// </summary>
-        public static readonly int RADIX = 3;
+        public const int RADIX = 3;
 
         /// <summary>
         /// The maximum value a trit can have
         /// </summary>
-        public static readonly int MAX_TRIT_VALUE = (RADIX - 1) / 2;
+        public const int MAX_TRIT_VALUE = (RADIX - 1) / 2;
 
         /// <summary>
         /// The minimum value a trit can have
         /// </summary>
-        public static readonly int MIN_TRIT_VALUE = -MAX_TRIT_VALUE;
+        public const int MIN_TRIT_VALUE = -MAX_TRIT_VALUE;
 
         /// <summary>
         /// The number of trits in a byte
         /// </summary>
-        public static readonly int NUMBER_OF_TRITS_IN_A_BYTE = 5;
+        public const int NUMBER_OF_TRITS_IN_A_BYTE = 5;
 
         /// <summary>
         /// The number of trits in a tryte
         /// </summary>
-        public static readonly int NUMBER_OF_TRITS_IN_A_TRYTE = 3;
+        public const int NUMBER_OF_TRITS_IN_A_TRYTE = 3;
 
         /// <summary>
         /// The minimum weight magnitutde that is considered as save
         /// </summary>
-        public static readonly int MIN_WEIGHT_MAGNITUDE = 18;
+        public const int MIN_WEIGHT_MAGNITUDE = 18;
     }
 }

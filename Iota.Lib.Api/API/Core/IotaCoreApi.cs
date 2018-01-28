@@ -24,33 +24,60 @@ namespace Iota.Lib.Api.Core
 
         /// <summary>
         /// Attaches the specified transactions (trytes) to the Tangle by doing Proof of Work. 
-        /// You need to supply branchTransaction as well as trunkTransaction 
-        /// (basically the tips which you're going to validate and reference with this transaction)
-        ///  - both of which you'll get through the getTransactionsToApprove API call.
+        /// You need to supply branchTransaction as well as trunkTransaction.
         /// </summary>
         /// <param name="trunkTransaction">Trunk transaction to approve.</param>
         /// <param name="branchTransaction">Branch transaction to approve.</param>
         /// <param name="trytes">List of trytes (raw transaction data) to attach to the tangle.</param>
-        /// <param name="minWeightMagnitude">Proof of Work intensity. Minimum value is 18</param>
+        /// <param name="minWeightMagnitude">Proof of Work intensity.</param>
         /// <returns>The returned value contains a different set of tryte values which you can input into broadcastTransactions and storeTransactions. 
         /// The returned tryte value, the last 243 trytes basically consist of the: trunkTransaction + branchTransaction + nonce. 
         /// These are valid trytes which are then accepted by the network.</returns>
-        public AttachToTangleResponse AttachToTangle(string trunkTransaction, string branchTransaction, string[] trytes)
+        public AttachToTangleResponse AttachToTangle(string trunkTransaction, string branchTransaction, List<string> trytes, int minWeightMagnitude = Constants.MIN_WEIGHT_MAGNITUDE)
         {
-            InputValidator.CheckIfArrayOfTrytes(trytes);
+            InputValidator.CheckIfArrayOfTrytes(trytes.ToArray());
 
-            AttachToTangleRequest attachToTangleRequest = new AttachToTangleRequest(trunkTransaction, branchTransaction, trytes, Constants.MIN_WEIGHT_MAGNITUDE);
+            AttachToTangleRequest attachToTangleRequest = new AttachToTangleRequest(trunkTransaction, branchTransaction, trytes, minWeightMagnitude);
             return _genericIotaCoreApi.Request<AttachToTangleRequest, AttachToTangleResponse>(attachToTangleRequest);
         }
 
         /// <summary>
-        /// Broadcasts the transactions.
+        /// Attaches the specified transactions (trytes) asynchronously to the Tangle by doing Proof of Work. 
+        /// You need to supply branchTransaction as well as trunkTransaction.
         /// </summary>
-        /// <param name="trytes">The transactions in trytes representation</param>
+        /// <param name="trunkTransaction">Trunk transaction to approve.</param>
+        /// <param name="branchTransaction">Branch transaction to approve.</param>
+        /// <param name="trytes">List of trytes (raw transaction data) to attach to the tangle.</param>
+        /// <param name="minWeightMagnitude">Proof of Work intensity.</param>
+        /// <returns>The returned value contains a different set of tryte values which you can input into broadcastTransactions and storeTransactions. 
+        /// The returned tryte value, the last 243 trytes basically consist of the: trunkTransaction + branchTransaction + nonce. 
+        /// These are valid trytes which are then accepted by the network.</returns>
+        public async Task<AttachToTangleResponse> AttachToTangleAsync(string trunkTransaction, string branchTransaction, List<string> trytes, int minWeightMagnitude = Constants.MIN_WEIGHT_MAGNITUDE)
+        {
+            InputValidator.CheckIfArrayOfTrytes(trytes.ToArray());
+
+            AttachToTangleRequest attachToTangleRequest = new AttachToTangleRequest(trunkTransaction, branchTransaction, trytes, minWeightMagnitude);
+            return await _genericIotaCoreApi.RequestAsync<AttachToTangleRequest, AttachToTangleResponse>(attachToTangleRequest);
+        }
+        
+        /// <summary>
+        /// Broadcast a list of transactions to all neighbors. The input trytes for this call are provided by attachToTangle.
+        /// </summary>
+        /// <param name="trytes">List of raw data of transactions to be broadcasted</param>
         /// <returns>the BroadcastTransactionsResponse <see cref="BroadcastTransactionsResponse"/></returns>
         public BroadcastTransactionsResponse BroadcastTransactions(List<string> trytes)
         {
             return _genericIotaCoreApi.Request<BroadcastTransactionsRequest, BroadcastTransactionsResponse>(new BroadcastTransactionsRequest(trytes));
+        }
+
+        /// <summary>
+        /// Broadcast a list of transactions to all neighbors asynchronously. The input trytes for this call are provided by attachToTangle.
+        /// </summary>
+        /// <param name="trytes">List of raw data of transactions to be broadcasted</param>
+        /// <returns>the BroadcastTransactionsResponse <see cref="BroadcastTransactionsResponse"/></returns>
+        public async Task<BroadcastTransactionsResponse> BroadcastTransactionsAsync(List<string> trytes)
+        {
+            return await _genericIotaCoreApi.RequestAsync<BroadcastTransactionsRequest, BroadcastTransactionsResponse>(new BroadcastTransactionsRequest(trytes));
         }
 
         /// <summary>
@@ -88,17 +115,31 @@ namespace Iota.Lib.Api.Core
         }
 
         /// <summary>
-        /// Gets the balances.
-        /// </summary>
-        /// <param name="addresses">The addresses.</param>
-        /// <param name="threshold">The threshold.</param>
-        /// <returns> It returns the confirmed balance which a list of addresses have at the latest confirmed milestone. 
+        /// Returns the confirmed balance which a list of addresses have at the latest confirmed milestone. 
         /// In addition to the balances, it also returns the milestone as well as the index with which the confirmed balance was determined. 
-        /// The balances is returned as a list in the same order as the addresses were provided as input.</returns>
-        public GetBalancesResponse GetBalances(List<string> addresses, long threshold = 100)
+        /// The balances is returned as a list in the same order as the addresses were provided as input.
+        /// </summary>
+        /// <param name="addresses">List of addresses you want to get the confirmed balance from.</param>
+        /// <param name="threshold">Confirmation threshold.</param>
+        /// <returns>The confirmed balance which a list of addresses have at the latest confirmed milestone and the milestone itself.</returns>
+        public GetBalancesResponse GetBalances(List<string> addresses, int threshold = 100)
         {
             GetBalancesRequest getBalancesRequest = new GetBalancesRequest(addresses, threshold);
             return _genericIotaCoreApi.Request<GetBalancesRequest, GetBalancesResponse>(getBalancesRequest);
+        }
+
+        /// <summary>
+        /// Returns the confirmed balance which a list of addresses have at the latest confirmed milestone asynchronously. 
+        /// In addition to the balances, it also returns the milestone as well as the index with which the confirmed balance was determined. 
+        /// The balances is returned as a list in the same order as the addresses were provided as input.
+        /// </summary>
+        /// <param name="addresses">List of addresses you want to get the confirmed balance from.</param>
+        /// <param name="threshold">Confirmation threshold.</param>
+        /// <returns>The confirmed balance which a list of addresses have at the latest confirmed milestone and the milestone itself.</returns>
+        public async Task<GetBalancesResponse> GetBalancesAsync(List<string> addresses, int threshold = 100)
+        {
+            GetBalancesRequest getBalancesRequest = new GetBalancesRequest(addresses, threshold);
+            return await _genericIotaCoreApi.RequestAsync<GetBalancesRequest, GetBalancesResponse>(getBalancesRequest);
         }
 
         /// <summary>
@@ -126,14 +167,23 @@ namespace Iota.Lib.Api.Core
         }
 
         /// <summary>
-        /// Stores the specified transactions in trytes into the local storage. The trytes to be used for this call are returned by attachToTangle.
+        /// Stores the specified transactions into the local storage. The trytes to be used for this call are returned by attachToTangle.
         /// </summary>
-        /// <param name="trytes">The trytes representing the transactions</param>
-        /// <returns>a <see cref="StoreTransactionsResponse"/></returns>
+        /// <param name="trytes">List of raw data of transactions to be rebroadcast</param>
+        /// <returns>A <see cref="StoreTransactionsResponse"/></returns>
         public StoreTransactionsResponse StoreTransactions(List<string> trytes)
         {
-            return
-                _genericIotaCoreApi.Request<StoreTransactionsRequest, StoreTransactionsResponse>(new StoreTransactionsRequest(trytes));
+            return _genericIotaCoreApi.Request<StoreTransactionsRequest, StoreTransactionsResponse>(new StoreTransactionsRequest(trytes));
+        }
+
+        /// <summary>
+        /// Stores the specified transactions into the local storage. The trytes to be used for this call are returned by attachToTangle.
+        /// </summary>
+        /// <param name="trytes">List of raw data of transactions to be rebroadcast</param>
+        /// <returns>A <see cref="StoreTransactionsResponse"/></returns>
+        public async Task<StoreTransactionsResponse> StoreTransactionsAsync(List<string> trytes)
+        {
+            return await _genericIotaCoreApi.RequestAsync<StoreTransactionsRequest, StoreTransactionsResponse>(new StoreTransactionsRequest(trytes));
         }
 
         /// <summary>
@@ -173,14 +223,23 @@ namespace Iota.Lib.Api.Core
         }
 
         /// <summary>
-        /// Gets the transactions to approve.
+        /// Returns two transactions to approve.
         /// </summary>
-        /// <param name="depth">The depth is the number of bundles to go back to determine the transactions for approval. 
-        /// The higher your depth value, the more "babysitting" you do for the network (as you have to confirm more transactions).</param>
-        /// <returns> trunkTransaction and branchTransaction (result of the Tip selection)</returns>
+        /// <param name="depth">Number of bundles to go back to determine the transactions for approval.</param>
+        /// <returns>A trunkTransaction and a branchTransaction</returns>
         public GetTransactionsToApproveResponse GetTransactionsToApprove(int depth)
         {
             return _genericIotaCoreApi.Request<GetTransactionsToApproveRequest, GetTransactionsToApproveResponse>(new GetTransactionsToApproveRequest(depth));
+        }
+
+        /// <summary>
+        /// Returns two transactions to approve asychronously.
+        /// </summary>
+        /// <param name="depth">Number of bundles to go back to determine the transactions for approval.</param>
+        /// <returns>A trunkTransaction and a branchTransaction</returns>
+        public async Task<GetTransactionsToApproveResponse> GetTransactionsToApproveAsync(int depth)
+        {
+            return await _genericIotaCoreApi.RequestAsync<GetTransactionsToApproveRequest, GetTransactionsToApproveResponse>(new GetTransactionsToApproveRequest(depth));
         }
 
         /// <summary>
@@ -208,10 +267,19 @@ namespace Iota.Lib.Api.Core
         /// <summary>
         /// Interrupts and completely aborts the attachToTangle process.
         /// </summary>
-        /// <returns>an <see cref="InterruptAttachingToTangleResponse"/></returns>
+        /// <returns>An <see cref="InterruptAttachingToTangleResponse"/></returns>
         public InterruptAttachingToTangleResponse InterruptAttachingToTangle()
         {
             return _genericIotaCoreApi.Request<InterruptAttachingToTangleRequest, InterruptAttachingToTangleResponse>(new InterruptAttachingToTangleRequest());
+        }
+
+        /// <summary>
+        /// Interrupts and completely aborts the attachToTangle process.
+        /// </summary>
+        /// <returns>An <see cref="InterruptAttachingToTangleResponse"/></returns>
+        public async Task<InterruptAttachingToTangleResponse> InterruptAttachingToTangleAsync()
+        {
+            return await _genericIotaCoreApi.RequestAsync<InterruptAttachingToTangleRequest, InterruptAttachingToTangleResponse>(new InterruptAttachingToTangleRequest());
         }
 
         /// <summary>

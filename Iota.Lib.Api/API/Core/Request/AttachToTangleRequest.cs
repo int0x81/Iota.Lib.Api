@@ -1,4 +1,5 @@
 using Iota.Lib.Api.Utils;
+using System.Collections.Generic;
 
 namespace Iota.Lib.Api.Core
 {
@@ -18,7 +19,7 @@ namespace Iota.Lib.Api.Core
         /// <param name="branchTransaction">The branch transaction.</param>
         /// <param name="trytes">The trytes.</param>
         /// <param name="minWeightMagnitude">The minimum weight magnitude.</param>
-        public AttachToTangleRequest(string trunkTransaction, string branchTransaction, string[] trytes, int minWeightMagnitude = 18) : base(Core.Command.AttachToTangle)
+        public AttachToTangleRequest(string trunkTransaction, string branchTransaction, List<string> trytes, int minWeightMagnitude = Constants.MIN_WEIGHT_MAGNITUDE) : base(Core.Command.AttachToTangle)
         {
             TrunkTransaction = trunkTransaction;
             BranchTransaction = branchTransaction;
@@ -26,7 +27,7 @@ namespace Iota.Lib.Api.Core
             MinWeightMagnitude = minWeightMagnitude;
 
             if (Trytes == null)
-                Trytes = new string[0];
+                Trytes = new List<string>();
         }
 
         /// <summary>
@@ -57,7 +58,7 @@ namespace Iota.Lib.Api.Core
         /// <summary>
         /// List of trytes (raw transaction data) to attach to the tangle.
         /// </summary>
-        public string[] Trytes { get; set; }
+        public List<string> Trytes { get; set; }
 
         /// <summary>
         /// Returns a <see cref="System.String" /> that represents this instance.

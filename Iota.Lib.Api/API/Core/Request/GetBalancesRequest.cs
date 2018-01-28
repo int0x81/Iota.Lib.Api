@@ -11,9 +11,9 @@ namespace Iota.Lib.Api.Core
         /// <summary>
         /// Initializes a new instance of the <see cref="GetBalancesRequest"/> class.
         /// </summary>
-        /// <param name="addresses">The addresses.</param>
-        /// <param name="threshold">The threshold.</param>
-        public GetBalancesRequest(List<string> addresses, long threshold = 100): base(Core.Command.GetBalances)
+        /// <param name="addresses">List of addresses you want to get the confirmed balance from.</param>
+        /// <param name="threshold">Confirmation treshold</param>
+        public GetBalancesRequest(List<string> addresses, int threshold = 100): base(Core.Command.GetBalances)
         {
             Addresses = addresses;
             Threshold = threshold;
@@ -23,15 +23,15 @@ namespace Iota.Lib.Api.Core
         /// Gets the threshold.
         /// </summary>
         /// <value>
-        /// The threshold.
+        /// Confirmation treshold
         /// </value>
-        public long Threshold { get; }
+        public int Threshold { get; }
 
         /// <summary>
         /// Gets the addresses.
         /// </summary>
         /// <value>
-        /// The addresses.
+        /// List of addresses you want to get the confirmed balance from.
         /// </value>
         public List<string> Addresses { get; }
 

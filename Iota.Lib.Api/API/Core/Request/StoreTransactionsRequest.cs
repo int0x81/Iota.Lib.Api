@@ -4,7 +4,6 @@ namespace Iota.Lib.Api.Core
 {
     /// <summary>
     /// Represents the core API request 'StoreTransactions'.
-    /// It stores transactions into the local storage. The trytes to be used for this call are returned by attachToTangle.
     /// </summary>
     /// <seealso cref="IotaRequest" />
     public class StoreTransactionsRequest : IotaRequest
@@ -22,7 +21,7 @@ namespace Iota.Lib.Api.Core
         /// Gets or sets the trytes.
         /// </summary>
         /// <value>
-        /// The trytes.
+        /// List of raw data of transactions to be rebroadcast.
         /// </value>
         public List<string> Trytes { get; set; }
 
