@@ -5,14 +5,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-using static Iota.Lib.Api.Utils.IotaApiUtils;
+using static Iota.Lib.Utils.IotaApiUtils;
 
 namespace Iota.Lib.Test
 {
     [TestClass]
     public class AddressGenerationTest
     {
-        readonly string seed = "SMRUKAKOPAKXQSIKVZWQGQNKZZWL9BGEFJCIEBRJDIAGWFHUKAOSWACNC9JFDU9WHAPZBEIGWBU9VTNZS";
+        const string seed = "SMRUKAKOPAKXQSIKVZWQGQNKZZWL9BGEFJCIEBRJDIAGWFHUKAOSWACNC9JFDU9WHAPZBEIGWBU9VTNZS";
 
         readonly string[] addresses_security_01_with_checksum =
         {
@@ -68,6 +68,13 @@ namespace Iota.Lib.Test
             Assert.AreEqual(address_02, addresses_security_02_with_checksum[1]);
             Assert.AreEqual(address_03, addresses_security_03_with_checksum[0]);
             Assert.AreEqual(address_04, addresses_security_03_without_checksum[2]);
+        }
+
+        [TestMethod]
+        public void TestCreateTimestampNow()
+        {
+            long timestamp = CreateTimeStampNow();
+            Assert.IsTrue(timestamp > 0);
         }
     }
 }

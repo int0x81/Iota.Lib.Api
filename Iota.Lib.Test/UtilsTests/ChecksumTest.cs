@@ -1,4 +1,4 @@
-﻿using Iota.Lib.Api.Utils;
+﻿using Iota.Lib.Utils;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Iota.Lib.Test

@@ -66,6 +66,7 @@
   <ItemGroup>
     <Compile Include="CoreTests\IotaCoreApiTests.cs" />
     <Compile Include="IotaApiTests.cs" />
+    <Compile Include="ModelTests\TransactionTests.cs" />
     <Compile Include="UtilsTests\IotaApiUtilsTest.cs" />
     <Compile Include="UtilsTests\ChecksumTest.cs" />
     <Compile Include="UtilsTests\ConverterTest.cs" />

@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <AssemblyName>Iota.Lib.Api</AssemblyName>
-    <RootNamespace>Iota.Lib.Api</RootNamespace>
+    <RootNamespace>Iota.Lib</RootNamespace>
     <Product />
     <Company />
     <Authors>Finn Fiedler</Authors>

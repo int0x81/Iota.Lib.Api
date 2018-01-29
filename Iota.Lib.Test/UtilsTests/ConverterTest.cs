@@ -1,8 +1,8 @@
-﻿using Iota.Lib.Api.Utils;
+﻿using Iota.Lib.Utils;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Numerics;
 
-using static Iota.Lib.Api.Utils.Converter;
+using static Iota.Lib.Utils.Converter;
 
 namespace Iota.Lib.Test
 {
@@ -125,6 +125,22 @@ namespace Iota.Lib.Test
             Assert.AreEqual("BA", Increment(trytes_04));
             Assert.AreEqual("A", Increment(trytes_05));
             Assert.AreEqual("W", Increment(trytes_05, -4));
+        }
+
+        [TestMethod]
+        public void TestLongToTrits()
+        {
+            var tmp_01 = ConvertLongToTrits(13);
+            var tmp_02 = ConvertLongToTrits(14);
+            var tmp_03 = ConvertLongToTrits(-14);
+            var tmp_04 = ConvertLongToTrits(28);
+            var tmp_05 = ConvertLongToTrits(1337);
+
+            Assert.IsTrue(ArrayUtils.CompareEachElement(tmp_01, trits_01));
+            Assert.IsTrue(ArrayUtils.CompareEachElement(tmp_02, trits_02));
+            Assert.IsTrue(ArrayUtils.CompareEachElement(tmp_03, trits_03));
+            Assert.IsTrue(ArrayUtils.CompareEachElement(tmp_04, trits_04));
+            Assert.IsFalse(ArrayUtils.CompareEachElement(tmp_05, trits_04));
         }
     }
 }

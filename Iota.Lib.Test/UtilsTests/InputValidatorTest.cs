@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
-using Iota.Lib.Api.Model;
-using Iota.Lib.Api.Utils;
+using Iota.Lib.Model;
+using Iota.Lib.Utils;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Iota.Lib.Test
@@ -41,17 +41,6 @@ namespace Iota.Lib.Test
         public void TestIsArrayOfHashes()
         {
             Assert.IsTrue(InputValidator.IsArrayOfHashes(new string[] {TEST_HASH, TEST_HASH}));
-        }
-
-        [TestMethod]
-        public void TestIsTransfersCollectionValid()
-        {
-            List<Transfer> transfers = new List<Transfer>
-            {
-                new Transfer(TEST_ADDRESS_WITH_CHECKSUM, 0, TEST_MESSAGE, TEST_TAG),
-                new Transfer(TEST_ADDRESS_WITH_CHECKSUM, 0, TEST_MESSAGE, TEST_TAG)
-            };
-            Assert.IsTrue(InputValidator.IsTransfersCollectionValid(transfers));
         }
     }
 }
