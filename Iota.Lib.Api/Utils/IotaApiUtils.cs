@@ -113,10 +113,10 @@ namespace Iota.Lib.Utils
         }
 
         /// <summary>
-        /// Gets the balance of multiple transactions combined.
+        /// Gets the balance of multiple transactions combined
         /// </summary>
-        /// <param name="transactions">The transactions.</param>
-        /// <returns>The total balance.</returns>
+        /// <param name="transactions">The transactions</param>
+        /// <returns>The total balance</returns>
         public static BigInteger GetTotalBalance(List<Transaction> transactions)
         {
             BigInteger totalBalance = 0;
@@ -140,6 +140,19 @@ namespace Iota.Lib.Utils
             }
 
             return seed;
+        }
+
+        /// <summary>
+        /// Gets the addresses from multiple transactions
+        /// </summary>
+        /// <param name="transactions">The transactions</param>
+        /// <returns>An IEnumerable containing the addresses</returns>
+        public static IEnumerable<string> GetAddressesFromTransactions(IEnumerable<Transaction> transactions)
+        {
+            foreach(Transaction transaction in transactions)
+            {
+                yield return transaction.Address;
+            }
         }
 
         /// <summary>

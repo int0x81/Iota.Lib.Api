@@ -50,10 +50,10 @@ namespace Iota.Lib.Test
         {
             var list = api.GetTipsAsync().Result.Hashes;
             string noTryteString = "HUBIDIHUBIDIYALLAH667";
-            Assert.IsTrue(InputValidator.IsListOfTrytes(list));
+            Assert.IsTrue(InputValidator.IsArrayOfTrytes(list));
 
             list.Add(noTryteString);
-            Assert.IsFalse(InputValidator.IsListOfTrytes(list));
+            Assert.IsFalse(InputValidator.IsArrayOfTrytes(list));
         }
 
         [TestMethod]

@@ -18,9 +18,9 @@ namespace Iota.Lib.Model
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Bundle"/> class.
+        /// Initializes a new instance of the <see cref="Bundle"/> class
         /// </summary>
-        /// <param name="transactions">The transactions.</param>
+        /// <param name="transactions">The transactions</param>
         public Bundle(List<Transaction> transactions)
         {
             Transactions = transactions;
@@ -52,21 +52,11 @@ namespace Iota.Lib.Model
             }
         }
 
-        /// <summary>
-        /// Adds a bundle entry
-        /// </summary>
-        /// <param name="signatureMessageLength">Length of the signature message.</param>
-        /// <param name="address">The address.</param>
-        /// <param name="value">The value.</param>
-        /// <param name="tag">The tag.</param>
-        /// <param name="timestamp">The timestamp.</param>
-        public void AddEntry(int signatureMessageLength, Transaction transaction)
+        /// <summary>Adds a bundle entry</summary>
+        /// <param name="transaction">The transaction</param>
+        public void AddEntry(Transaction transaction)
         {
-            for (int i = 0; i < signatureMessageLength; i++)
-            {
-                TotalValue += transaction.Value;
-                Transactions.Add(transaction);
-            }
+            Transactions.Add(transaction);
         }
 
         /// <summary>
@@ -152,7 +142,7 @@ namespace Iota.Lib.Model
         }
 
         /// <summary>
-        /// Calculates the bundle hash using <see cref="Kerl"/> and fills it into all transactions this bundle has.
+        /// Calculates the bundle hash using <see cref="Kerl"/> and fills it into all transactions
         /// </summary>
         public void FinalizeBundle()
         {

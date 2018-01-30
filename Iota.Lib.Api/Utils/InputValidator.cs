@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using Iota.Lib.Exception;
 using Iota.Lib.Model;
-using RestSharp.Extensions;
 using static Iota.Lib.Utils.Constants;
 
 namespace Iota.Lib.Utils
@@ -28,6 +25,18 @@ namespace Iota.Lib.Utils
                 return IsStringOfTrytes(address);
             }
             return false;
+        }
+
+        /// <summary>
+        /// Determines whether an array only contains valid addresses
+        /// </summary>
+        /// <param name="addresses">The addresses</param>
+        /// <returns>
+        /// The state as boolean if the provided array only contains addresses
+        /// </returns>
+        public static bool IsArrayOfValidAddress(IEnumerable<string> addresses)
+        {
+            return addresses.ToList().TrueForAll(address => IsValidAddress(address));
         }
 
         /// <summary>
@@ -76,7 +85,7 @@ namespace Iota.Lib.Utils
         /// <returns>
         /// The state as boolean if the provided array only contains valid trytes
         /// </returns>
-        public static bool IsListOfTrytes(IEnumerable<string> trytes)
+        public static bool IsArrayOfTrytes(IEnumerable<string> trytes)
         {
            return trytes.ToList().TrueForAll(element => IsStringOfTrytes(element));
         }

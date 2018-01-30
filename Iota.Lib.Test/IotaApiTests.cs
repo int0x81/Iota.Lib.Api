@@ -1,7 +1,10 @@
-﻿using Iota.Lib;
+﻿using System.Collections.Generic;
+using System.Linq;
+using System.Text.RegularExpressions;
+using Iota.Lib.Model;
 using Iota.Lib.Exception;
+using Iota.Lib.Utils;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Collections.Generic;
 
 namespace Iota.Lib.Test
 {
@@ -30,16 +33,20 @@ namespace Iota.Lib.Test
         IotaApi api = new IotaApi(NODE, PORT, IS_SSL);
 
         [TestMethod, Timeout(TIMEOUT)]
-        [ExpectedException(typeof(NotEnoughBalanceException))]
         public void TestGetInputs()
         {
             var inputs = api.GetInputs(seed);
+            Assert.IsTrue(InputValidator.IsArrayOfValidTransactionHashes(inputs));
         }
 
         [TestMethod]
         public void TestGetNewAddresses()
         {
-            Assert.IsTrue(true);
+            int numberOfAddresses = 21;
+
+            var addresses = api.GetNewAddresses(seed, 0, numberOfAddresses);
+            Assert.IsTrue(InputValidator.IsArrayOfValidAddress(addresses));
+            Assert.IsTrue(addresses.Count() == numberOfAddresses);
         }
     }
 }
