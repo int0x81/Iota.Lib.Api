@@ -25,7 +25,8 @@ namespace Iota.Lib
         /// </summary>
         /// <param name="host">The host address</param>
         /// <param name="port">The port</param>
-        public IotaApi(string host, int port, bool ssl) : base(host, port, ssl)
+        /// <param name="is_ssl">States if the connection you want to establish is using ssl-encryption (https)</param>
+        public IotaApi(string host, int port, bool is_ssl) : base(host, port, is_ssl)
         {
             kerl = new Kerl();
         }
@@ -83,14 +84,13 @@ namespace Iota.Lib
         }
 
         /// <summary>
-        /// Main purpose of this function is to get a list of transfer objects as input, and then prepare the transfer by generating the correct bundle,
-        /// as well as choosing and signing the inputs if necessary (if it's a value transfer). The output of this function is list of the raw transaction data (trytes)
+        /// Generates a correct bundle containing the desired ouputs and inputs, signs the transactions if needed and returns the transactions as tryte encoded strings
         /// </summary>
-        /// <param name="seed">The seed.</param>
-        /// <param name="outputs">The transfers to prepare.</param>
-        /// <param name="inputs">List of inputs used for funding the transfer.</param>
-        /// <param name="remainderAddress">If defined, this address will be used for sending the remainder value (of the inputs) to.</param>
-        /// <returns>A list containing the trytes of the new bundle.</returns>
+        /// <param name="seed">The seed</param>
+        /// <param name="outputs">The transfers to prepare</param>
+        /// <param name="inputs">List of inputs used for funding the transfer</param>
+        /// <param name="remainderAddress">If defined, this address will be used for sending the remainder value (of the inputs) to</param>
+        /// <returns>A list of raw transaction data</returns>
         public List<string> PrepareTransfers(string seed, List<Transaction> outputs, List<Transaction> inputs = null, string remainderAddress = null)
         {
             InputValidator.CheckTransferArray(outputs);
@@ -138,100 +138,77 @@ namespace Iota.Lib
         }
 
         /// <summary>
-        /// Generates a new address from a seed and returns the remainderAddress. This is either done deterministically, or by providing the index of the new remainderAddress 
+        /// Generates new, unused addresses from a seed 
         /// </summary>
-        /// <param name="seed">Tryte-encoded seed. It should be noted that this seed is not transferred</param>
-        /// <param name="index">Optional (default null). Key index to start search from. If the index is provided, the generation of the address is not deterministic.</param>
-        /// <param name="checksum">Optional (default false). Adds 9-tryte address checksum</param>
-        /// <param name="total">Optional (default 1)Total number of addresses to generate.</param>
-        /// <param name="returnAll">If true, it returns all addresses which were deterministically generated (until findTransactions returns null)</param>
-        /// <returns>an array of strings with the specifed number of addresses</returns>
-        public string[] GetNewAddress(string seed, int index = 0, int securityLevel = 0, bool checksum = false, int total = 0, bool returnAll = false)
-        {
-            //Validate all parameters
-
-            List<string> allAdresses = new List<string>();
-
-            // Case 1: total
-            //
-            // If total number of addresses to generate is supplied, simply generate
-            // and return the list of all addresses
-            if (total > 0)
-            {
-                // Increase index with each iteration
-                for (int i = index; i < index + total; i++)
-                {
-                    allAdresses.Add(IotaApiUtils.CreateNewAddress(seed, i, securityLevel, checksum));
-                }
-
-                return allAdresses.ToArray();
-            }
-
-            //  Case 2: no total provided
-            //
-            //  Continue calling findTransactions to see if address was already created
-            //  if null, return list of addresses
-            //
-            else
-            {
-                List<string> addresses = new List<string>();
-
-                for (int i = index; ; i++)
-                {
-                    string newAddress = IotaApiUtils.CreateNewAddress(seed, i, 2, checksum);
-                    FindTransactionsResponse response = FindTransactionsByAddresses(newAddress);
-
-                    if (returnAll)
-                    {
-                        addresses.Add(newAddress);
-                    }
-
-                    if (response.Hashes.Count == 0)
-                        break;
-                }
-
-                return addresses.ToArray();
-            }
-        }
-
-        /// <summary>
-        /// Gets the transfers which are associated with a seed. 
-        /// The transfers are determined by either calculating deterministically which addresses were already used, 
-        /// or by providing a list of indexes to get the transfers from.
-        /// </summary>
-        /// <param name="seed">tryte-encoded seed. It should be noted that this seed is not transferred</param>
-        /// <param name="inclusionStates">If True, it gets the inclusion states of the transfers.</param>
-        /// <param name="start">the address start index</param>
-        /// <param name="end">the address end index</param>
-        /// <returns>An Array of Bundle object that represent the transfers</returns>
-        public Bundle[] GetTransfers(string seed, int? start, int? end, bool inclusionStates = false)
+        /// <param name="seed">The seed</param>
+        /// <param name="index">Key index to start search from</param>
+        /// <param name="total">Total number of addresses to generate</param>
+        /// <param name="securityLevel">The security level of the generated addresses</param>
+        /// <param name="checksum">States if the returning addresses shall contain a valid checksum</param>
+        /// <returns>An IEnumerable containing the addresses</returns>
+        public IEnumerable<string> GetNewAddresses(string seed, int index = 0, int total = 0, int securityLevel = 2, bool checksum = false)
         {
             InputValidator.CheckIfValidSeed(seed);
-            seed = InputValidator.PadSeedIfNecessary(seed);
-
-            if (!start.HasValue)
-                start = 0;
-            if (!end.HasValue)
-                end = 0;
-
-            // If start value bigger than end, return error
-            // or if difference between end and start is bigger than 500 keys
-            if (start.Value > end.Value || end.Value > (start + 500))
+            if(securityLevel < 1 || securityLevel > 3)
             {
-                throw new System.Exception("Invalid inputs provided: start, end");
+                throw new ArgumentException("Invalid security level parameter", "securityLevel");
+            }
+            if (index < 0)
+            {
+                throw new ArgumentException("Invalid index parameter", "index");
             }
 
-            // first call findTransactions
-            // If a transaction is non tail, get the tail transactions associated with it
-            // add it to the list of tail transactions
-
-            string[] addresses = GetNewAddress(seed, start.Value, 2, false,
-                end.HasValue ? end.Value : end.Value - start.Value, true);
-
-
-            Bundle[] bundles = BundlesFromAddresses(addresses, inclusionStates);
-            return bundles;
+            for(int i = index; i < index + total;)
+            {
+                string newAddress = IotaApiUtils.CreateNewAddress(seed, i, securityLevel, checksum);
+                List<string> foundAddresses = FindTransactionsByAddress(newAddress);
+                if(foundAddresses.Count == 0)
+                {
+                    yield return newAddress;
+                    i++;
+                }
+            }  
         }
+
+        ///// <summary>
+        ///// Gets the transfers which are associated with a seed. 
+        ///// The transfers are determined by either calculating deterministically which addresses were already used, 
+        ///// or by providing a list of indexes to get the transfers from.
+        ///// </summary>
+        ///// <param name="seed">tryte-encoded seed. It should be noted that this seed is not transferred</param>
+        ///// <param name="inclusionStates">If True, it gets the inclusion states of the transfers.</param>
+        ///// <param name="start">the address start index</param>
+        ///// <param name="end">the address end index</param>
+        ///// <returns>An Array of Bundle object that represent the transfers</returns>
+        //public Bundle[] GetTransfers(string seed, int start, int end, bool inclusionStates = false)
+        //{
+        //    InputValidator.CheckIfValidSeed(seed);
+        //    seed = InputValidator.PadSeedIfNecessary(seed);
+
+        //    if (!start.HasValue)
+        //        start = 0;
+        //    if (!end.HasValue)
+        //        end = 0;
+
+        //    // If start value bigger than end, return error
+        //    // or if difference between end and start is bigger than 500 keys
+        //    if (start.Value > end.Value || end.Value > (start + 500))
+        //    {
+        //        throw new System.Exception("Invalid inputs provided: start, end");
+        //    }
+
+        //    // first call findTransactions
+        //    // If a transaction is non tail, get the tail transactions associated with it
+        //    // add it to the list of tail transactions
+
+        //    //string[] addresses = GetNewAddress(seed, start.Value, 2, false);
+        //    IEnumerable<string> addresses = GetNewAddresses(seed, start.Value, end, 2, false);
+        //    string add = addresses.ElementAt(0);
+
+
+        //    Bundle[] bundles = BundlesFromAddresses(addresses, inclusionStates);
+        //    return bundles;
+        //}
 
         /// <summary>
         /// Finds the transaction objects.
@@ -286,74 +263,58 @@ namespace Iota.Lib
             return GetTransactionsObjects(ftr.Hashes.ToArray());
         }
 
-        /// <summary>
-        /// Replays the bundle.
-        /// </summary>
-        /// <param name="transaction">The transaction.</param>
-        /// <param name="depth">The depth.</param>
-        /// <param name="minWeightMagnitude">The minimum weight magnitude.</param>
-        /// <returns>an array of boolean that indicate which transactions have been replayed successfully</returns>
-        public bool[] ReplayBundle(string transaction, int depth, int minWeightMagnitude)
-        {
-            //StopWatch stopWatch = new StopWatch();
+        ///// <summary>
+        ///// Replays the bundle.
+        ///// </summary>
+        ///// <param name="transaction">The transaction.</param>
+        ///// <param name="depth">The depth.</param>
+        ///// <param name="minWeightMagnitude">The minimum weight magnitude.</param>
+        ///// <returns>an array of boolean that indicate which transactions have been replayed successfully</returns>
+        //public bool[] ReplayBundle(string transaction, int depth, int minWeightMagnitude)
+        //{
+        //    //StopWatch stopWatch = new StopWatch();
 
-            List<string> bundleTrytes = new List<string>();
+        //    List<string> bundleTrytes = new List<string>();
 
-            Bundle bundle = GetBundle(transaction)[0];
+        //    Bundle bundle = GetBundle(transaction)[0];
 
-            bundle.Transactions.ForEach((t) => bundleTrytes.Add(t.ToTransactionTrytes()));
+        //    bundle.Transactions.ForEach((t) => bundleTrytes.Add(t.ToTransactionTrytes()));
 
-            List<Transaction> transactions = SendTrytes(bundleTrytes, depth).ToList();
+        //    List<Transaction> transactions = SendTrytes(bundleTrytes, depth).ToList();
 
-            bool[] successful = new bool[transactions.Count];
+        //    bool[] successful = new bool[transactions.Count];
 
-            for (int i = 0; i < transactions.Count; i++)
-            {
-                FindTransactionsResponse response = FindTransactionsByBundles(transactions[i].Bundle);
-                successful[i] = response.Hashes.Count != 0;
-            }
+        //    for (int i = 0; i < transactions.Count; i++)
+        //    {
+        //        FindTransactionsResponse response = FindTransactionsByBundles(transactions[i].Bundle);
+        //        successful[i] = response.Hashes.Count != 0;
+        //    }
 
-            return successful;
-        }
+        //    return successful;
+        //}
 
-        /// <summary>
-        /// Finds the transactions by bundles.
-        /// </summary>
-        /// <param name="bundles">The bundles.</param>
-        /// <returns>a FindTransactionsResponse containing the transactions, see <see cref="FindTransactionsResponse"/></returns>
-        public FindTransactionsResponse FindTransactionsByBundles(params string[] bundles)
-        {
-            return FindTransactions(null, null, null, bundles.ToList());
-        }
-
-        /// <summary>
-        /// Finds the transactions by approvees.
-        /// </summary>
-        /// <param name="approvees">The approvees.</param>
-        /// <returns>a FindTransactionsResponse containing the transactions, see <see cref="FindTransactionsResponse"/></returns>
-        public FindTransactionsResponse FindTransactionsByApprovees(params string[] approvees)
-        {
-            return FindTransactions(null, null, approvees.ToList(), null);
-        }
-
-        /// <summary>
-        /// Finds the transactions by digests.
-        /// </summary>
-        /// <param name="bundles">The bundles.</param>
-        /// <returns>a FindTransactionsResponse containing the transactions, see <see cref="FindTransactionsResponse"/></returns>
-        public FindTransactionsResponse FindTransactionsByDigests(params string[] bundles)
-        {
-            return FindTransactions(null, bundles.ToList(), null, null);
-        }
+        ///// <summary>
+        ///// Finds the transactions by bundles.
+        ///// </summary>
+        ///// <param name="bundles">The bundles.</param>
+        ///// <returns>a FindTransactionsResponse containing the transactions, see <see cref="FindTransactionsResponse"/></returns>
+        //public FindTransactionsResponse FindTransactionsByBundles(params string[] bundles)
+        //{
+        //    return FindTransactions(null, null, null, bundles.ToList());
+        //}
 
         /// <summary>
         /// Finds the transactions by addresses.
         /// </summary>
         /// <param name="addresses">The addresses.</param>
         /// <returns>a FindTransactionsResponse containing the transactions, see <see cref="FindTransactionsResponse"/></returns>
-        public FindTransactionsResponse FindTransactionsByAddresses(params string[] addresses)
+        public List<string> FindTransactionsByAddress(string address)
         {
-            return FindTransactions(addresses.ToList(), null, null, null);
+            List<string> addressList = new List<string>
+            {
+                address
+            };
+            return FindTransactionsAsync(addressList, null, null, null).Result.Hashes;
         }
 
         /// <summary>
@@ -367,61 +328,61 @@ namespace Iota.Lib
             return GetInclusionStates(hashes, latestMilestone);
         }
 
-        /// <summary>
-        /// Wrapper function that basically does prepareTransfers, as well as attachToTangle and finally, it broadcasts and stores the transactions locally.
-        /// </summary>
-        /// <param name="seed">tryte-encoded seed</param>
-        /// <param name="depth">depth</param>
-        /// <param name="minWeightMagnitude">The minimum weight magnitude</param>
-        /// <param name="transactions">Array of transfer objects</param>
-        /// <param name="inputs">Optional (default null). List of inputs used for funding the transfer</param>
-        /// <param name="address">Optional (default null). If defined, this address will be used for sending the remainder value (of the inputs) to</param>
-        /// <returns> an array of the boolean that indicates which Transactions where sent successully</returns>
-        public List<bool> SendTransfer(string seed, int depth, int minWeightMagnitude, List<Transaction> outputs, List<Transaction> inputs = null, string address = null)
-        {
-            List<string> trytes = PrepareTransfers(seed, outputs, inputs, address);
-            List<Transaction> finalizedTransactions = SendTrytes(trytes, depth);
+        ///// <summary>
+        ///// Wrapper function that basically does prepareTransfers, as well as attachToTangle and finally, it broadcasts and stores the transactions locally.
+        ///// </summary>
+        ///// <param name="seed">tryte-encoded seed</param>
+        ///// <param name="depth">depth</param>
+        ///// <param name="minWeightMagnitude">The minimum weight magnitude</param>
+        ///// <param name="transactions">Array of transfer objects</param>
+        ///// <param name="inputs">Optional (default null). List of inputs used for funding the transfer</param>
+        ///// <param name="address">Optional (default null). If defined, this address will be used for sending the remainder value (of the inputs) to</param>
+        ///// <returns> an array of the boolean that indicates which Transactions where sent successully</returns>
+        //public List<bool> SendTransfer(string seed, int depth, int minWeightMagnitude, List<Transaction> outputs, List<Transaction> inputs = null, string address = null)
+        //{
+        //    List<string> trytes = PrepareTransfers(seed, outputs, inputs, address);
+        //    List<Transaction> finalizedTransactions = SendTrytes(trytes, depth);
 
-            List<bool> successful = new List<bool>();
+        //    List<bool> successful = new List<bool>();
 
-            for (int i = 0; i < finalizedTransactions.Count; i++)
-            {
-                FindTransactionsResponse response = FindTransactionsByBundles(finalizedTransactions[i].Bundle);
+        //    for (int i = 0; i < finalizedTransactions.Count; i++)
+        //    {
+        //        FindTransactionsResponse response = FindTransactionsByBundles(finalizedTransactions[i].Bundle);
 
-                successful[i] = response.Hashes.Count != 0;
-            }
+        //        successful[i] = response.Hashes.Count != 0;
+        //    }
 
-            return successful;
-        }
+        //    return successful;
+        //}
 
-        /// <summary>
-        /// Sends the trytes.
-        /// </summary>
-        /// <param name="trytes">The trytes.</param>
-        /// <param name="depth">The depth.</param>
-        /// <returns>an Array of Transactions</returns>
-        public List<Transaction> SendTrytes(List<string> trytes, int depth)
-        {
-            GetTransactionsToApproveResponse transactionsToApproveResponse = GetTransactionsToApprove(depth);
+        ///// <summary>
+        ///// Sends the trytes.
+        ///// </summary>
+        ///// <param name="trytes">The trytes.</param>
+        ///// <param name="depth">The depth.</param>
+        ///// <returns>an Array of Transactions</returns>
+        //public List<Transaction> SendTrytes(List<string> trytes, int depth)
+        //{
+        //    GetTransactionsToApproveResponse transactionsToApproveResponse = GetTransactionsToApprove(depth);
 
-            AttachToTangleResponse attachToTangleResponse = AttachToTangle(transactionsToApproveResponse.TrunkTransaction, transactionsToApproveResponse.BranchTransaction, trytes);
-            try
-            {
-                BroadcastAndStore(attachToTangleResponse.Trytes);
-            }
-            catch (System.Exception)
-            {
-                return new List<Transaction>();
-            }
+        //    AttachToTangleResponse attachToTangleResponse = AttachToTangle(transactionsToApproveResponse.TrunkTransaction, transactionsToApproveResponse.BranchTransaction, trytes);
+        //    try
+        //    {
+        //        BroadcastAndStore(attachToTangleResponse.Trytes);
+        //    }
+        //    catch (System.Exception)
+        //    {
+        //        return new List<Transaction>();
+        //    }
 
-            List<Transaction> transactions = new List<Transaction>();
+        //    List<Transaction> transactions = new List<Transaction>();
 
-            foreach (string tx in attachToTangleResponse.Trytes)
-            {
-                transactions.Add(new Transaction(tx));
-            }
-            return transactions;
-        }
+        //    foreach (string tx in attachToTangleResponse.Trytes)
+        //    {
+        //        transactions.Add(new Transaction(tx));
+        //    }
+        //    return transactions;
+        //}
 
         /// <summary>
         /// This function returns the bundle which is associated with a transaction. Input can by any type of transaction (tail and non-tail). 
@@ -515,15 +476,15 @@ namespace Iota.Lib
             return new List<Bundle>();
         }
 
-        /// <summary>
-        /// Wrapper function that broadcasts and stores the specified trytes
-        /// </summary>
-        /// <param name="trytes">trytes</param>
-        public void BroadcastAndStore(List<string> trytes)
-        {
-            BroadcastTransactions(trytes);
-            StoreTransactions(trytes);
-        }
+        ///// <summary>
+        ///// Wrapper function that broadcasts and stores the specified trytes
+        ///// </summary>
+        ///// <param name="trytes">trytes</param>
+        //public void BroadcastAndStore(List<string> trytes)
+        //{
+        //    BroadcastTransactions(trytes);
+        //    StoreTransactions(trytes);
+        //}
 
         private Bundle TraverseBundle(string trunkTransaction, string bundleHash, Bundle bundle)
         {
@@ -698,7 +659,7 @@ namespace Iota.Lib
                     else if (remainder > 0)
                     {
                         // Generate a new Address by calling getNewAddress
-                        string address = GetNewAddress(seed)[0];
+                        string address = GetNewAddresses(seed).ElementAt(0);
 
                         // Remainder bundle entry
                         bundle.AddEntry(1, new Transaction(address, remainder, tag));

@@ -11,9 +11,9 @@ namespace Iota.Lib.Test.ModelTests
     {
         const string NODE = "nodes.thetangle.org"; //Your test node; Please note that not all nodes accept the all requests
         const int PORT = 443;                      //Your test nodes's port
-        const bool SSL = true;                     //Your test node's encryption state
+        const bool IS_SSL = true;                  //Your test node's encryption state
 
-        readonly IotaCoreApi api = new IotaCoreApi(NODE, PORT, SSL);
+        readonly IotaCoreApi api = new IotaCoreApi(NODE, PORT, IS_SSL);
 
         [TestMethod]
         public void TestTransactionConstructor()

@@ -10,16 +10,17 @@ namespace Iota.Lib.Core
     /// </summary>
     public class IotaCoreApi
     {
-        private readonly IGenericIotaCoreApi _genericIotaCoreApi;
+        private readonly GenericIotaCoreApi _genericIotaCoreApi;
 
         /// <summary>
         /// Creates a core api object that uses the specified connection settings to connect to a node
         /// </summary>
         /// <param name="host">hostname or API address of a node to interact with</param>
         /// <param name="port">tcp/udp port</param>
-        public IotaCoreApi(string host, int port, bool ssl)
+        /// <param name="is_ssl">States if the connection you want to establish is using ssl-encryption (https)</param>
+        public IotaCoreApi(string host, int port, bool is_ssl)
         {
-            _genericIotaCoreApi = new GenericIotaCoreApi(host, port, ssl);
+            _genericIotaCoreApi = new GenericIotaCoreApi(host, port, is_ssl);
         }
 
         /// <summary>

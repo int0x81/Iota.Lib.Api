@@ -10,7 +10,7 @@ namespace Iota.Lib.Test
     {
         const string NODE = "nodes.thetangle.org"; //Your test node; Please note that not all nodes accept the all requests
         const int PORT = 443;                      //Your test nodes's port
-        const bool SSL = true;                     //Your test node's encryption state
+        const bool IS_SSL = true;                  //Your test node's encryption state
         const int TIMEOUT = 10000;                 //Limits the time a request should take in milliseconds
 
         readonly List<string> ADDRESSES = new List<string>()
@@ -27,13 +27,19 @@ namespace Iota.Lib.Test
 
         const string seed = "SMRUKAKOPAKXQSIKVZWQGQNKZZWL9BGEFJCIEBRJDIAGWFHUKAOSWACNC9JFDU9WHAPZBEIGWBU9VTNZS";
 
-        IotaApi api = new IotaApi(NODE, PORT, SSL);
+        IotaApi api = new IotaApi(NODE, PORT, IS_SSL);
 
         [TestMethod, Timeout(TIMEOUT)]
         [ExpectedException(typeof(NotEnoughBalanceException))]
         public void TestGetInputs()
         {
             var inputs = api.GetInputs(seed);
+        }
+
+        [TestMethod]
+        public void TestGetNewAddresses()
+        {
+            Assert.IsTrue(true);
         }
     }
 }

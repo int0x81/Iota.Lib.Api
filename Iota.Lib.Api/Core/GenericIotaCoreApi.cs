@@ -7,60 +7,29 @@ namespace Iota.Lib.Core
     /// <summary>
     /// Represents a generic version of the core API that is used internally 
     /// </summary>
-    /// <seealso cref="IGenericIotaCoreApi" />
-    public class GenericIotaCoreApi : IGenericIotaCoreApi
+    internal class GenericIotaCoreApi
     {
-        string _host;
-        int _port;
-        bool _ssl;
         JsonWebClient jsonWebClient = new JsonWebClient();
+        string baseURL;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="GenericIotaCoreApi"/> class.
+        /// Initializes a new instance of the <see cref="GenericIotaCoreApi"/> class
         /// </summary>
         /// <param name="host">The host.</param>
         /// <param name="port">The port.</param>
-        /// <param name="ssl">States if the connection is using ssl-encryption(https)</param>
-        public GenericIotaCoreApi(string host, int port, bool ssl)
+        /// <param name="is_ssl">States if the connection you want to establish is using ssl encryption(https)</param>
+        public GenericIotaCoreApi(string host, int port, bool is_ssl)
         {
-            _host = host;
-            _port = port;
-            _ssl = ssl;
+            if (is_ssl)
+            {
+                 baseURL = "https://" + host + ":" + port;
+            }
+            else
+            {
+                 baseURL = "http://" + host + ":" + port;
+            }
         }
-
-        /// <summary>
-        /// Gets the hostname.
-        /// </summary>
-        /// <value>
-        /// The hostname.
-        /// </value>
-        public string Hostname
-        {
-            get { return _host; }
-        }
-
-        /// <summary>
-        /// Gets the port.
-        /// </summary>
-        /// <value>
-        /// The port.
-        /// </value>
-        public int Port
-        {
-            get { return _port; }
-        }
-
-        /// <summary>
-        /// Gets the state that says if the connection is using ssl-encryption(https)
-        /// </summary>
-        /// <value>
-        /// The state
-        /// </value>
-        public bool SSL
-        {
-            get { return _ssl; }
-        }
-
+        
         /// <summary>
         /// Requests the specified request
         /// </summary>
@@ -70,7 +39,7 @@ namespace Iota.Lib.Core
         /// <returns>A corresponding response</returns>
         public TResponse Request<TRequest, TResponse>(TRequest request) where TRequest: IotaRequest where TResponse : IotaResponse, new()
         {
-            return jsonWebClient.GetResponse<TResponse>(new Uri(CreateBaseUrl()), new JsonSerializer().Serialize(request));
+            return jsonWebClient.GetResponse<TResponse>(new Uri(baseURL), new JsonSerializer().Serialize(request));
         }
 
         /// <summary>
@@ -82,19 +51,7 @@ namespace Iota.Lib.Core
         /// <returns>A corresponding response</returns>
         public Task<TResponse> RequestAsync<TRequest, TResponse>(TRequest request) where TRequest : IotaRequest where TResponse : IotaResponse, new()
         {
-            return jsonWebClient.GetResponseAsync<TResponse>(new Uri(CreateBaseUrl()), new JsonSerializer().Serialize(request));
-        }
-
-        private string CreateBaseUrl()
-        {
-            if(SSL)
-            {
-                return "https://" + _host + ":" + _port;
-            }
-            else
-            {
-                return "http://" + _host + ":" + _port;
-            }
+            return jsonWebClient.GetResponseAsync<TResponse>(new Uri(baseURL), new JsonSerializer().Serialize(request));
         }
     }
 }
