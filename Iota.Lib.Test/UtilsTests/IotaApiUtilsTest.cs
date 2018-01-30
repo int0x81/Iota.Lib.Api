@@ -12,7 +12,8 @@ namespace Iota.Lib.Test
     [TestClass]
     public class AddressGenerationTest
     {
-        const string seed = "SMRUKAKOPAKXQSIKVZWQGQNKZZWL9BGEFJCIEBRJDIAGWFHUKAOSWACNC9JFDU9WHAPZBEIGWBU9VTNZS";
+        readonly string seed = "SMRUKAKOPAKXQSIKVZWQGQNKZZWL9BGEFJCIEBRJDIAGWFHUKAOSWACNC9JFDU9WHAPZBEIGWBU9VTNZS";
+        readonly string shortSeed = "SMRUKAKOPAKXQSIEIGWBU9VTNZS";
 
         readonly string[] addresses_security_01_with_checksum =
         {
@@ -75,6 +76,12 @@ namespace Iota.Lib.Test
         {
             long timestamp = CreateTimeStampNow();
             Assert.IsTrue(timestamp > 0);
+        }
+
+        [TestMethod]
+        public void TestPadSeedWithNines()
+        {
+            Assert.IsTrue(seed.Length == PadSeedWithNines(shortSeed).Length);
         }
     }
 }

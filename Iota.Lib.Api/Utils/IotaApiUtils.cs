@@ -128,6 +128,21 @@ namespace Iota.Lib.Utils
         }
 
         /// <summary>
+        /// Pads a seed until the the maximum seed length is reached
+        /// </summary>
+        /// <param name="seed">The seed</param>
+        /// <returns>The padded seed</returns>
+        public static string PadSeedWithNines(string seed)
+        {
+            while(seed.Length < Constants.SEED_MAX_LENGTH)
+            {
+                seed += "9";
+            }
+
+            return seed;
+        }
+
+        /// <summary>
         /// Creates a unix timestamp.
         /// </summary>
         /// <returns>An integer that represents a timestamp.</returns>

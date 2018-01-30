@@ -41,9 +41,12 @@ namespace Iota.Lib
         /// <returns>A list of inputs</returns>
         public List<Transaction> GetInputs(string seed, int start = 0, int end = MAX_KEY_INDEX, int securityLevel = 0)
         {
-            InputValidator.CheckIfValidSeed(seed);
+            if (!InputValidator.IsValidSeed(seed))
+            {
+                throw new InvalidTryteException();
+            }
 
-            seed = InputValidator.PadSeedIfNecessary(seed);
+            seed = IotaApiUtils.PadSeedWithNines(seed);
 
             if (start > end)
             {
@@ -93,7 +96,17 @@ namespace Iota.Lib
         /// <returns>A list of raw transaction data</returns>
         public List<string> PrepareTransfers(string seed, List<Transaction> outputs, List<Transaction> inputs = null, string remainderAddress = null)
         {
-            InputValidator.CheckTransferArray(outputs);
+            if (!InputValidator.IsValidSeed(seed))
+            {
+                throw new InvalidTryteException();
+            }
+
+            seed = IotaApiUtils.PadSeedWithNines(seed);
+
+            if (!InputValidator.IsArrayOfValidTransactions(outputs))
+            {
+                throw new InvalidTransactionException();
+            }
 
             Bundle bundle = new Bundle();
             List<string> signatureFragments = new List<string>();
@@ -148,8 +161,11 @@ namespace Iota.Lib
         /// <returns>An IEnumerable containing the addresses</returns>
         public IEnumerable<string> GetNewAddresses(string seed, int index = 0, int total = 0, int securityLevel = 2, bool checksum = false)
         {
-            InputValidator.CheckIfValidSeed(seed);
-            if(securityLevel < 1 || securityLevel > 3)
+            if (!InputValidator.IsValidSeed(seed))
+            {
+                throw new InvalidTryteException();
+            }
+            if (securityLevel < 1 || securityLevel > 3)
             {
                 throw new ArgumentException("Invalid security level parameter", "securityLevel");
             }
@@ -232,7 +248,7 @@ namespace Iota.Lib
         /// <returns>a list of transactions</returns>
         public List<Transaction> GetTransactionsObjects(string[] hashes)
         {
-            if (!InputValidator.IsArrayOfHashes(hashes))
+            if (!InputValidator.IsArrayOfValidTransactionHashes(hashes))
             {
                 throw new IllegalStateException("Not an Array of Hashes: " + hashes.ToString());
             }

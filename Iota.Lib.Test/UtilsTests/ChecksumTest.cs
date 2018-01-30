@@ -33,10 +33,10 @@ namespace Iota.Lib.Test
         [TestMethod]
         public void TestIsAddress()
         {
-            Assert.IsTrue(InputValidator.IsAddress(TEST_ADDRESSES_WITHOUT_CHECKSUM[0]));
-            Assert.IsTrue(InputValidator.IsAddress(TEST_ADDRESSES_WITHOUT_CHECKSUM[1]));
-            Assert.IsTrue(InputValidator.IsAddress(TEST_ADDRESSES_WITH_CHECKSUM[0]));
-            Assert.IsTrue(InputValidator.IsAddress(TEST_ADDRESSES_WITH_CHECKSUM[1]));
+            Assert.IsTrue(InputValidator.IsValidAddress(TEST_ADDRESSES_WITHOUT_CHECKSUM[0]));
+            Assert.IsTrue(InputValidator.IsValidAddress(TEST_ADDRESSES_WITHOUT_CHECKSUM[1]));
+            Assert.IsTrue(InputValidator.IsValidAddress(TEST_ADDRESSES_WITH_CHECKSUM[0]));
+            Assert.IsTrue(InputValidator.IsValidAddress(TEST_ADDRESSES_WITH_CHECKSUM[1]));
         }
     }
 }

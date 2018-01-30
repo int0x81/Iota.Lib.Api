@@ -22,10 +22,11 @@ namespace Iota.Lib.Test.ModelTests
             string raw_transaction = api.GetTrytesAsync(response.BranchTransaction).Result.Trytes[0];
             Assert.IsTrue(raw_transaction.Length == RAW_TRANSACTION_LENGTH);
             Transaction transaction = new Transaction(raw_transaction);
+            Assert.IsTrue(InputValidator.IsValidTransaction(transaction));
             Assert.IsTrue(transaction.SignatureMessageFragment.Length == SIGNATURE_MESSAGE_LENGTH);
-            Assert.IsTrue(InputValidator.IsTrytes(transaction.SignatureMessageFragment, transaction.SignatureMessageFragment.Length));
+            Assert.IsTrue(InputValidator.IsStringOfTrytes(transaction.SignatureMessageFragment));
             Assert.IsTrue(transaction.Address.Length == ADDRESSLENGTH_WITHOUT_CHECKSUM);
-            Assert.IsTrue(InputValidator.IsAddress(transaction.Address));
+            Assert.IsTrue(InputValidator.IsValidAddress(transaction.Address));
             Assert.IsTrue(transaction.AttachmentTimestamp >= 0);
             Assert.IsTrue(transaction.AttachmentTimestampLowerBound >= 0);
             Assert.IsTrue(transaction.AttachmentTimestampUpperBound >= 0);

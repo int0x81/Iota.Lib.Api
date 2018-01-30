@@ -16,10 +16,12 @@ namespace Iota.Lib.Utils
         /// <exception cref="InvalidAddressException">is thrown when an invalid address is provided</exception>
         public static string AddChecksum(string address)
         {
-            InputValidator.CheckAddress(address);
-            string addressWithChecksum = address;
-            addressWithChecksum += CalculateChecksum(address);
-            return addressWithChecksum;
+            if(!InputValidator.IsValidAddress(address))
+            {
+                throw new InvalidAddressException($"{address} is no valid address");
+            }
+
+            return address + CalculateChecksum(address);
         }
 
 
@@ -61,7 +63,7 @@ namespace Iota.Lib.Utils
 
         private static bool IsAddressWithChecksum(string addressWithChecksum)
         {
-            return InputValidator.IsAddress(addressWithChecksum) && addressWithChecksum.Length == Constants.ADDRESSLENGTH_WITH_CHECKSUM;
+            return InputValidator.IsValidAddress(addressWithChecksum) && addressWithChecksum.Length == Constants.ADDRESSLENGTH_WITH_CHECKSUM;
         }
 
         private static string CalculateChecksum(string address)

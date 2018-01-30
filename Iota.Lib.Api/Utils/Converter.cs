@@ -21,7 +21,7 @@ namespace Iota.Lib.Utils
         /// <returns>A trit-array</returns>
         public static int[] ConvertTrytesToTrits(string trytes)
         {
-            if(!InputValidator.IsTrytes(trytes, trytes.Length))
+            if(!InputValidator.IsStringOfTrytes(trytes))
             {
                 throw new InvalidTryteException();
             }

@@ -174,11 +174,11 @@ namespace Iota.Lib.Test
         {
             var response = api.GetTransactionsToApprove(27);
             Assert.IsTrue(response.StatusCode == OK);
-            Assert.IsTrue(InputValidator.IsTrytes(response.TrunkTransaction, response.TrunkTransaction.Length));
+            Assert.IsTrue(InputValidator.IsStringOfTrytes(response.TrunkTransaction));
 
             response = api.GetTransactionsToApproveAsync(27).GetAwaiter().GetResult();
             Assert.IsTrue(response.StatusCode == OK);
-            Assert.IsTrue(InputValidator.IsTrytes(response.BranchTransaction, response.BranchTransaction.Length));
+            Assert.IsTrue(InputValidator.IsStringOfTrytes(response.BranchTransaction));
         }
 
         [TestMethod, Timeout(TIMEOUT)]

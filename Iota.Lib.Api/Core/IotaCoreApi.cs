@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Iota.Lib.Exception;
 using Iota.Lib.Utils;
 
 namespace Iota.Lib.Core
@@ -36,7 +37,10 @@ namespace Iota.Lib.Core
         /// These are valid trytes which are then accepted by the network.</returns>
         public AttachToTangleResponse AttachToTangle(string trunkTransaction, string branchTransaction, List<string> trytes, int minWeightMagnitude = Constants.MIN_WEIGHT_MAGNITUDE)
         {
-            InputValidator.CheckIfArrayOfTrytes(trytes.ToArray());
+            if(!InputValidator.IsListOfTrytes(trytes))
+            {
+                throw new InvalidTryteException();
+            }
 
             AttachToTangleRequest attachToTangleRequest = new AttachToTangleRequest(trunkTransaction, branchTransaction, trytes, minWeightMagnitude);
             return _genericIotaCoreApi.Request<AttachToTangleRequest, AttachToTangleResponse>(attachToTangleRequest);
@@ -55,7 +59,10 @@ namespace Iota.Lib.Core
         /// These are valid trytes which are then accepted by the network.</returns>
         public async Task<AttachToTangleResponse> AttachToTangleAsync(string trunkTransaction, string branchTransaction, List<string> trytes, int minWeightMagnitude = Constants.MIN_WEIGHT_MAGNITUDE)
         {
-            InputValidator.CheckIfArrayOfTrytes(trytes.ToArray());
+            if (!InputValidator.IsListOfTrytes(trytes))
+            {
+                throw new InvalidTryteException();
+            }
 
             AttachToTangleRequest attachToTangleRequest = new AttachToTangleRequest(trunkTransaction, branchTransaction, trytes, minWeightMagnitude);
             return await _genericIotaCoreApi.RequestAsync<AttachToTangleRequest, AttachToTangleResponse>(attachToTangleRequest);
