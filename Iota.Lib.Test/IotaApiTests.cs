@@ -34,7 +34,7 @@ namespace Iota.Lib.Test
         const string TEST_MESSAGE = "JUSTANOTHERJOTATEST";
         const string TEST_TAG = "JOTASPAM9999999999999999999";
         const int MIN_WEIGHT_MAGNITUDE = 14;
-        int DEPTH = 9;
+        const int DEPTH = 9;
 
         IotaApi api = new IotaApi(NODE, PORT, IS_SSL);
 
@@ -53,11 +53,6 @@ namespace Iota.Lib.Test
             var addresses = api.GetNewAddresses(TEST_SEED_01, 0, numberOfAddresses);
             Assert.IsTrue(InputValidator.IsArrayOfValidAddress(addresses));
             Assert.IsTrue(addresses.Count() == numberOfAddresses);
-        }
-
-        [TestMethod]
-        public void TestSendTransfer()
-        {
         }
     }
 }

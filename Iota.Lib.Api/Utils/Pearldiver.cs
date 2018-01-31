@@ -214,7 +214,7 @@ namespace Iota.Lib.Utils
                     state = State.RUNNING;
                 }
             }
-            catch (SystemException ex) 
+            catch (SystemException) 
             {
                 lock(interlock)
                 {
@@ -228,7 +228,7 @@ namespace Iota.Lib.Utils
                 {
                     worker.Join();
                 }
-                catch (SystemException ex)
+                catch (SystemException)
                 {
                     lock(interlock)
                     {

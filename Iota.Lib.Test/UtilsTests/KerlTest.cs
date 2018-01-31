@@ -2,7 +2,7 @@
 using Iota.Lib.Utils;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Iota.Lib.Tests
+namespace Iota.Lib.Test
 {
     [TestClass]
     public class KerlTest

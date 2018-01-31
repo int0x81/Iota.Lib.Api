@@ -68,11 +68,14 @@ namespace Iota.Lib.Utils
 
         private static string CalculateChecksum(string address)
         {
-            ISponge sponge = new Kerl();
+            if(!InputValidator.IsValidAddress(address) || address.Length != Constants.ADDRESSLENGTH_WITHOUT_CHECKSUM)
+            {
+                throw new InvalidAddressException($"{address} is no valid address");
+            }
+            Kerl sponge = new Kerl();
             sponge.Reset();
-            int[] paddedAddress = ArrayUtils.PadArrayWithZeros(Converter.ConvertTrytesToTrits(address), Kerl.HASH_LENGTH);
-            sponge.Absorb(paddedAddress);
-            string checksum = Converter.ConvertTritsToTrytes(sponge.Squeeze(Kerl.HASH_LENGTH));
+            sponge.Absorb(Converter.ConvertTrytesToTrits(address));
+            string checksum = Converter.ConvertTritsToTrytes(sponge.Squeeze());
             return checksum.Substring(72);
         }
     }
