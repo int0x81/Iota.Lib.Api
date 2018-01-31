@@ -31,7 +31,6 @@ namespace Iota.Lib.Utils
 
         public static List<string> SignInputsAndReturn(string seed, List<Transaction> inputs, Bundle bundle, List<string> signatureFragments)
         {
-            bundle.FinalizeBundle();
             bundle.AddTrytes(signatureFragments);
 
             //  SIGNING OF INPUTS

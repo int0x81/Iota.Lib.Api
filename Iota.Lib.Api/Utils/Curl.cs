@@ -1,13 +1,16 @@
-﻿using System;
+﻿#region Acknowledgements
+/**
+ * The code on this class is heavily based on:
+ * 
+ * See https://github.com/iotaledger/iri/blob/dev/src/main/java/com/iota/iri/hash/Curl.java
+ * (c) 2016 Come-from-Beyond and Paul Handy
+ */
+#endregion
+
+using System;
 
 namespace Iota.Lib.Utils
 {
-    /// <summary>
-    /// (c) 2016 Come-from-Beyond
-    /// 
-    /// Curl belongs to the sponge function family.
-    /// 
-    /// </summary>
     public class Curl : ISponge
     {
         /// <summary>

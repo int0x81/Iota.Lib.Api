@@ -117,5 +117,10 @@ namespace Iota.Lib.Utils
         /// The length of a bundle hash in trytes
         /// </summary>
         public const int BUNDLE_HASH_LENGTH = 81;
+
+        /// <summary>
+        /// Testing var
+        /// </summary>
+        public const int SAVE_DEPTH = 27;
     }
 }

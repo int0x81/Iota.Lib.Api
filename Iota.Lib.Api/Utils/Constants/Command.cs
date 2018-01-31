@@ -5,6 +5,7 @@ namespace Iota.Lib.Core
     /// <summary>
     /// This enumeration defines the core API call commands
     /// </summary>
+    /// <see href="https://iota.readme.io/reference"/>
     public enum Command
     {
         /// <summary>

@@ -121,12 +121,7 @@ namespace Iota.Lib.Utils
                 return false;
             }
 
-            if(transaction.CurrentIndex > transaction.LastIndex)
-            {
-                return false;
-            }
-
-            if (transaction.Value < 0)
+            if (transaction.CurrentIndex > transaction.LastIndex)
             {
                 return false;
             }

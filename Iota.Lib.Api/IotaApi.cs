@@ -13,15 +13,14 @@ using static Iota.Lib.Utils.IotaApiUtils;
 namespace Iota.Lib
 {
     /// <summary>
-    /// This class provides all proposed calls and inherits the core calls
+    /// Provides all proposed calls and inherits the core calls
     /// </summary>
     public class IotaApi : IotaCoreApi
     {
         Kerl kerl = new Kerl();
-        const int MAX_KEY_INDEX = 10; //The default maximum for generating addresses; Increasing this value can decrease performance because more addresses have to be queried
-
+        
         /// <summary>
-        /// Creates an api object that can interact with a specific Node
+        /// Creates an api object that can interact with a specific node
         /// </summary>
         /// <param name="host">The host address</param>
         /// <param name="port">The port</param>
@@ -35,10 +34,10 @@ namespace Iota.Lib
         /// </summary>
         /// <param name="seed">The seed</param>
         /// <param name="start">Starting key index</param>
-        /// <param name="end">Ending key index</param>
+        /// <param name="end">Ending key index. Choosing a high value will result in an io-intense operation</param>
         /// <param name="securityLevel">The security level. If no security level is specified the value will be 0 and the addresses of all security levels will be queried.</param>
         /// <returns>A list of inputs</returns>
-        public IEnumerable<string> GetInputs(string seed, int start = 0, int end = MAX_KEY_INDEX, int securityLevel = 0)
+        public IEnumerable<string> GetInputs(string seed, int start = 0, int end = 10, int securityLevel = 0)
         {
             if (!InputValidator.IsValidSeed(seed))
             {
@@ -50,11 +49,6 @@ namespace Iota.Lib
             if (start > end)
             {
                 throw new ArgumentException("Start index must be smaller than end index");
-            }
-
-            if (end - start > MAX_KEY_INDEX)
-            {
-                throw new ArgumentException($"Can't generate more than {MAX_KEY_INDEX} addresses");
             }
 
             if (securityLevel < 0 || securityLevel > 3)
@@ -86,7 +80,10 @@ namespace Iota.Lib
         /// <param name="seed">The seed</param>
         /// <param name="outputs">The transfers to prepare</param>
         /// <param name="inputs">List of inputs used for funding the transfer</param>
-        /// <param name="remainderAddress">If defined, this address will be used for sending the remainder value to</param>
+        /// <param name="remainderAddress">
+        /// If defined, this address will be used for sending the remainder value to. Should be set to avoid high io rates
+        /// if the bundle does not only contains meta transactions
+        /// </param>
         /// <returns>A list of raw transaction data</returns>
         public List<string> PrepareTransfers(string seed, List<Transaction> outputs, List<Transaction> inputs = null, string remainderAddress = null)
         {
@@ -95,19 +92,11 @@ namespace Iota.Lib
                 throw new InvalidTryteException();
             }
 
-            seed = IotaApiUtils.PadSeedWithNines(seed);
+            seed = PadSeedWithNines(seed);
 
             if (!InputValidator.IsArrayOfValidTransactions(outputs))
             {
                 throw new InvalidTransactionException();
-            }
-
-            if(remainderAddress != null)
-            {
-                if (!InputValidator.IsValidAddress(remainderAddress))
-                {
-                    throw new InvalidAddressException($"{remainderAddress} is not a valid address");
-                }
             }
 
             if (inputs != null)
@@ -116,9 +105,19 @@ namespace Iota.Lib
                 {
                     throw new InvalidTransactionException();
                 }
+
+                if (string.IsNullOrEmpty(remainderAddress))
+                {
+                    if (!InputValidator.IsValidAddress(remainderAddress))
+                    {
+                        throw new InvalidAddressException($"{remainderAddress} is not a valid address");
+                    }
+
+                    remainderAddress = GetNewAddresses(seed, 0, 1).ElementAt(0); //If inputs are provided but no remainder address is given, get new address
+                }
             }
 
-            var remainding = BigInteger.Subtract(GetTotalBalance(inputs), GetTotalBalance(outputs));
+            var remainding = BigInteger.Add(GetTotalBalance(inputs), GetTotalBalance(outputs));
 
             if(remainding < 0)
             {
@@ -126,15 +125,15 @@ namespace Iota.Lib
             }
             if(remainding > 0 )
             {
-                Transaction refund = new Transaction(GetNewAddresses(seed).ElementAt(0));
-                outputs.Add(refund);
+                outputs.Add(new Transaction(remainderAddress, remainding));
             }
 
             Bundle bundle = new Bundle(outputs);
-            List<Transaction> confirmedInputs = ValidateInputs(inputs, bundle).ToList();
-            confirmedInputs.ForEach(tx => bundle.AddEntry(tx));
+            inputs.ForEach(tx => bundle.AddEntry(tx));
+
+            var response = GetTransactionsToApproveAsync(SAVE_DEPTH).Result;
              
-            bundle.FinalizeBundle();
+            bundle.FinalizeBundle(response.BranchTransaction, response.TrunkTransaction);
 
             List<String> bundleTrytes = new List<string>();
             bundle.Transactions.ForEach(tx => bundleTrytes.Add(tx.ToTransactionTrytes()));

@@ -63,16 +63,18 @@ namespace Iota.Lib.Model
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Transaction"/> class.
+        /// Initializes a new instance of the <see cref="Transaction"/> class
         /// </summary>
-        /// <param name="address">The address.</param>
-        /// <param name="value">The value.</param>
-        /// <param name="tag">The tag.</param>
-        /// <param name="timestamp">The timestamp.</param>
-        public Transaction(string address, BigInteger value, string tag)
+        /// <param name="address">The address</param>
+        /// <param name="value">The value</param>
+        /// <param name="message">The message</param>
+        /// <param name="tag">The tag</param>
+        public Transaction(string address, BigInteger value, string message = null, string tag = null)
         {
             Address = address;
             Value = value;
+            SignatureMessageFragment = message;
+            Tag = tag;
             Timestamp = IotaApiUtils.CreateTimeStampNow();
         }
 

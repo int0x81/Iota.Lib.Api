@@ -3,7 +3,7 @@
     /// <summary>
     /// Iota Units 
     /// </summary>
-    public enum IotaUnits
+    public enum IotaUnit
     {
         /// <summary>
         /// The corresponding value is in iota. Same as 'None' (<see cref="None"/>)

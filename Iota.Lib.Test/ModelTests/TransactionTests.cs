@@ -41,7 +41,6 @@ namespace Iota.Lib.Test.ModelTests
             Assert.IsTrue(transaction.Tag.Length == TAG_LENGTH);
             Assert.IsTrue(transaction.Timestamp >= 0);
             Assert.IsTrue(transaction.TrunkTransaction.Length == TRANSACTION_HASH_LENGTH);
-            Assert.IsTrue(transaction.Value >= 0);
         }
     }
 }

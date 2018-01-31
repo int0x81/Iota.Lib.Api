@@ -8,7 +8,7 @@ namespace Iota.Lib.Model
     /// <summary>
     /// Represents a bundle.
     /// </summary>
-    public class Bundle : IComparable<Bundle>
+    public class Bundle
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="Bundle"/> class without transactions.
@@ -144,60 +144,15 @@ namespace Iota.Lib.Model
         /// <summary>
         /// Calculates the bundle hash using <see cref="Kerl"/> and fills it into all transactions
         /// </summary>
-        public void FinalizeBundle()
+        public void FinalizeBundle(string tip_01, string tip_02)
         {
-            Kerl kerl = new Kerl();
-            kerl.Reset();
+            CreateTail(tip_01, tip_02);
+            Transactions.ForEach(tx => tx.AttachmentTimestampLowerBound = IotaApiUtils.CreateTimeStampNow());
+            string bundleHash = GetBundleHash();
+            Transactions.ForEach(tx => tx.Bundle = bundleHash);
+            //POW
+            Transactions.ForEach(tx => tx.AttachmentTimestampUpperBound = IotaApiUtils.CreateTimeStampNow());
 
-            for (int i = 0; i < Transactions.Count; i++)
-            {
-                int[] valueTrits = Converter.ConvertBigIntToTrits(Transactions[i].Value);
-                valueTrits = ArrayUtils.PadArrayWithZeros(valueTrits, 81);
-
-                int[] timestampTrits = Converter.ConvertLongToTrits(Transactions[i].Timestamp);
-                timestampTrits = ArrayUtils.PadArrayWithZeros(timestampTrits, 27);
-
-                int[] currentIndexTrits = Converter.ConvertIntegerToTrits(Transactions[i].CurrentIndex);
-                currentIndexTrits = ArrayUtils.PadArrayWithZeros(currentIndexTrits, 27);
-
-                int[] lastIndexTrits = Converter.ConvertIntegerToTrits(Transactions[i].LastIndex);
-                lastIndexTrits = ArrayUtils.PadArrayWithZeros(lastIndexTrits, 27);
-
-                string stringToConvert = Transactions[i].Address
-                                         + Converter.ConvertTritsToTrytes(valueTrits)
-                                         + Converter.ConvertTritsToTrytes(timestampTrits)
-                                         + Converter.ConvertTritsToTrytes(currentIndexTrits)
-                                         + Converter.ConvertTritsToTrytes(lastIndexTrits);
-
-                int[] t = Converter.ConvertTrytesToTrits(stringToConvert);
-                kerl.Absorb(t, 0, t.Length);
-            }
-
-            string hashInTrytes = Converter.ConvertTritsToTrytes(kerl.Squeeze());
-
-            foreach(Transaction transaction in Transactions)
-            {
-                transaction.Bundle = hashInTrytes;
-            }
-        }
-
-        /// <summary>
-        /// Compares the current object with another object of the same type.
-        /// </summary>
-        /// <param name="other">An object to compare with this object.</param>
-        /// <returns>
-        /// A value that indicates the relative order of the objects being compared. The return value has the following meanings: Value Meaning Less than zero This object is less than the <paramref name="other" /> parameter.Zero This object is equal to <paramref name="other" />. Greater than zero This object is greater than <paramref name="other" />.
-        /// </returns>
-        public int CompareTo(Bundle other)
-        {
-            long timeStamp1 = Transactions[0].Timestamp;
-            long timeStamp2 = other.Transactions[0].Timestamp;
-
-            if (timeStamp1 < timeStamp2)
-                return -1;
-            if (timeStamp1 > timeStamp2)
-                return 1;
-            return 0;
         }
 
         /// <summary>
@@ -209,6 +164,37 @@ namespace Iota.Lib.Model
         public override string ToString()
         {
             return $"{nameof(Transactions)}: {string.Join(",", Transactions)}";
+        }
+
+        /// <summary>
+        /// Calculates the bundle hash
+        /// </summary>
+        /// <returns>The bundle hash</returns>
+        private string GetBundleHash()
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Sets the branch- and trunktransaction for each transaction
+        /// </summary>
+        /// <param name="tip_01">The first tip</param>
+        /// <param name="tip_02">The second tip</param>
+        private void CreateTail(string tip_01, string tip_02)
+        {
+            for(int c = 0; c <= Transactions.Count; c++)
+            {
+                if(c == Transactions.Count)
+                {
+                    Transactions[c].BranchTransaction = tip_02;
+                    Transactions[c].TrunkTransaction = tip_01;
+                }
+                else
+                {
+                    Transactions[c].BranchTransaction = tip_01;
+                    Transactions[c].TrunkTransaction = Transactions[c + 1].Hash;
+                }
+            }
         }
     }
 }
