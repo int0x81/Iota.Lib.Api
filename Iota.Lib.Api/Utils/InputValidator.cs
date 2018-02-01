@@ -20,7 +20,7 @@ namespace Iota.Lib.Utils
         /// </returns>
         public static bool IsValidAddress(string address)
         {
-            if (address.Length == Constants.ADDRESSLENGTH_WITHOUT_CHECKSUM || address.Length == Constants.ADDRESSLENGTH_WITH_CHECKSUM)
+            if (address.Length == ADDRESSLENGTH_WITHOUT_CHECKSUM || address.Length == ADDRESSLENGTH_WITH_CHECKSUM)
             {
                 return IsStringOfTrytes(address);
             }

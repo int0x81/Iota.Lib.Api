@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Numerics;
+using Iota.Lib.Exception;
 using Iota.Lib.Utils;
 
 namespace Iota.Lib.Model
@@ -56,6 +57,11 @@ namespace Iota.Lib.Model
         /// <param name="transaction">The transaction</param>
         public void AddEntry(Transaction transaction)
         {
+            if(!InputValidator.IsValidAddress(transaction.Address) || transaction.Value == null || !InputValidator.IsStringOfTrytes(transaction.Tag) || transaction.Timestamp == 0)
+            {
+                throw new InvalidTransactionException();
+            }
+
             Transactions.Add(transaction);
         }
 
@@ -144,14 +150,8 @@ namespace Iota.Lib.Model
         /// <summary>
         /// Calculates the bundle hash using <see cref="Kerl"/> and fills it into all transactions
         /// </summary>
-        public void FinalizeBundle(string tip_01, string tip_02)
+        public void FinalizeBundle()
         {
-            CreateTail(tip_01, tip_02);
-            Transactions.ForEach(tx => tx.AttachmentTimestampLowerBound = IotaApiUtils.CreateTimeStampNow());
-            string bundleHash = GetBundleHash();
-            Transactions.ForEach(tx => tx.Bundle = bundleHash);
-            //POW
-            Transactions.ForEach(tx => tx.AttachmentTimestampUpperBound = IotaApiUtils.CreateTimeStampNow());
 
         }
 
@@ -170,9 +170,21 @@ namespace Iota.Lib.Model
         /// Calculates the bundle hash
         /// </summary>
         /// <returns>The bundle hash</returns>
-        private string GetBundleHash()
+        public string GetBundleHash()
         {
-            throw new NotImplementedException();
+            Kerl kerl = new Kerl();
+
+            foreach(Transaction transaction in Transactions)
+            {
+                kerl.Absorb(Converter.ConvertTrytesToTrits(transaction.Address));
+                kerl.Absorb(Converter.ConvertBigIntToTrits(transaction.Value));
+                kerl.Absorb(Converter.ConvertTrytesToTrits(transaction.ObsoleteTag));
+                kerl.Absorb(Converter.ConvertLongToTrits(transaction.Timestamp));
+                kerl.Absorb(Converter.ConvertIntegerToTrits(transaction.CurrentIndex));
+                kerl.Absorb(Converter.ConvertIntegerToTrits(transaction.LastIndex));
+            }
+
+            return Converter.ConvertTritsToTrytes(kerl.Squeeze());
         }
 
         /// <summary>

@@ -133,7 +133,7 @@ namespace Iota.Lib
 
             var response = GetTransactionsToApproveAsync(SAVE_DEPTH).Result;
              
-            bundle.FinalizeBundle(response.BranchTransaction, response.TrunkTransaction);
+            bundle.FinalizeBundle();
 
             List<String> bundleTrytes = new List<string>();
             bundle.Transactions.ForEach(tx => bundleTrytes.Add(tx.ToTransactionTrytes()));
@@ -175,6 +175,19 @@ namespace Iota.Lib
                     i++;
                 }
             }  
+        }
+
+        public void SendTransfer()
+        {
+            //ValidateInputs
+            //Add Meta Transactions for SignatureMessageFragments
+            //FinalizeBundle
+            //Sign the bundle
+            //get trunk and Branch
+            //Set lower timestamp
+            //POW
+            //set upper timestamp
+            throw new NotImplementedException();
         }
 
         /// <summary>
