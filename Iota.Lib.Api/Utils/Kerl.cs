@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Org.BouncyCastle.Crypto.Digests;
 
 using static Iota.Lib.Utils.Converter;
@@ -34,7 +35,13 @@ namespace Iota.Lib.Utils
 
         public ISponge Absorb(int[] trits, int offset, int length)
         {
-            trits = ArrayUtils.PadArrayWithZeros(trits, trits.Length + (trits.Length % HASH_LENGTH));
+            List<int> tritsAsList = new List<int>(trits);
+            while(tritsAsList.Count % HASH_LENGTH != 0)
+            {
+                tritsAsList.Add(0);
+            }
+            trits = tritsAsList.ToArray();
+
             while (offset < length)
             {
                 Array.Copy(trits, offset, tritState, 0, HASH_LENGTH);

@@ -2,7 +2,7 @@
 /**
  * The code on this class is heavily based on:
  * 
- * See <https://github.com/iotaledger/iri/blob/dev/src/main/java/com/iota/iri/hash/PearlDiver.java
+ * https://github.com/iotaledger/iri/blob/dev/src/main/java/com/iota/iri/hash/PearlDiver.java
  * (c) 2016 Come-from-Beyond
  */
 #endregion

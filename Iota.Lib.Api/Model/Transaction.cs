@@ -8,7 +8,7 @@ namespace Iota.Lib.Model
     /// <summary>
     /// This class represents an iota transaction
     /// </summary>
-    public class Transaction
+    public class Transaction : ICloneable
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="Transaction"/> class.
@@ -101,16 +101,30 @@ namespace Iota.Lib.Model
         public string Address { get; set; }
 
         /// <summary>
-        /// Gets or sets the value.
+        /// Gets or sets the value. When the bundle is created with a value less then 0 that means this transaction has to be signed later on.
+        /// That why you have to set the key index first.
         /// </summary>
         /// <value>The value transfered in this transaction.</value>
-        public BigInteger Value { get; set; }
+        public BigInteger Value
+        {
+            get { return Value; }
+            
+            set
+            {
+                if(value < 0 && KeyIndex == 0)
+                {
+                    throw new ArgumentException("When preparing an input transaction, make sure to assign the KeyIndex first! (Needed for later bundle signing)");
+                }
+            }
+        }
 
         /// <summary>
         /// Gets or sets the timestamp.
         /// </summary>
         /// <value>Timestamp of the transaction. Timestamps are not enforced in iota.</value>
         public long Timestamp { get; set; }
+
+        public int KeyIndex { get; set; } //This value is just used internal for proper signing; not sent to the node
 
         /// <summary>
         /// Gets or sets the current index.
@@ -196,6 +210,22 @@ namespace Iota.Lib.Model
         public override string ToString()
         {
             return $"{nameof(Value)}: {Value}, {nameof(Hash)}: {Hash}, {nameof(Address)}: {Address}, {nameof(Timestamp)}: {Timestamp}, {nameof(Bundle)}: {Bundle}, {nameof(TrunkTransaction)}: {TrunkTransaction}, {nameof(BranchTransaction)}: {BranchTransaction}, {nameof(SignatureMessageFragment)}: {SignatureMessageFragment}, {nameof(LastIndex)}: {LastIndex}, {nameof(CurrentIndex)}: {CurrentIndex}, {nameof(Nonce)}: {Nonce}";
+        }
+
+        /// <summary>
+        /// Clones the transaction
+        /// </summary>
+        /// <returns>The clone</returns>
+        public Object Clone()
+        {
+            Transaction clone = new Transaction
+            {
+                Address = this.Address,
+                ObsoleteTag = this.ObsoleteTag,
+                Timestamp = this.Timestamp,
+                Tag = this.Tag
+            };
+            return clone;
         }
     }
 }
