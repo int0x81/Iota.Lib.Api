@@ -21,29 +21,22 @@ namespace Iota.Lib.Utils
                 throw new InvalidAddressException($"{address} is no valid address");
             }
 
-            return address + CalculateChecksum(address);
+             return address + CalculateChecksum(address);
         }
 
 
         /// <summary>
-        /// Removes the checksum from the specified address with checksum
+        /// Removes the checksum from the specified address
         /// </summary>
-        /// <param name="addressWithChecksum">The address with checksum.</param>
-        /// <returns>the specified address without checksum</returns>
-        /// <exception cref="InvalidAddressException">is thrown when the specified address is not an address with checksum</exception>
-        public static string RemoveChecksum(this string addressWithChecksum)
+        /// <param name="addressWithChecksum">The address with checksum</param>
+        /// <exception cref="InvalidAddressException"> is thrown when the specified address is not an address with checksum</exception>
+        public static string RemoveChecksum(string addressWithChecksum)
         {
             if (IsAddressWithChecksum(addressWithChecksum))
             {
-                return GetAddress(addressWithChecksum);
+                return addressWithChecksum.Substring(0, Constants.ADDRESSLENGTH_WITHOUT_CHECKSUM);
             }
             throw new InvalidAddressException(addressWithChecksum);
-        }
-
-
-        internal static string GetAddress(string addressWithChecksum)
-        {
-            return addressWithChecksum.Substring(0, Constants.ADDRESSLENGTH_WITHOUT_CHECKSUM);
         }
 
         /// <summary>
@@ -55,9 +48,9 @@ namespace Iota.Lib.Utils
         /// </returns>
         public static bool IsValidChecksum(string addressWithChecksum)
         {
-            string addressWithoutChecksum = RemoveChecksum(addressWithChecksum);
-            string adressWithRecalculateChecksum = addressWithoutChecksum + CalculateChecksum(addressWithoutChecksum);
-            return adressWithRecalculateChecksum.Equals(addressWithChecksum);
+            string addressWithoutChecksum = addressWithChecksum.Substring(0, Constants.ADDRESSLENGTH_WITHOUT_CHECKSUM);
+
+            return addressWithChecksum.Equals(addressWithoutChecksum + CalculateChecksum(addressWithoutChecksum));
         }
 
 
@@ -68,11 +61,14 @@ namespace Iota.Lib.Utils
 
         private static string CalculateChecksum(string address)
         {
-            ISponge sponge = new Kerl();
-            sponge.Reset();
-            int[] paddedAddress = ArrayUtils.PadArrayWithZeros(Converter.ConvertTrytesToTrits(address), Kerl.HASH_LENGTH);
-            sponge.Absorb(paddedAddress);
-            string checksum = Converter.ConvertTritsToTrytes(sponge.Squeeze(Kerl.HASH_LENGTH));
+            if(!InputValidator.IsValidAddress(address) || address.Length != Constants.ADDRESSLENGTH_WITHOUT_CHECKSUM)
+            {
+                throw new InvalidAddressException($"{address} is no valid address");
+            }
+            Kerl kerl = new Kerl();
+            kerl.Reset();
+            kerl.Absorb(Converter.ConvertTrytesToTrits(address));
+            string checksum = Converter.ConvertTritsToTrytes(kerl.Squeeze());
             return checksum.Substring(72);
         }
     }

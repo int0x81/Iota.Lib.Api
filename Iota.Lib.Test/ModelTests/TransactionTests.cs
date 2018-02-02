@@ -4,7 +4,7 @@ using Iota.Lib.Utils;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using static Iota.Lib.Utils.Constants;
 
-namespace Iota.Lib.Test.ModelTests
+namespace Iota.Lib.Test
 {
     [TestClass]
     public class TransactionTests
@@ -27,9 +27,6 @@ namespace Iota.Lib.Test.ModelTests
             Assert.IsTrue(InputValidator.IsStringOfTrytes(transaction.SignatureMessageFragment));
             Assert.IsTrue(transaction.Address.Length == ADDRESSLENGTH_WITHOUT_CHECKSUM);
             Assert.IsTrue(InputValidator.IsValidAddress(transaction.Address));
-            Assert.IsTrue(transaction.AttachmentTimestamp >= 0);
-            Assert.IsTrue(transaction.AttachmentTimestampLowerBound >= 0);
-            Assert.IsTrue(transaction.AttachmentTimestampUpperBound >= 0);
             Assert.IsTrue(transaction.BranchTransaction.Length == TRANSACTION_HASH_LENGTH);
             Assert.IsTrue(transaction.Bundle.Length == BUNDLE_HASH_LENGTH);
             Assert.IsTrue(transaction.CurrentIndex >= 0);

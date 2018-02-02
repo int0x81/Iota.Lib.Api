@@ -29,39 +29,28 @@ namespace Iota.Lib.Utils
             return checksum ? Checksum.AddChecksum(address) : address;
         }
 
-        public static List<string> SignInputsAndReturn(string seed, List<Transaction> inputs, Bundle bundle, List<string> signatureFragments)
+        public static List<string> SignInputsAndReturn(string seed, Bundle bundle, int securityLevel)
         {
-            bundle.AddTrytes(signatureFragments);
+            //bundle.AddTrytes(signatureFragments);
 
             //  SIGNING OF INPUTS
             //
             //  Here we do the actual signing of the inputs
             //  Iterate over all bundle transactions, find the inputs
             //  Get the corresponding private key and calculate the signatureFragment
-            for (int i = 0; i < bundle.Transactions.Count; i++)
+            foreach(Transaction transaction in bundle.Transactions)
             {
-                if (bundle.Transactions[i].Value < 0)
+                if (transaction.Value < 0)
                 {
-                    string thisAddress = bundle.Transactions[i].Address;
+                    string thisAddress = transaction.Address;
 
-                    // Get the corresponding keyIndex of the address
-                    int keyIndex = 0;
-                    foreach (Transaction input in inputs)
-                    {
-                        if (input.Address.Equals(thisAddress))
-                        {
-                            keyIndex = input.CurrentIndex;
-                            break;
-                        }
-                    }
-
-                    string bundleHash = bundle.Transactions[i].Bundle;
+                    string bundleHash = transaction.Bundle;
 
                     // Get corresponding private key of address
-                    int[] key = Signing.Key(Converter.ConvertTrytesToTrits(seed), keyIndex, 2);
+                    int[] key = Signing.Key(Converter.ConvertTrytesToTrits(seed), transaction.KeyIndex, securityLevel);
 
                     //  First 6561 trits for the firstFragment
-                    int[] firstFragment = ArrayUtils.CreateSubArray(key, 0, 6561);
+                    int[] firstFragment = ArrayUtils.CreateSubArray(key, 0, Constants.SIGNATURE_MESSAGE_LENGTH * 3);
 
                     //  Get the normalized bundle hash
                     int[] normalizedBundleHash = bundle.NormalizedBundle(bundleHash);
@@ -73,7 +62,7 @@ namespace Iota.Lib.Utils
                     int[] firstSignedFragment = Signing.SignatureFragment(firstBundleFragment, firstFragment);
 
                     //  Convert signature to trytes and assign the new signatureFragment
-                    bundle.Transactions[i].SignatureMessageFragment = Converter.ConvertTritsToTrytes(firstSignedFragment);
+                    transaction.SignatureMessageFragment = Converter.ConvertTritsToTrytes(firstSignedFragment);
 
                     //  Because the signature is > 2187 trytes, we need to
                     //  find the second transaction to add the remainder of the signature

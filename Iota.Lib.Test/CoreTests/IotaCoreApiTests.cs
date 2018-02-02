@@ -1,6 +1,7 @@
 ﻿using Iota.Lib.Core;
 using Iota.Lib.Utils;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
 using System.Collections.Generic;
 
 using static System.Net.HttpStatusCode;
@@ -15,7 +16,7 @@ namespace Iota.Lib.Test
         const bool IS_SSL = true;                  //Your test node's encryption state
         const int TIMEOUT = 10000;                 //Limits the time a request should take in milliseconds
 
-        readonly List<string> ADDRESSES = new List<string>()
+        List<string> ADDRESSES = new List<string>()
         {
             "ADJGOINLDBYXPTHJTZCAMABXLNOUFVPRROSRT99RYCNMIBIVKLEKCBVMRWZCKMVLUIMZVHEUXZAJRGA9DNVCJURQMY",
             "NZ9CNGUKCHUQPRIYLV9OXN9KMDGAEFLDOWENIH9KHPVJGYIWUKKBFDZSZDPAOOFEECVITDXQXPEUAGOT9UBQYOQXCD",
@@ -53,60 +54,67 @@ namespace Iota.Lib.Test
             Assert.IsTrue(response.JreVersion.Length != 0);
         }
 
-        [TestMethod, Timeout(TIMEOUT)]
-        public void TestGetNeighbors()
-        {
-            var response = api.GetNeighbors();
-            Assert.IsTrue(response.StatusCode == OK);
+        //[TestMethod, Timeout(TIMEOUT)]
+        //public void TestGetNeighbors()
+        //{
+        //    var response = api.GetNeighbors();
+        //    Assert.IsTrue(response.StatusCode == OK);
 
-            var asyncResponse = api.GetNeighborsAsync().GetAwaiter().GetResult();
-            Assert.IsTrue(asyncResponse.StatusCode == OK);
-        }
+        //    var asyncResponse = api.GetNeighborsAsync().GetAwaiter().GetResult();
+        //    Assert.IsTrue(asyncResponse.StatusCode == OK);
+        //}
 
-        [TestMethod, Timeout(TIMEOUT)]
-        public void TestAddNeighbors()
-        {
-            string[] neighbors =
-            {
-                "udp://8.8.8.8:14265",
-                "udp://8.8.8.5:14265"
-            };
+        //[TestMethod, Timeout(TIMEOUT)]
+        //public void TestAddNeighbors()
+        //{
+        //    string[] neighbors =
+        //    {
+        //        "udp://8.8.8.8:14265",
+        //        "udp://8.8.8.5:14265"
+        //    };
 
-            var response = api.AddNeighbors(neighbors);
-            Assert.IsTrue(response.StatusCode == OK);
-            Assert.IsTrue(response.AddedNeighbors >= 0);
+        //    var response = api.AddNeighbors(neighbors);
+        //    Assert.IsTrue(response.StatusCode == OK);
+        //    Assert.IsTrue(response.AddedNeighbors >= 0);
 
-            var asyncResponse = api.AddNeighborsAsync(neighbors).GetAwaiter().GetResult();
-            Assert.IsTrue(response.StatusCode == OK);
-            Assert.IsTrue(response.AddedNeighbors >= 0);
-        }
+        //    var asyncResponse = api.AddNeighborsAsync(neighbors).GetAwaiter().GetResult();
+        //    Assert.IsTrue(response.StatusCode == OK);
+        //    Assert.IsTrue(response.AddedNeighbors >= 0);
+        //}
 
-        [TestMethod, Timeout(TIMEOUT)]
-        public void TestRemoveNeighbors()
-        {
-            string[] neighbors =
-            {
-                "udp://8.8.8.8:14265",
-                "udp://8.8.8.5:14265"
-            };
+        //[TestMethod, Timeout(TIMEOUT)]
+        //public void TestRemoveNeighbors()
+        //{
+        //    string[] neighbors =
+        //    {
+        //        "udp://8.8.8.8:14265",
+        //        "udp://8.8.8.5:14265"
+        //    };
 
-            var response = api.RemoveNeighbors(neighbors);
-            Assert.IsTrue(response.StatusCode == OK);
-            Assert.IsTrue(response.RemovedNeighbors >= 0);
+        //    var response = api.RemoveNeighbors(neighbors);
+        //    Assert.IsTrue(response.StatusCode == OK);
+        //    Assert.IsTrue(response.RemovedNeighbors >= 0);
 
-            var asyncResponse = api.RemoveNeighborsAsync(neighbors).GetAwaiter().GetResult();
-            Assert.IsTrue(response.StatusCode == OK);
-            Assert.IsTrue(response.RemovedNeighbors >= 0);
-        }
+        //    var asyncResponse = api.RemoveNeighborsAsync(neighbors).GetAwaiter().GetResult();
+        //    Assert.IsTrue(response.StatusCode == OK);
+        //    Assert.IsTrue(response.RemovedNeighbors >= 0);
+        //}
 
         [TestMethod, Timeout(TIMEOUT)]
         public void TestFindTransactions()
         {
+            foreach(string address in ADDRESSES)
+            {
+                if(!InputValidator.IsValidAddress(address))
+                {
+                    throw new ArgumentException();
+                }
+            }
             var response = api.FindTransactions(null, ADDRESSES);
             Assert.IsTrue(response.StatusCode == OK);
             Assert.IsTrue(response.Hashes.Count >= 0);
 
-            response = api.FindTransactions();
+            response = api.FindTransactionsAsync(null, ADDRESSES).Result;
             Assert.IsTrue(response.StatusCode == OK);
             Assert.IsTrue(response.Hashes.Count >= 0);
         }
@@ -181,29 +189,29 @@ namespace Iota.Lib.Test
             Assert.IsTrue(InputValidator.IsStringOfTrytes(response.BranchTransaction));
         }
 
-        [TestMethod, Timeout(TIMEOUT)]
-        public void TestAttachToTangle()
-        {
-            var transactionsToApprove = api.GetTransactionsToApprove(27);
+        //[TestMethod, Timeout(TIMEOUT)]
+        //public void TestAttachToTangle()
+        //{
+        //    var transactionsToApprove = api.GetTransactionsToApprove(27);
 
-            var response = api.AttachToTangle(transactionsToApprove.TrunkTransaction, transactionsToApprove.BranchTransaction, RAW_TRANSACTIONS, Constants.MIN_WEIGHT_MAGNITUDE);
-            Assert.IsTrue(response.StatusCode == OK);
-            Assert.IsTrue(response.Trytes.Count >= 0);
+        //    var response = api.AttachToTangle(transactionsToApprove.TrunkTransaction, transactionsToApprove.BranchTransaction, RAW_TRANSACTIONS, Constants.MIN_WEIGHT_MAGNITUDE);
+        //    Assert.IsTrue(response.StatusCode == OK);
+        //    Assert.IsTrue(response.Trytes.Count >= 0);
 
-            response = api.AttachToTangleAsync(transactionsToApprove.TrunkTransaction, transactionsToApprove.BranchTransaction, RAW_TRANSACTIONS, Constants.MIN_WEIGHT_MAGNITUDE).GetAwaiter().GetResult();
-            Assert.IsTrue(response.StatusCode == OK);
-            Assert.IsTrue(response.Trytes.Count >= 0);
-        }
+        //    response = api.AttachToTangleAsync(transactionsToApprove.TrunkTransaction, transactionsToApprove.BranchTransaction, RAW_TRANSACTIONS, Constants.MIN_WEIGHT_MAGNITUDE).GetAwaiter().GetResult();
+        //    Assert.IsTrue(response.StatusCode == OK);
+        //    Assert.IsTrue(response.Trytes.Count >= 0);
+        //}
 
-        [TestMethod, Timeout(TIMEOUT)]
-        public void TestInterruptAttackingToTangle()
-        {
-            var response = api.InterruptAttachingToTangle();
-            Assert.IsTrue(response.StatusCode == OK);
+        //[TestMethod, Timeout(TIMEOUT)]
+        //public void TestInterruptAttachingToTangle()
+        //{
+        //    var response = api.InterruptAttachingToTangle();
+        //    Assert.IsTrue(response.StatusCode == OK);
 
-            response = api.InterruptAttachingToTangleAsync().GetAwaiter().GetResult();
-            Assert.IsTrue(response.StatusCode == OK);
-        }
+        //    response = api.InterruptAttachingToTangleAsync().GetAwaiter().GetResult();
+        //    Assert.IsTrue(response.StatusCode == OK);
+        //}
 
         [TestMethod, Timeout(TIMEOUT)]
         public void TestBroadcastTransactions()

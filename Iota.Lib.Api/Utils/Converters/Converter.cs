@@ -37,7 +37,8 @@ namespace Iota.Lib.Utils
                 }
             }
 
-            return ArrayUtils.EraseNullValuesFromEnd(trits.ToArray());
+            int[] paddedArray = trits.ToArray();
+            return ArrayUtils.PadArrayWithZeros(paddedArray, paddedArray.Length + (paddedArray.Length % Constants.RADIX));
         }
 
         /// <summary>
@@ -132,7 +133,9 @@ namespace Iota.Lib.Utils
                     trits[i] = -trits[i];
                 }
             }
-            return trits.ToArray();
+
+            int[] paddedArray = trits.ToArray();
+            return ArrayUtils.PadTritArrayWithZeroes(paddedArray);
         }
 
         /// <summary>
@@ -255,7 +258,9 @@ namespace Iota.Lib.Utils
                     trits[i] = -trits[i];
                 }
             }
-            return trits.ToArray();
+
+            int[] paddedArray = trits.ToArray();
+            return ArrayUtils.PadTritArrayWithZeroes(paddedArray);
         }
         
         /// <summary>
@@ -320,7 +325,9 @@ namespace Iota.Lib.Utils
                     trits[i] = -trits[i];
                 }
             }
-            return trits.ToArray();
+
+            int[] paddedArray = trits.ToArray();
+            return ArrayUtils.PadTritArrayWithZeroes(paddedArray);
         }
 
         /// <summary>

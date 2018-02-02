@@ -2,14 +2,14 @@
 
 This is an unofficial C#-Library that targets .NET Standard 2.0. That means it can be used within .NET Framework-, .NET Core- and Xamarin-Projects. It supports all 14 [Core API calls](https://iota.readme.io/docs/getnodeinfo). The [Proposed calls](https://github.com/iotaledger/wiki/blob/master/api-proposal.md) will be available in the near future. All API calls are also available as asynchronous methods.
 
-This library is actively supported (as of 2017-01-30). I will try to implement all upcoming Iota-Features as soon as possible.
+This library is actively supported (as of 2017-02-03). I will try to implement all upcoming Iota-Features as soon as possible.
 
 ## Getting Started
 
 This is how you create the API you can use within your projects:
 
 ```csharp
-   IotaApi iotaApi = new IotaApi("nodes.thetangle.org", 443);
+   IotaApi iotaApi = new IotaApi("nodes.thetangle.org", 443, true);
    //...
 ```
 ## Join the Iota Community

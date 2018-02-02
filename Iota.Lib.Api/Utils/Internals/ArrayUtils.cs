@@ -85,8 +85,11 @@ namespace Iota.Lib.Utils
         /// <param name="firstArray">The first array.</param>
         /// <param name="secondArray">The second array.</param>
         /// <returns>A boolean that determines if both arrays are equal.</returns>
-        public static bool CompareEachElement(int[] firstArray, int[] secondArray)
+        public static bool CompareTritArrays(int[] firstArray, int[] secondArray)
         {
+            firstArray =  EraseNullValuesFromEnd(firstArray);
+            secondArray = EraseNullValuesFromEnd(secondArray);
+
             if (firstArray == null || firstArray.Length != secondArray.Length)
             {
                 return false;
@@ -101,6 +104,30 @@ namespace Iota.Lib.Utils
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// Fills a trit-array with approriate zeroes so that  the length can be divided by the RADIX
+        /// </summary>
+        /// <param name="trits">The trit-array</param>
+        /// <returns>The filled trit-array</returns>
+        public static int[] PadTritArrayWithZeroes(int[] trits)
+        {
+            List<int> list = new List<int>(trits);
+            switch(list.Count % Constants.RADIX)
+            {
+                case 0:
+                    break;
+                case 1:
+                    list.Add(0);
+                    list.Add(0);
+                    break;
+                case 2:
+                    list.Add(0);
+                    break;
+            }
+
+            return list.ToArray();
         }
     }
 }

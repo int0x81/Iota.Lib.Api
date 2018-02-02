@@ -18,7 +18,7 @@ namespace Iota.Lib.Test
 
         [TestMethod]
         public void TestAddChecksum()
-        {
+        {   
             Assert.AreEqual(TEST_ADDRESSES_WITH_CHECKSUM[0], Checksum.AddChecksum(TEST_ADDRESSES_WITHOUT_CHECKSUM[0]));
             Assert.AreEqual(TEST_ADDRESSES_WITH_CHECKSUM[1], Checksum.AddChecksum(TEST_ADDRESSES_WITHOUT_CHECKSUM[1]));
         }

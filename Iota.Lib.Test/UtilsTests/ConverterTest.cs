@@ -9,11 +9,11 @@ namespace Iota.Lib.Test
     [TestClass]
     public class ConverterTest
     {
-        readonly int[] trits_01 = { 1, 1, 1 };          //13
-        readonly int[] trits_02 = { -1, -1, -1, 1 };    //14
-        readonly int[] trits_03 = { 1, 1, 1, -1 };      //-14
-        readonly int[] trits_04 = { 1, 0, 0, 1 };       //28
-        readonly int[] trits_05 = { 0 };                //0
+        readonly int[] trits_01 = { 1, 1, 1 };             //13
+        readonly int[] trits_02 = { -1, -1, -1, 1, 0, 0 }; //14
+        readonly int[] trits_03 = { 1, 1, 1, -1, 0, 0};    //-14
+        readonly int[] trits_04 = { 1, 0, 0, 1, 0, 0 };    //28
+        readonly int[] trits_05 = { 0, 0, 0 };             //0
 
         readonly string trytes_01 = "M";
         readonly string trytes_02 = "NA";
@@ -41,11 +41,11 @@ namespace Iota.Lib.Test
             var tmp_04 = ConvertBigIntToTrits(new BigInteger(28));
             var tmp_05 = ConvertBigIntToTrits(new BigInteger(1337));
 
-            Assert.IsTrue(ArrayUtils.CompareEachElement(tmp_01, trits_01));
-            Assert.IsTrue(ArrayUtils.CompareEachElement(tmp_02, trits_02));
-            Assert.IsTrue(ArrayUtils.CompareEachElement(tmp_03, trits_03));
-            Assert.IsTrue(ArrayUtils.CompareEachElement(tmp_04, trits_04));
-            Assert.IsFalse(ArrayUtils.CompareEachElement(tmp_05, trits_04));
+            Assert.IsTrue(ArrayUtils.CompareTritArrays(tmp_01, trits_01));
+            Assert.IsTrue(ArrayUtils.CompareTritArrays(tmp_02, trits_02));
+            Assert.IsTrue(ArrayUtils.CompareTritArrays(tmp_03, trits_03));
+            Assert.IsTrue(ArrayUtils.CompareTritArrays(tmp_04, trits_04));
+            Assert.IsFalse(ArrayUtils.CompareTritArrays(tmp_05, trits_04));
         }
 
         [TestMethod]
@@ -109,11 +109,11 @@ namespace Iota.Lib.Test
         [TestMethod]
         public void TestTrytesToTrits()
         {
-            Assert.IsTrue(ArrayUtils.CompareEachElement(trits_01, ConvertTrytesToTrits(trytes_01)));
-            Assert.IsTrue(ArrayUtils.CompareEachElement(trits_02, ConvertTrytesToTrits(trytes_02)));
-            Assert.IsTrue(ArrayUtils.CompareEachElement(trits_03, ConvertTrytesToTrits(trytes_03)));
-            Assert.IsTrue(ArrayUtils.CompareEachElement(trits_04, ConvertTrytesToTrits(trytes_04)));
-            Assert.IsTrue(ArrayUtils.CompareEachElement(trits_05, ConvertTrytesToTrits(trytes_05)));
+            Assert.IsTrue(ArrayUtils.CompareTritArrays(trits_01, ConvertTrytesToTrits(trytes_01)));
+            Assert.IsTrue(ArrayUtils.CompareTritArrays(trits_02, ConvertTrytesToTrits(trytes_02)));
+            Assert.IsTrue(ArrayUtils.CompareTritArrays(trits_03, ConvertTrytesToTrits(trytes_03)));
+            Assert.IsTrue(ArrayUtils.CompareTritArrays(trits_04, ConvertTrytesToTrits(trytes_04)));
+            Assert.IsTrue(ArrayUtils.CompareTritArrays(trits_05, ConvertTrytesToTrits(trytes_05)));
         }
 
         [TestMethod]
@@ -136,11 +136,11 @@ namespace Iota.Lib.Test
             var tmp_04 = ConvertLongToTrits(28);
             var tmp_05 = ConvertLongToTrits(1337);
 
-            Assert.IsTrue(ArrayUtils.CompareEachElement(tmp_01, trits_01));
-            Assert.IsTrue(ArrayUtils.CompareEachElement(tmp_02, trits_02));
-            Assert.IsTrue(ArrayUtils.CompareEachElement(tmp_03, trits_03));
-            Assert.IsTrue(ArrayUtils.CompareEachElement(tmp_04, trits_04));
-            Assert.IsFalse(ArrayUtils.CompareEachElement(tmp_05, trits_04));
+            Assert.IsTrue(ArrayUtils.CompareTritArrays(tmp_01, trits_01));
+            Assert.IsTrue(ArrayUtils.CompareTritArrays(tmp_02, trits_02));
+            Assert.IsTrue(ArrayUtils.CompareTritArrays(tmp_03, trits_03));
+            Assert.IsTrue(ArrayUtils.CompareTritArrays(tmp_04, trits_04));
+            Assert.IsFalse(ArrayUtils.CompareTritArrays(tmp_05, trits_04));
         }
     }
 }

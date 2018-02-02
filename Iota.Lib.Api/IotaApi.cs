@@ -75,17 +75,18 @@ namespace Iota.Lib
         }
 
         /// <summary>
-        /// Generates a correct bundle containing the desired ouputs and inputs, signs the transactions if needed and returns the transactions as tryte encoded strings
+        /// Generates a correct bundle containing the desired ouputs and inputs, signs the transactions, creates the tail and also does the proof of work.
+        /// <see href="https://medium.com/@louielu/in-depth-explanation-of-how-iota-making-a-transaction-with-picture-8a638805f905"/>
         /// </summary>
         /// <param name="seed">The seed</param>
         /// <param name="outputs">The transfers to prepare</param>
+        /// <param name="securityLevel">The security level of the private key hwich is used to sign the outputs</param>
         /// <param name="inputs">List of inputs used for funding the transfer</param>
         /// <param name="remainderAddress">
-        /// If defined, this address will be used for sending the remainder value to. Should be set to avoid high io rates
-        /// if the bundle does not only contains meta transactions
+        /// If defined, this address will be used for sending the remainder value to.
         /// </param>
         /// <returns>A list of raw transaction data</returns>
-        public List<string> PrepareTransfers(string seed, List<Transaction> outputs, List<Transaction> inputs = null, string remainderAddress = null)
+        public List<string> PrepareTransfers(string seed, List<Transaction> outputs, int securityLevel, List<Transaction> inputs = null, string remainderAddress = null)
         {
             if (!InputValidator.IsValidSeed(seed))
             {
@@ -128,12 +129,15 @@ namespace Iota.Lib
                 outputs.Add(new Transaction(remainderAddress, remainding));
             }
 
-            Bundle bundle = new Bundle(outputs);
+            Bundle bundle = new Bundle();
+            outputs.ForEach(tx => bundle.AddEntry(tx));
+            bundle.SliceSignatures(securityLevel);
             inputs.ForEach(tx => bundle.AddEntry(tx));
-
+            bundle.FinalizeBundle();
+            //signTransactions
             var response = GetTransactionsToApproveAsync(SAVE_DEPTH).Result;
-             
-            bundle.FinalizeBundle(response.BranchTransaction, response.TrunkTransaction);
+            bundle.CreateTail(response.BranchTransaction, response.TrunkTransaction);
+            //POW 
 
             List<String> bundleTrytes = new List<string>();
             bundle.Transactions.ForEach(tx => bundleTrytes.Add(tx.ToTransactionTrytes()));
@@ -175,6 +179,19 @@ namespace Iota.Lib
                     i++;
                 }
             }  
+        }
+
+        public void SendTransfer()
+        {
+            //ValidateInputs
+            //Add Meta Transactions for SignatureMessageFragments
+            //FinalizeBundle
+            //Sign the bundle
+            //get trunk and Branch
+            //Set lower timestamp
+            //POW
+            //set upper timestamp
+            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -224,7 +241,7 @@ namespace Iota.Lib
                 }
             }
 
-            if (bundle.TotalValue > totalBalance)
+            if (GetTotalBalance(bundle.Transactions) > totalBalance)
             {
                 throw new NotEnoughBalanceException();
             }

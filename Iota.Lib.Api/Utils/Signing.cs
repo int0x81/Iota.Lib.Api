@@ -18,7 +18,7 @@ namespace Iota.Lib.Utils
         /// <returns>The private key as trit-array</returns>
         public static int[] Key(int[] seed, int index, int securityLevel)
         {
-            int[] filledSeed = FillSeed(seed);
+            int[] filledSeed = ArrayUtils.PadArrayWithZeros(seed, Constants.SEED_MAX_LENGTH * 3);
 
             int[] subseed = Converter.Increment(filledSeed, index);
             
@@ -169,23 +169,6 @@ namespace Iota.Lib.Utils
             string address = Converter.ConvertTritsToTrytes(Address(digests));
 
             return (expectedAddress.Equals(address));
-        }
-
-        /// <summary>
-        /// Fills a seed with zeroes until the maximum seed length is reached
-        /// </summary>
-        /// <param name="seed">The seed in trits</param>
-        /// <returns>The filled seed</returns>
-        private static int[] FillSeed(int[] seed)
-        {
-            List<int> seedAsList = new List<int>(seed);
-
-            while (seedAsList.Count % (Constants.SEED_MAX_LENGTH * 3) != 0)
-            {
-                seedAsList.Add(0);
-            }
-
-            return seedAsList.ToArray();
         }
     }
 }
