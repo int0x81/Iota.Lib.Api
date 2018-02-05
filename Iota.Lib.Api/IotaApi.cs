@@ -44,7 +44,7 @@ namespace Iota.Lib
                 throw new InvalidTryteException();
             }
 
-            seed = PadSeedWithNines(seed);
+            seed = ArrayUtils.AdjustTryteString(seed, SEED_MAX_LENGTH);
 
             if (start > end)
             {
@@ -75,7 +75,8 @@ namespace Iota.Lib
         }
 
         /// <summary>
-        /// Generates a correct bundle containing the desired ouputs and inputs, signs the transactions, creates the tail and also does the proof of work.
+        /// Generates a correct bundle containing the desired ouputs and inputs, signs the transactionsand creates the tail. In order to succesfully
+        /// send the bundle you still need to perform proof of work
         /// <see href="https://medium.com/@louielu/in-depth-explanation-of-how-iota-making-a-transaction-with-picture-8a638805f905"/>
         /// </summary>
         /// <param name="seed">The seed</param>
@@ -86,14 +87,14 @@ namespace Iota.Lib
         /// If defined, this address will be used for sending the remainder value to.
         /// </param>
         /// <returns>A list of raw transaction data</returns>
-        public List<string> PrepareTransfers(string seed, List<Transaction> outputs, int securityLevel, List<Transaction> inputs = null, string remainderAddress = null)
+        public IEnumerable<string> PrepareTransfers(string seed, List<Transaction> outputs, int securityLevel, List<Transaction> inputs = null, string remainderAddress = null)
         {
             if (!InputValidator.IsValidSeed(seed))
             {
                 throw new InvalidTryteException();
             }
 
-            seed = PadSeedWithNines(seed);
+            seed = ArrayUtils.AdjustTryteString(seed, SEED_MAX_LENGTH);
 
             if (!InputValidator.IsArrayOfValidTransactions(outputs))
             {
@@ -102,45 +103,38 @@ namespace Iota.Lib
 
             if (inputs != null)
             {
-                if (!InputValidator.IsArrayOfValidTransactions(inputs))
+                if(!InputValidator.IsArrayOfValidTransactions(inputs))
                 {
                     throw new InvalidTransactionException();
                 }
 
                 if (string.IsNullOrEmpty(remainderAddress))
                 {
-                    if (!InputValidator.IsValidAddress(remainderAddress))
-                    {
-                        throw new InvalidAddressException($"{remainderAddress} is not a valid address");
-                    }
-
-                    remainderAddress = GetNewAddresses(seed, 0, 1).ElementAt(0); //If inputs are provided but no remainder address is given, get new address
+                    remainderAddress = GetNewAddresses(seed, inputs[inputs.Count - 1].KeyIndex + 1, 1, securityLevel).ElementAt(0);
                 }
             }
 
-            var remainding = BigInteger.Add(GetTotalBalance(inputs), GetTotalBalance(outputs));
+            BigInteger remainding = BigInteger.Add(GetTotalBalance(inputs), GetTotalBalance(outputs));
 
-            if(remainding < 0)
+
+            if(remainding > 0)
             {
                 throw new NotEnoughBalanceException();
             }
-            if(remainding > 0 )
-            {
-                outputs.Add(new Transaction(remainderAddress, remainding));
-            }
+
+            var dummy = outputs[0].ToTransactionTrytes();
+            var di = dummy.Length;
 
             Bundle bundle = new Bundle();
-            outputs.ForEach(tx => bundle.AddEntry(tx));
+            bundle.AddEntries(outputs);
+            bundle.AddEntries(inputs);
             bundle.SliceSignatures(securityLevel);
-            inputs.ForEach(tx => bundle.AddEntry(tx));
+            bundle.AddEntry(new Transaction(remainderAddress, -remainding));
             bundle.FinalizeBundle();
-            //signTransactions
+            var tmp = Task.Run(() => SignInputsAndReturn(seed, bundle)).Result;
             var response = GetTransactionsToApproveAsync(SAVE_DEPTH).Result;
             bundle.CreateTail(response.BranchTransaction, response.TrunkTransaction);
-            //POW 
-
-            List<String> bundleTrytes = new List<string>();
-            bundle.Transactions.ForEach(tx => bundleTrytes.Add(tx.ToTransactionTrytes()));
+            IEnumerable<String> bundleTrytes = bundle.GetRawTransactions();
             bundleTrytes.Reverse();
             return bundleTrytes;  
         }
@@ -154,7 +148,7 @@ namespace Iota.Lib
         /// <param name="securityLevel">The security level of the generated addresses</param>
         /// <param name="checksum">States if the returning addresses shall contain a valid checksum</param>
         /// <returns>An IEnumerable containing the addresses</returns>
-        public IEnumerable<string> GetNewAddresses(string seed, int index = 0, int total = 0, int securityLevel = 2, bool checksum = false)
+        public IEnumerable<string> GetNewAddresses(string seed, int index = 0, int total = 1, int securityLevel = 2, bool checksum = false)
         {
             if (!InputValidator.IsValidSeed(seed))
             {
@@ -171,9 +165,9 @@ namespace Iota.Lib
 
             for(int i = index; i < index + total;)
             {
-                string newAddress = IotaApiUtils.CreateNewAddress(seed, i, securityLevel, checksum);
-                List<string> foundTransactions = FindTransactionsByAddress(newAddress);
-                if(foundTransactions.Count == 0)
+                string newAddress = CreateNewAddress(seed, i, securityLevel, checksum);
+                IEnumerable<Transaction> foundTransactions = FindTransactionsByAddresses(newAddress);
+                if(foundTransactions.Count() == 0)
                 {
                     yield return newAddress;
                     i++;
@@ -181,17 +175,167 @@ namespace Iota.Lib
             }  
         }
 
-        public void SendTransfer()
+        /// <summary>
+        /// This function returns the bundle which is associated with a transaction
+        /// </summary>
+        /// <param name="rawTransaction">The raw transaction</param>
+        /// <returns>The bundle</returns>
+        public Bundle GetBundle(string rawTransaction)
         {
-            //ValidateInputs
-            //Add Meta Transactions for SignatureMessageFragments
-            //FinalizeBundle
-            //Sign the bundle
-            //get trunk and Branch
-            //Set lower timestamp
-            //POW
-            //set upper timestamp
+            Bundle bundle = TraverseBundle(rawTransaction, null, new Bundle());
+
+            if (bundle == null)
+            {
+                throw new InvalidBundleException("Bundle can not be null");
+            }
+            
+            BigInteger totalValue = 0;
+            string bundleHash = bundle.Transactions[0].Bundle;
+
+            kerl.Reset();
+
+            List<Signature> signaturesToValidate = new List<Signature>();
+
+            for(int index = 0; index < bundle.Transactions.Count; index++)
+            {
+                Transaction bundleTransaction = bundle.Transactions[index];
+                totalValue += bundleTransaction.Value;
+
+                if(bundleTransaction.CurrentIndex != index)
+                {
+                    throw new InvalidBundleException("The index of the bundle " + bundleTransaction.CurrentIndex + " did not match the expected index " + index);
+                }
+
+                kerl.Absorb(Converter.ConvertTrytesToTrits(bundleTransaction.ToTransactionTrytes().Substring(2187, 162)));
+
+                if (bundleTransaction.Value < 0)
+                {
+                    Signature sig = new Signature
+                    {
+                        Address = bundleTransaction.Address
+                    };
+                    sig.SignatureFragments.Add(bundleTransaction.SignatureMessageFragment);
+
+                    for (int i = index; i < bundle.Transactions.Count - 1; i++)
+                    {
+                        var newBundleTx = bundle.Transactions[i + 1];
+
+                        if (newBundleTx.Address == bundleTransaction.Address && newBundleTx.Value == 0)
+                        {
+                            sig.SignatureFragments.Add(newBundleTx.SignatureMessageFragment);
+                        }
+                    }
+
+                    signaturesToValidate.Add(sig);
+                }
+            }
+
+            string bundleFromTxString = Converter.ConvertTritsToTrytes(kerl.Squeeze());
+
+            if (totalValue != 0 || !bundle.Transactions[bundle.Transactions.Count - 1].CurrentIndex.Equals(bundle.Transactions[bundle.Transactions.Count - 1].LastIndex) || !bundleFromTxString.Equals(bundleHash))
+            {
+                throw new InvalidBundleException("Invalid Bundle");
+            } 
+
+            foreach (Signature signature in signaturesToValidate)
+            {
+                String[] signatureFragments = signature.SignatureFragments.ToArray();
+                string address = signature.Address;
+
+                if (Signing.ValidateSignatures(address, signatureFragments, bundleHash))
+                {
+                    throw new InvalidSignatureException();
+                }     
+            }
+
+            return bundle;
+        }
+
+        public List<Bundle> GetTransfers(string seed, int start, int end, int securityLevel, bool inclusionStates = false)
+        {
+            if(!InputValidator.IsValidSeed(seed))
+            {
+                throw new InvalidTryteException();
+            }
+            seed = ArrayUtils.AdjustTryteString(seed, SEED_MAX_LENGTH);
+
+            if (start > end || end > (start + 500))
+            {
+                throw new System.Exception("Invalid inputs provided: start, end");
+            }
+
+            IEnumerable<string> addresses = GetNewAddresses(seed, start, end, securityLevel, false);
+
+
+            return BundlesFromAddresses(addresses, inclusionStates);
+        }
+
+        /// <summary>
+        /// Takes a tail transaction hash as input, gets the bundle associated with the transaction and then replays the bundle by attaching it to the tangle
+        /// </summary>
+        public void ReplayTransfer()
+        {
             throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Performs the 'prepareTransfers' request, does the Proof-of-Work, broadcasts the transactions to the network and stores them locally
+        /// </summary>
+        /// <param name="seed"></param>
+        /// <param name="depth"></param>
+        /// <param name="outputs"></param>
+        /// <param name="securityLevel"></param>
+        /// <param name="inputs"></param>
+        /// <param name="remainderAddress"></param>
+        /// <param name="localPOW"></param>
+        /// <returns></returns>
+        public bool[] SendTransfer(string seed, int depth, List<Transaction> outputs, int securityLevel, List<Transaction> inputs = null, string remainderAddress = null, bool localPOW = true)
+        {
+            IEnumerable<string> rawTransactions = PrepareTransfers(seed, outputs, securityLevel, inputs, remainderAddress);
+            IEnumerable<Transaction> sentTransactions = SendTrytes(rawTransactions.ToArray(), depth);
+
+            bool[] successful = new bool[sentTransactions.Count()];
+
+            for (int i = 0; i < successful.Length; i++)
+            {
+                successful[i] = FindTransactionsByBundleHash(sentTransactions.ElementAt(i).Bundle).Count() != 0;
+            }
+
+            return successful;
+        }
+
+        /// <summary>
+        /// Broadcasts and stores a list of transactions
+        /// </summary>
+        /// <param name="rawTransactions">The raw transactions</param>
+        public void BroadcastAndStore(List<string> trytes)
+        {
+            var response = BroadcastTransactionsAsync(trytes).Result;
+            if(response.StatusCode == System.Net.HttpStatusCode.OK)
+            {
+                StoreTransactions(trytes);
+            }
+        }
+
+        /// <summary>
+        /// Performs the Proof-of-Work, broadcasts the transactions to the network and stores them locally
+        /// </summary>
+        /// <param name="rawTransactions"></param>
+        /// <param name="depth"></param>
+        /// <returns></returns>
+        public IEnumerable<Transaction> SendTrytes(IEnumerable<string> rawTransactions, int depth)
+        {
+            GetTransactionsToApproveResponse transactionsToApproveResponse = GetTransactionsToApprove(depth);
+
+            AttachToTangleResponse attachToTangleResponse = AttachToTangleAsync(transactionsToApproveResponse.TrunkTransaction, transactionsToApproveResponse.BranchTransaction, rawTransactions.ToList()).Result;
+
+            BroadcastAndStore(attachToTangleResponse.Trytes);
+
+
+            foreach(string rawTransaction in attachToTangleResponse.Trytes)
+            {
+                yield return new Transaction(rawTransaction);
+            }
         }
 
         /// <summary>
@@ -199,15 +343,31 @@ namespace Iota.Lib
         /// </summary>
         /// <param name="address">The address</param>
         /// <returns>The transaction hashes</returns>
-        public List<string> FindTransactionsByAddress(string address)
+        public IEnumerable<Transaction> FindTransactionsByAddresses(params string[] addresses)
         {
-            List<string> singleAddress = new List<string>
+            List<string> rawTransactions= FindTransactionsAsync(null, addresses.ToList(), null, null).Result.Hashes;
+
+            foreach(string rawTransaction in rawTransactions)
             {
-                address
-            };
-            return FindTransactionsAsync(null, singleAddress, null, null).Result.Hashes;
+                yield return new Transaction(rawTransaction);
+            }
         }
 
+        /// <summary>
+        /// Finds all transactions with a specific bundle hash
+        /// </summary>
+        /// <param name="bundleHashes">The hash</param>
+        /// <returns>An array of transactions</returns>
+        public IEnumerable<Transaction> FindTransactionsByBundleHash(params string[] bundleHashes)
+        {
+            var rawTransactions = FindTransactionsAsync(bundleHashes.ToList()).Result.Hashes;
+            foreach (string rawTransaction in rawTransactions)
+            {
+                yield return new Transaction(rawTransaction);
+            }
+        }
+
+        #region private methods
         /// <summary>
         /// Lets the network verify if the total balance of the addresses of the input list will cover the bundles total balance
         /// </summary>
@@ -246,5 +406,147 @@ namespace Iota.Lib
                 throw new NotEnoughBalanceException();
             }
         }
+
+        private List<Bundle> BundlesFromAddresses(IEnumerable<string> addresses, bool inclusionStates)
+        {
+            IEnumerable<Transaction> foundTransactions = FindTransactionsByAddresses(addresses.ToArray());
+
+            List<string> tailTransactions = new List<string>();
+            List<string> nonTailBundleHashes = new List<string>();
+
+            foreach (Transaction transaction in foundTransactions)
+            {
+                // Sort tail and nonTails
+                if (transaction.CurrentIndex == 0)
+                {
+                    tailTransactions.Add(transaction.Hash);
+                }
+                else
+                {
+                    if (nonTailBundleHashes.IndexOf(transaction.Bundle) == -1)
+                    {
+                        nonTailBundleHashes.Add(transaction.Bundle);
+                    }
+                }
+            }
+
+            foundTransactions = FindTransactionsByBundleHash(nonTailBundleHashes.ToArray());
+            foreach (Transaction transaction in foundTransactions)
+            {
+                // Sort tail and nonTails
+                if (transaction.CurrentIndex == 0)
+                {
+                    if (tailTransactions.IndexOf(transaction.Hash) == -1)
+                    {
+                        tailTransactions.Add(transaction.Hash);
+                    }
+                }
+            }
+
+            List<Bundle> finalBundles = new List<Bundle>();
+            string[] tailTxArray = tailTransactions.ToArray();
+
+            GetInclusionStatesResponse gisr = null;
+            if(inclusionStates)
+            {
+                try
+                {
+                    gisr = GetLatestInclusion(tailTxArray);
+                }
+                catch(SystemException)
+                {}
+                if (gisr == null || gisr.States == null || gisr.States.Count == 0)
+                {
+                    throw new ArgumentException("Inclusion states not found");
+                }    
+            }
+
+
+            GetInclusionStatesResponse finalInclusionStates = gisr;
+
+            Parallel.ForEach(tailTransactions, (param) =>
+            {
+                try
+                {
+                    Bundle bundle = GetBundle(param);
+
+                    if (inclusionStates)
+                    {
+                        bool thisInclusion = finalInclusionStates.States[tailTxArray.ToList().IndexOf(param)];
+                        foreach(Transaction transaction in bundle.Transactions)
+                        {
+                            transaction.Persistance = thisInclusion;
+                        }
+                    }
+                    finalBundles.Add(bundle);
+                }
+                catch (System.Exception ex)
+                {
+                    Console.WriteLine("Bundle error: " + ex.Message);
+                }
+            });
+
+            finalBundles.Sort();
+            return finalBundles;
+        }
+
+        private Bundle TraverseBundle(string trunkTransaction, string bundleHash, Bundle bundle)
+        {
+            GetTrytesResponse gtr = GetTrytesAsync(trunkTransaction).Result;
+
+            if (gtr.Trytes.Count == 0)
+            {
+                throw new InvisibleBundleTransactionException();
+            }
+                
+            string trytes = gtr.Trytes[0];
+
+            Transaction transaction = new Transaction(trytes);
+
+            // If first transaction to search is not a tail, return error
+            if (bundleHash == null && transaction.CurrentIndex != 0)
+            {
+                throw new InvalidTailTransactionException();
+            }
+
+            // If no bundle hash, define it
+            if (bundleHash == null)
+            {
+                bundleHash = transaction.Bundle;
+            }
+
+            // If different bundle hash, return with bundle
+            if (bundleHash != transaction.Bundle)
+            {
+                return bundle;
+            }
+
+            // If only one bundle element, return
+            if(transaction.LastIndex == 0 && transaction.CurrentIndex == 0)
+            {
+                return new Bundle(new List<Transaction>() { transaction });
+            }
+
+            // Define new trunkTransaction for search
+            var trunkTx = transaction.TrunkTransaction;
+
+            // Add transaction object to bundle
+            bundle.AddEntry(transaction);
+
+            // Continue traversing with new trunkTx
+            return TraverseBundle(trunkTx, bundleHash, bundle);
+        }
+
+        /// <summary>
+        /// Gets the latest inclusion
+        /// </summary>
+        /// <param name="hashes">The hashes</param>
+        /// <returns>a GetInclusionStatesResponse cotaining the inclusion state of the specified hashes</returns>
+        private GetInclusionStatesResponse GetLatestInclusion(string[] hashes)
+        {
+            string[] latestMilestone = { GetNodeInfo().LatestSolidSubtangleMilestone };
+            return GetInclusionStates(hashes, latestMilestone);
+        }
+        #endregion
     }
 }

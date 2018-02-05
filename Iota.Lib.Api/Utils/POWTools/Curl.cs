@@ -93,7 +93,7 @@ namespace Iota.Lib.Utils
         /// <returns>
         /// the ICurl instance (used for method chaining)
         /// </returns>
-        public ISponge Transform() //WTF?
+        public Curl Transform()
         {
             int[] scratchpad = new int[StateLength];
             int scratchpadIndex = 0;

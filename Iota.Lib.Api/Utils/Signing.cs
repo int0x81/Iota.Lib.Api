@@ -119,26 +119,19 @@ namespace Iota.Lib.Utils
 
         public static int[] SignatureFragment(int[] normalizedBundleFragment, int[] keyFragment)
         {
-            int[] hash = new int[243];
+            int[] signatureFragment = (int[])keyFragment.Clone();
 
             for (int i = 0; i < 27; i++)
             {
-                Array.Copy(keyFragment, i*243, hash, 0, 243);
-
                 for (int j = 0; j < 13 - normalizedBundleFragment[i]; j++)
                 {
                     kerl.Reset();
-                    kerl.Absorb(hash);
-                    hash = kerl.Squeeze();
-                }
-
-                for (int j = 0; j < 243; j++)
-                {
-                    Array.Copy(hash, j, keyFragment, i*243 + j, 1);
+                    kerl.Absorb(signatureFragment);
+                    signatureFragment = kerl.Squeeze(Constants.SIGNATURE_MESSAGE_LENGTH * 3);
                 }
             }
 
-            return keyFragment;
+            return signatureFragment;
         }
 
         public static bool ValidateSignatures(string expectedAddress, string[] signatureFragments, string bundleHash)
@@ -146,7 +139,7 @@ namespace Iota.Lib.Utils
             Bundle bundle = new Bundle();
 
             var normalizedBundleFragments = new int[3, 27];
-            int[] normalizedBundleHash = bundle.NormalizedBundle(bundleHash);
+            int[] normalizedBundleHash = bundle.NormalizeBundle();
 
             // Split hash into 3 fragments
             for (int i = 0; i < 3; i++)

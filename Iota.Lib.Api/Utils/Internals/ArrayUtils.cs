@@ -129,5 +129,41 @@ namespace Iota.Lib.Utils
 
             return list.ToArray();
         }
+
+        /// <summary>
+        /// This function adjusts a tryte encoded string to a given length by erasing or padding the string with nines
+        /// </summary>
+        /// <param name="trytes">The tryte string</param>
+        /// <param name=""></param>
+        public static string AdjustTryteString(string trytes, int length)
+        {
+            if(string.IsNullOrEmpty(trytes))
+            {
+                trytes = string.Empty;
+            }
+            if(trytes.Length > length)
+            {
+                while(trytes.Length > length)
+                {
+                    if (trytes[trytes.Length - 1] == '9')
+                    {
+                        trytes = trytes.Remove(trytes.Length - 1);
+                    }
+                    else
+                    {
+                        throw new ArgumentException("Trying to erase nulls where are given values");
+                    }
+                }  
+            }
+            else
+            {
+                while(trytes.Length < length)
+                {
+                    trytes += '9';
+                }
+            }
+
+            return trytes;
+        }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Iota.Lib.Model;
+using Iota.Lib.Utils;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
@@ -77,12 +78,6 @@ namespace Iota.Lib.Test
         {
             long timestamp = CreateTimeStampNow();
             Assert.IsTrue(timestamp > 0);
-        }
-
-        [TestMethod]
-        public void TestPadSeedWithNines()
-        {
-            Assert.IsTrue(seed.Length == PadSeedWithNines(shortSeed).Length);
         }
     }
 }

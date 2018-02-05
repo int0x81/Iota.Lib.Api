@@ -46,6 +46,43 @@ namespace Iota.Lib.Test
         }
 
         [TestMethod]
+        public void TestPrepareTransfers()
+        {
+            const int SECURITY_LEVEL = 3;
+            string inputAddress = IotaApiUtils.CreateNewAddress(TEST_SEED_01, 1, SECURITY_LEVEL, false);
+            string remainderAddress = IotaApiUtils.CreateNewAddress(TEST_SEED_01, 2, SECURITY_LEVEL, false);
+
+            List <Transaction> outputs = new List<Transaction>
+            {
+                new Transaction
+                {
+                    Address = "JHYLDJCBBTSFGVTBONTIVOWURCWMWBGGVRTOAMTKKFHWJAJHKKPWEYTAVDXMUSJBIUYEVZMO9LXBWHTUZ",
+                    Value = 3,
+                    ObsoleteTag = "999999999999999999999999999",
+                    Tag = "999999999999999999999999999",
+                    Timestamp = 1515494426
+                }
+            };
+
+            List<Transaction> inputs = new List<Transaction>
+            {
+                new Transaction
+                {
+                    Address = inputAddress,
+                    Value = -5,
+                    KeyIndex = 1,
+                    SecurityLevel = 3,
+                    ObsoleteTag = "999999999999999999999999999",
+                    Tag = "999999999999999999999999999",
+                    Timestamp = 1515494426
+                }
+            };
+
+            var result = api.PrepareTransfers(TEST_SEED_01, outputs, SECURITY_LEVEL, inputs, remainderAddress);
+            Assert.IsTrue(result.Count() == 5);
+        }
+
+        [TestMethod]
         public void TestGetNewAddresses()
         {
             int numberOfAddresses = 21;
@@ -53,6 +90,52 @@ namespace Iota.Lib.Test
             var addresses = api.GetNewAddresses(TEST_SEED_01, 0, numberOfAddresses);
             Assert.IsTrue(InputValidator.IsArrayOfValidAddress(addresses));
             Assert.IsTrue(addresses.Count() == numberOfAddresses);
+        }
+
+        [TestMethod]
+        public void TestGetBundle()
+        {
+            var bundle = api.GetBundle(RAW_TRANSACTIONS[0]);
+            Assert.IsTrue(bundle != null);
+        }
+
+        [TestMethod]
+        public void TestGetTransfers()
+        {
+            var bundles = api.GetTransfers(TEST_SEED_01, 0, 5, 2);
+            Assert.IsTrue(bundles.Count >= 0);
+        }
+
+        /// <summary>
+        /// This test performs an actuall transfer including local proof-of-work
+        /// </summary>
+        [TestMethod]
+        public void PROOF_OF_CONCEPT()
+        {
+            IPowService powService = new PearlDiver();
+            const string SEED = "HAKHOVW9EQWPESUCKITYGLYWGCCOXYH9EOZITARIFJMARWB9SSNB9URZFFANPWEGNONPGEUDBENZRZW9R";
+            string outgoingAddress = "DMDSWYIUUFDMHKIBQPP9LMCQNYQDFXXMPT9GWHXYZ9IQNEYJLSNASVXFFSZZKJAVHTFIDSZGIOXDURONWDTTBHVBWX";
+            string inputAddress = IotaApiUtils.CreateNewAddress(SEED, 0, 2, true);
+            Assert.AreEqual(inputAddress, "RQXWRWSRPKRFTCJQME9FPXEJMZXQHOEKYZRQCNYQADWTPBKPPSYZYADKBLRNOKUMQYYSLJJDBAJJWGBMWCBDTSU9CA");
+            Transaction output = new Transaction(outgoingAddress, 2);
+            Transaction input = new Transaction(inputAddress, -10, null, "IHATEJAVA", 0, 2);
+            List<string> rawTransactions = api.PrepareTransfers(SEED, new List<Transaction> {output}, 2, new List<Transaction> {input}).ToList();
+            Assert.IsTrue(rawTransactions.Count == 4);
+
+            List<string> rawTransactionsWithNonce = new List<string>();
+            foreach (string rawTransaction in rawTransactions)
+            {
+                var dummy = rawTransaction.Length;
+                string rawTransactionWithNonce = powService.Execute(rawTransaction, 10);
+                rawTransactionsWithNonce.Add(rawTransactionWithNonce);
+            }
+            Transaction transaction_01 = new Transaction(rawTransactionsWithNonce[0]);
+            Transaction transaction_02 = new Transaction(rawTransactionsWithNonce[1]);
+            Transaction transaction_03 = new Transaction(rawTransactionsWithNonce[2]);
+            Transaction transaction_04 = new Transaction(rawTransactionsWithNonce[3]);
+
+            var result = api.BroadcastTransactions(rawTransactionsWithNonce);
+            Assert.IsTrue(result.StatusCode == System.Net.HttpStatusCode.OK);
         }
     }
 }

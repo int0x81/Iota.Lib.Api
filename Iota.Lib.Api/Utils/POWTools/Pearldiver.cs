@@ -8,11 +8,13 @@
 #endregion
 
 using System;
+using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Iota.Lib.Utils
 {
-    class PearlDiver
+    class PearlDiver : IPowService
     {
         enum State
         {
@@ -37,6 +39,21 @@ namespace Iota.Lib.Utils
         {
 
         }
+
+        public string Execute(string rawTransaction, int minWeightMagnitude = Constants.MIN_WEIGHT_MAGNITUDE)
+        {
+            int[] tritArray = Converter.ConvertTrytesToTrits(rawTransaction);
+            tritArray = ArrayUtils.EraseNullValuesFromEnd(tritArray);
+            tritArray = ArrayUtils.PadArrayWithZeros(tritArray, TRANSACTION_LENGTH);
+            if(tritArray.Length != TRANSACTION_LENGTH)
+            {
+                tritArray = ArrayUtils.PadArrayWithZeros(tritArray, TRANSACTION_LENGTH);
+            }
+
+            Task.WaitAll(Search(tritArray, minWeightMagnitude).ToArray());
+            return Converter.ConvertTritsToTrytes(tritArray);
+        }
+
         public void Cancel()
         {
             lock(interlock)
@@ -45,9 +62,8 @@ namespace Iota.Lib.Utils
             }
         }
 
-        public bool Search(int[] transactionTrits, int minWeightMagnitude)
+        public List<Task> Search(int[] transactionTrits, int minWeightMagnitude)
         {
-
             if (transactionTrits.Length != TRANSACTION_LENGTH)
             {
                 throw new ArgumentException("Invalid transaction trits length", "transactionTrits");
@@ -96,7 +112,7 @@ namespace Iota.Lib.Utils
                         }
                     }
 
-                Transform(midCurlStateLow, midCurlStateHigh, ref curlScratchpadLow, ref curlScratchpadHigh);
+                Transform(midCurlStateLow, midCurlStateHigh, curlScratchpadLow, curlScratchpadHigh);
             }
 
             for (int i = 0; i < 162; i++)
@@ -142,12 +158,12 @@ namespace Iota.Lib.Utils
             midCurlStateLow[162 + 3] = 0b1111111111000000000000000000000000000111111111111111111111111111L;
             midCurlStateHigh[162 + 3] = 0b0000000000111111111111111111111111111111111111111111111111111111L;
 
-            Thread[] workers = new Thread[numberOfProcs];
+            List<Task> workers = new List<Task>();
 
             while(numberOfProcs-- > 0)
             {
                 int threadIndex = numberOfProcs;
-                Thread worker = new Thread(() =>
+                var worker = Task.Factory.StartNew(() =>
                 {
                     ulong[] midCurlStateCopyLow = new ulong[CURL_STATE_LENGTH];
                     ulong[] midCurlStateCopyHigh = new ulong[CURL_STATE_LENGTH];
@@ -168,12 +184,11 @@ namespace Iota.Lib.Utils
 
                     while (state == State.RUNNING && mask == 0)
                     {
-
                         Increment(midCurlStateCopyLow, midCurlStateCopyHigh, 162 + (CURL_HASH_LENGTH / 9) * 2, CURL_HASH_LENGTH);
 
                         Array.Copy(midCurlStateCopyLow, 0, curlStateLow, 0, CURL_STATE_LENGTH);
                         Array.Copy(midCurlStateCopyHigh, 0, curlStateHigh, 0, CURL_STATE_LENGTH);
-                        Transform(curlStateLow, curlStateHigh, ref curlScratchpadLow, ref curlScratchpadHigh);
+                        Transform(curlStateLow, curlStateHigh, curlScratchpadLow, curlScratchpadHigh);
 
                         mask = HIGH_BITS;
                         for (int i = minWeightMagnitude; i-- > 0;)
@@ -185,16 +200,21 @@ namespace Iota.Lib.Utils
                             }
                         }
 
+                        if(mask == 0)
+                        {
+                            continue;
+                        }
+
                         lock(interlock)
                         {
                             if (state == State.RUNNING)
                             {
                                 state = State.COMPLETED;
-                                while ((outMask & mask) == 0)
+                                while((outMask & mask) == 0)
                                 {
                                     outMask <<= 1;
                                 }
-                                for (int i = 0; i < CURL_HASH_LENGTH; i++)
+                                for(int i = 0; i < CURL_HASH_LENGTH; i++)
                                 {
                                     transactionTrits[TRANSACTION_LENGTH - CURL_HASH_LENGTH + i] = (midCurlStateCopyLow[i] & outMask) == 0 ? 1 : (midCurlStateCopyHigh[i] & outMask) == 0 ? -1 : 0;
                                 }
@@ -203,44 +223,13 @@ namespace Iota.Lib.Utils
                     }
                 });
 
-                workers[threadIndex] = worker;
-                worker.Start();
-            }
-            
-            try
-            {
-                lock(interlock)
-                {
-                    state = State.RUNNING;
-                }
-            }
-            catch (SystemException) 
-            {
-                lock(interlock)
-                {
-                    state = State.CANCELLED;
-                }
+                workers.Add(worker);
             }
 
-            foreach(var worker in workers)
-            {
-                try
-                {
-                    worker.Join();
-                }
-                catch (SystemException)
-                {
-                    lock(interlock)
-                    {
-                        state = State.CANCELLED;
-                    }
-                }
-            }
-
-            return state == State.COMPLETED;
+            return workers;
         }
         
-        private void Transform(ulong[] curlStateLow, ulong[] curlStateHigh, ref ulong[] curlScratchpadLow, ref ulong[] curlScratchpadHigh)
+        private void Transform(ulong[] curlStateLow, ulong[] curlStateHigh, ulong[] curlScratchpadLow, ulong[] curlScratchpadHigh)
         {
             int curlScratchpadIndex = 0;
             for (int round = 0; round < 81; round++)

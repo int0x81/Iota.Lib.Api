@@ -35,12 +35,6 @@
         int[] Squeeze(int length);
 
         /// <summary>
-        /// Transforms this instance
-        /// </summary>
-        /// <returns>An ISponge instance (used for method chaining)</returns>
-        ISponge Transform();
-
-        /// <summary>
         /// Resets this state
         /// </summary>
         /// <returns>the ISpongeFunction instance (used for method chaining)</returns>

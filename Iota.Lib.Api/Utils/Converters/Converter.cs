@@ -4,7 +4,6 @@ using System.Text;
 using System.Numerics;
 using System.Linq;
 using Iota.Lib.Exception;
-
 using static Iota.Lib.Utils.Constants;
 
 namespace Iota.Lib.Utils
@@ -239,73 +238,6 @@ namespace Iota.Lib.Utils
             while (absoluteValue > 0)
             {
                 int quotient = Math.DivRem(absoluteValue, RADIX, out int remainder);
-
-                absoluteValue = quotient;
-
-                if (remainder > MAX_TRIT_VALUE)
-                {
-                    remainder = MIN_TRIT_VALUE;
-                    absoluteValue++;
-                }
-                trits.Add(remainder);
-                counter++;
-            }
-
-            if (value < 0)
-            {
-                for (int i = 0; i < trits.Count; i++)
-                {
-                    trits[i] = -trits[i];
-                }
-            }
-
-            int[] paddedArray = trits.ToArray();
-            return ArrayUtils.PadTritArrayWithZeroes(paddedArray);
-        }
-        
-        /// <summary>
-        /// Converts a small trit-array into a long
-        /// </summary>
-        /// <param name="trits">The trit-array</param>
-        /// <exception cref="ArgumentException">Thrown when the trits-array exceeds the specific limit to avoid an integeroverflow</exception>
-        /// <returns>A long</returns>
-        public static long ConvertTritsToLong(int[] trits)
-        {
-            const int TRITS_MAX_LENGTH = 39; //Increasing this value may result in an integer-overflow!!!
-
-            if (ArrayUtils.EraseNullValuesFromEnd(trits).Length > TRITS_MAX_LENGTH)
-            {
-                throw new ArgumentException($"Trit-array may only contain {TRITS_MAX_LENGTH} digets");
-            }
-
-            long value = 0;
-
-            for (int i = trits.Length; i-- > 0;)
-            {
-                value = value * 3 + trits[i];
-            }
-            return value;
-        }
-
-        public static int[] ConvertLongToTrits(long value)
-        {
-            List<int> trits = new List<int>();
-            long absoluteValue;
-            if(value < 0)
-            {
-                absoluteValue = -value;
-            }
-            else
-            {
-                absoluteValue = value;
-            }
-
-            int counter = 0;
-
-            while (absoluteValue > 0)
-            {
-                long quotient = absoluteValue / RADIX;
-                int remainder = (int)absoluteValue % RADIX;
 
                 absoluteValue = quotient;
 

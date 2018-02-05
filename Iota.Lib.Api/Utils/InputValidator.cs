@@ -116,24 +116,13 @@ namespace Iota.Lib.Utils
                 return false;
             }
 
-            if (!IsStringOfTrytes(transaction.SignatureMessageFragment))
+            if(transaction.Value < 0)
             {
-                return false;
-            }
-
-            if (transaction.CurrentIndex > transaction.LastIndex)
-            {
-                return false;
-            }
-
-            if (transaction.TrunkTransaction.Length != TRANSACTION_HASH_LENGTH)
-            {
-                return false;
-            }
-
-            if (transaction.BranchTransaction.Length != TRANSACTION_HASH_LENGTH)
-            {
-                return false;
+                if(transaction.KeyIndex < 0 || transaction.SecurityLevel < 1)
+                {
+                    return false;
+                }
+                return true;
             }
 
             return true;
@@ -154,6 +143,18 @@ namespace Iota.Lib.Utils
             if (seed.Length > SEED_MAX_LENGTH)
             {
                 return false;
+            }
+            return true;
+        }
+
+        public static bool AreKeyIndexesAssigned(List<Transaction> transactions)
+        {
+            foreach(Transaction transaction in transactions)
+            {
+                if(transaction.Value < 0 && transaction.KeyIndex == 0)
+                {
+                    return false;
+                }
             }
             return true;
         }

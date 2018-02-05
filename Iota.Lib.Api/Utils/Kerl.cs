@@ -95,10 +95,5 @@ namespace Iota.Lib.Utils
             keccak.Reset();
             return this;
         }
-
-        public ISponge Transform()
-        {
-            throw new NotImplementedException();
-        }
     }
 }
