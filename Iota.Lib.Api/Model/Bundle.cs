@@ -199,10 +199,12 @@ namespace Iota.Lib.Model
         /// <param name="tip_02">The second tip</param>
         public void CreateTail(string branchTip, string trunkTip)
         {
+            if(string.IsNullOrEmpty(branchTip) || branchTip.Length != Constants.TRANSACTION_HASH_LENGTH || string.IsNullOrEmpty(trunkTip) || trunkTip.Length != Constants.TRANSACTION_HASH_LENGTH)
+            {
+                throw new ArgumentException();
+            }
             for (int c = Transactions.Count - 1; c >= 0; c--)
             {
-                Transactions[c].SetHash();
-
                 if (c == Transactions.Count - 1)
                 {
                     Transactions[c].BranchTransaction = branchTip;

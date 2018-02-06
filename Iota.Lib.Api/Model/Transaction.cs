@@ -39,14 +39,12 @@ namespace Iota.Lib.Model
                 trytes = AdjustTryteString(trytes, RAW_TRANSACTION_LENGTH);
             }
 
-            Curl curl = new Curl();
+            ISponge curl = new Curl();
 
             int[] transactionTrits = Converter.ConvertTrytesToTrits(trytes);
 
             curl.Reset();
             curl.Absorb(transactionTrits);
-            var testme = Converter.ConvertTritsToBigInt(ArrayUtils.CreateSubArray(transactionTrits, 7020, 27));
-            var testmeJETZTERSTRECHT = Converter.ConvertTritsToInteger(ArrayUtils.EraseNullValuesFromEnd(ArrayUtils.CreateSubArray(transactionTrits, 6993, 27)));
 
             Hash = Converter.ConvertTritsToTrytes(curl.Squeeze(Curl.HASH_LENGTH));
             SignatureMessageFragment = trytes.Substring(0, SIGNATURE_MESSAGE_LENGTH);
@@ -132,7 +130,18 @@ namespace Iota.Lib.Model
         /// Gets or sets the hash.
         /// </summary>
         /// <value>A unique hash which is 81-trytes long.</value>
-        public string Hash { get; set; }
+        public string Hash {
+            get
+            {
+                Curl curl = new Curl();
+                curl.Absorb(Converter.ConvertTrytesToTrits(ToTransactionTrytes()));
+                return Converter.ConvertTritsToTrytes(curl.Squeeze(Curl.HASH_LENGTH));
+            }
+            set
+            {
+                Hash = value;
+            }
+        }
 
         /// <summary>
         /// Gets or sets the signatureMessageFragment.
@@ -235,30 +244,22 @@ namespace Iota.Lib.Model
             int[] attachmentTimestampUpperBoundTrits = Converter.ConvertBigIntToTrits(AttachmentTimestampUpperBound);
             attachmentTimestampUpperBoundTrits = ArrayUtils.PadArrayWithZeros(attachmentTimestampUpperBoundTrits, 27);
 
-            var dummy = Converter.ConvertTritsToTrytes(lastIndexTrits).Substring(0, 9);
-
-            return AdjustTryteString(SignatureMessageFragment, SIGNATURE_MESSAGE_LENGTH)
-                   + AdjustTryteString(Address, ADDRESSLENGTH_WITHOUT_CHECKSUM)
-                   + Converter.ConvertTritsToTrytes(valueTrits)
-                   + AdjustTryteString(ObsoleteTag, TAG_LENGTH)
-                   + Converter.ConvertTritsToTrytes(timestampTrits).Substring(0, 9)
-                   + Converter.ConvertTritsToTrytes(currentIndexTrits).Substring(0, 9)
-                   + Converter.ConvertTritsToTrytes(lastIndexTrits).Substring(0, 9)
-                   + AdjustTryteString(Bundle, BUNDLE_HASH_LENGTH)
-                   + AdjustTryteString(TrunkTransaction, TRANSACTION_HASH_LENGTH)
-                   + AdjustTryteString(BranchTransaction, TRANSACTION_HASH_LENGTH)
-                   + AdjustTryteString(Tag, TAG_LENGTH)
-                   + Converter.ConvertTritsToTrytes(attachmentTimestampTrits).Substring(0, 9)
-                   + Converter.ConvertTritsToTrytes(attachmentTimestampLowerBoundTrits).Substring(0, 9)
-                   + Converter.ConvertTritsToTrytes(attachmentTimestampUpperBoundTrits).Substring(0, 9)
-                   + AdjustTryteString(Nonce, NONCE_LENGTH);
-        }
-
-        public void SetHash()
-        {
-            Curl curl = new Curl();
-            curl.Absorb(Converter.ConvertTrytesToTrits(ToTransactionTrytes()));
-            Hash = Converter.ConvertTritsToTrytes(curl.Squeeze(Curl.HASH_LENGTH));
+            string trytes = AdjustTryteString(SignatureMessageFragment, SIGNATURE_MESSAGE_LENGTH);
+            trytes += AdjustTryteString(Address, ADDRESSLENGTH_WITHOUT_CHECKSUM);
+            trytes += Converter.ConvertTritsToTrytes(valueTrits);
+            trytes += AdjustTryteString(ObsoleteTag, TAG_LENGTH);
+            trytes += Converter.ConvertTritsToTrytes(timestampTrits).Substring(0, 9);
+            trytes += Converter.ConvertTritsToTrytes(currentIndexTrits).Substring(0, 9);
+            trytes += Converter.ConvertTritsToTrytes(lastIndexTrits).Substring(0, 9);
+            trytes += AdjustTryteString(Bundle, BUNDLE_HASH_LENGTH);
+            trytes += AdjustTryteString(TrunkTransaction, TRANSACTION_HASH_LENGTH);
+            trytes += AdjustTryteString(BranchTransaction, TRANSACTION_HASH_LENGTH);
+            trytes += AdjustTryteString(Tag, TAG_LENGTH);
+            trytes += Converter.ConvertTritsToTrytes(attachmentTimestampTrits).Substring(0, 9);
+            trytes += Converter.ConvertTritsToTrytes(attachmentTimestampLowerBoundTrits).Substring(0, 9);
+            trytes += Converter.ConvertTritsToTrytes(attachmentTimestampUpperBoundTrits).Substring(0, 9);
+            trytes += AdjustTryteString(Nonce, NONCE_LENGTH);
+            return trytes;
         }
 
         /// <summary>

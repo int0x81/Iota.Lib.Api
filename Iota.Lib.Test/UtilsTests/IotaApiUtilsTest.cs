@@ -15,7 +15,6 @@ namespace Iota.Lib.Test
     public class AddressGenerationTest
     {
         readonly string seed = "SMRUKAKOPAKXQSIKVZWQGQNKZZWL9BGEFJCIEBRJDIAGWFHUKAOSWACNC9JFDU9WHAPZBEIGWBU9VTNZS";
-        readonly string shortSeed = "SMRUKAKOPAKXQSIEIGWBU9VTNZS";
 
         readonly string[] addresses_security_01_with_checksum =
         {

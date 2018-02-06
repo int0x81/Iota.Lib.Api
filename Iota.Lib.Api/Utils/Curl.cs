@@ -84,7 +84,7 @@ namespace Iota.Lib.Utils
                 offset += HASH_LENGTH;
             } while ((length -= HASH_LENGTH) > 0);
 
-            return State;
+            return digest;
         }
 
         /// <summary>

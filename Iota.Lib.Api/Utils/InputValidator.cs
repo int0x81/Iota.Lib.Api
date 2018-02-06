@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Iota.Lib.Model;
@@ -147,16 +148,9 @@ namespace Iota.Lib.Utils
             return true;
         }
 
-        public static bool AreKeyIndexesAssigned(List<Transaction> transactions)
+        public static bool IsValidBundle()
         {
-            foreach(Transaction transaction in transactions)
-            {
-                if(transaction.Value < 0 && transaction.KeyIndex == 0)
-                {
-                    return false;
-                }
-            }
-            return true;
+            throw new NotImplementedException();
         }
     }
 }

@@ -87,7 +87,7 @@ namespace Iota.Lib
         /// If defined, this address will be used for sending the remainder value to.
         /// </param>
         /// <returns>A list of raw transaction data</returns>
-        public IEnumerable<string> PrepareTransfers(string seed, List<Transaction> outputs, int securityLevel, List<Transaction> inputs = null, string remainderAddress = null)
+        public Bundle PrepareTransfers(string seed, List<Transaction> outputs, int securityLevel, List<Transaction> inputs = null, string remainderAddress = null)
         {
             if (!InputValidator.IsValidSeed(seed))
             {
@@ -131,12 +131,12 @@ namespace Iota.Lib
             bundle.SliceSignatures(securityLevel);
             bundle.AddEntry(new Transaction(remainderAddress, -remainding));
             bundle.FinalizeBundle();
-            var tmp = Task.Run(() => SignInputsAndReturn(seed, bundle)).Result;
-            var response = GetTransactionsToApproveAsync(SAVE_DEPTH).Result;
-            bundle.CreateTail(response.BranchTransaction, response.TrunkTransaction);
-            IEnumerable<String> bundleTrytes = bundle.GetRawTransactions();
-            bundleTrytes.Reverse();
-            return bundleTrytes;  
+            return Task.Run(() => SignInputsAndReturn(seed, bundle)).Result;
+            //var response = GetTransactionsToApproveAsync(SAVE_DEPTH).Result;
+            //bundle.CreateTail(response.BranchTransaction, response.TrunkTransaction);
+            //IEnumerable<String> bundleTrytes = bundle.GetRawTransactions();
+            //bundleTrytes.Reverse();
+            //return bundleTrytes;  
         }
 
         /// <summary>
@@ -291,8 +291,8 @@ namespace Iota.Lib
         /// <returns></returns>
         public bool[] SendTransfer(string seed, int depth, List<Transaction> outputs, int securityLevel, List<Transaction> inputs = null, string remainderAddress = null, bool localPOW = true)
         {
-            IEnumerable<string> rawTransactions = PrepareTransfers(seed, outputs, securityLevel, inputs, remainderAddress);
-            IEnumerable<Transaction> sentTransactions = SendTrytes(rawTransactions.ToArray(), depth);
+            Bundle bundle = PrepareTransfers(seed, outputs, securityLevel, inputs, remainderAddress);
+            IEnumerable<Transaction> sentTransactions = SendTrytes(bundle.GetRawTransactions(), depth);
 
             bool[] successful = new bool[sentTransactions.Count()];
 

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Iota.Lib.Model;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
@@ -10,6 +11,6 @@ namespace Iota.Lib.Utils
     /// </summary>
     interface IPowService
     {
-        string Execute(string rawTransaction, int minWeightMagnitutde);
+        Bundle Execute(Bundle transfer, string branchTip, string trunkTip, int minWeightMagnitutde = Constants.MIN_WEIGHT_MAGNITUDE);
     }
 }

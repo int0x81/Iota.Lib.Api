@@ -78,8 +78,8 @@ namespace Iota.Lib.Test
                 }
             };
 
-            var result = api.PrepareTransfers(TEST_SEED_01, outputs, SECURITY_LEVEL, inputs, remainderAddress);
-            Assert.IsTrue(result.Count() == 5);
+            Bundle result = api.PrepareTransfers(TEST_SEED_01, outputs, SECURITY_LEVEL, inputs, remainderAddress);
+            Assert.IsTrue(result.Transactions.Count() == 5);
         }
 
         [TestMethod]
@@ -116,25 +116,16 @@ namespace Iota.Lib.Test
             const string SEED = "HAKHOVW9EQWPESUCKITYGLYWGCCOXYH9EOZITARIFJMARWB9SSNB9URZFFANPWEGNONPGEUDBENZRZW9R";
             string outgoingAddress = "DMDSWYIUUFDMHKIBQPP9LMCQNYQDFXXMPT9GWHXYZ9IQNEYJLSNASVXFFSZZKJAVHTFIDSZGIOXDURONWDTTBHVBWX";
             string inputAddress = IotaApiUtils.CreateNewAddress(SEED, 0, 2, true);
-            Assert.AreEqual(inputAddress, "RQXWRWSRPKRFTCJQME9FPXEJMZXQHOEKYZRQCNYQADWTPBKPPSYZYADKBLRNOKUMQYYSLJJDBAJJWGBMWCBDTSU9CA");
             Transaction output = new Transaction(outgoingAddress, 2);
             Transaction input = new Transaction(inputAddress, -10, null, "IHATEJAVA", 0, 2);
-            List<string> rawTransactions = api.PrepareTransfers(SEED, new List<Transaction> {output}, 2, new List<Transaction> {input}).ToList();
-            Assert.IsTrue(rawTransactions.Count == 4);
 
-            List<string> rawTransactionsWithNonce = new List<string>();
-            foreach (string rawTransaction in rawTransactions)
-            {
-                var dummy = rawTransaction.Length;
-                string rawTransactionWithNonce = powService.Execute(rawTransaction, 10);
-                rawTransactionsWithNonce.Add(rawTransactionWithNonce);
-            }
-            Transaction transaction_01 = new Transaction(rawTransactionsWithNonce[0]);
-            Transaction transaction_02 = new Transaction(rawTransactionsWithNonce[1]);
-            Transaction transaction_03 = new Transaction(rawTransactionsWithNonce[2]);
-            Transaction transaction_04 = new Transaction(rawTransactionsWithNonce[3]);
+            Bundle transfer = api.PrepareTransfers(SEED, new List<Transaction> {output}, 2, new List<Transaction> {input});
+            Assert.IsTrue(transfer.Transactions.Count == 4);
+            var response = api.GetTransactionsToApproveAsync(27).Result;
+            transfer = powService.Execute(transfer, response.BranchTransaction, response.TrunkTransaction);
 
-            var result = api.BroadcastTransactions(rawTransactionsWithNonce);
+
+            var result = api.BroadcastTransactions(transfer.GetRawTransactions().ToList());
             Assert.IsTrue(result.StatusCode == System.Net.HttpStatusCode.OK);
         }
     }

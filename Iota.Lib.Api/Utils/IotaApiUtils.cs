@@ -30,7 +30,7 @@ namespace Iota.Lib.Utils
             return checksum ? Checksum.AddChecksum(address) : address;
         }
 
-        public static List<string> SignInputsAndReturn(string seed, Bundle bundle)
+        public static Bundle SignInputsAndReturn(string seed, Bundle bundle)
         {
             Kerl kerl = new Kerl();
 
@@ -88,14 +88,16 @@ namespace Iota.Lib.Utils
                 }
             }
 
-            List<string> bundleTrytes = new List<string>();
-            // Convert all bundle entries into trytes
-            foreach (Transaction transaction in bundle.Transactions)
-            {
-                bundleTrytes.Add(transaction.ToTransactionTrytes());
-            }
-            bundleTrytes.Reverse();
-            return bundleTrytes;
+            return bundle;
+
+            //List<string> bundleTrytes = new List<string>();
+            //// Convert all bundle entries into trytes
+            //foreach (Transaction transaction in bundle.Transactions)
+            //{
+            //    bundleTrytes.Add(transaction.ToTransactionTrytes());
+            //}
+            //bundleTrytes.Reverse();
+            //return bundleTrytes;
         }
  
         /// <summary>
