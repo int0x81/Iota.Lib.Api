@@ -112,19 +112,21 @@ namespace Iota.Lib.Test
         [TestMethod]
         public void PROOF_OF_CONCEPT()
         {
-            IPowService powService = new PearlDiver();
+            PowService powService = new PowService();
             const string SEED = "HAKHOVW9EQWPESUCKITYGLYWGCCOXYH9EOZITARIFJMARWB9SSNB9URZFFANPWEGNONPGEUDBENZRZW9R";
             string outgoingAddress = "DMDSWYIUUFDMHKIBQPP9LMCQNYQDFXXMPT9GWHXYZ9IQNEYJLSNASVXFFSZZKJAVHTFIDSZGIOXDURONWDTTBHVBWX";
-            string inputAddress = IotaApiUtils.CreateNewAddress(SEED, 0, 2, true);
+            string inputAddress = "RQXWRWSRPKRFTCJQME9FPXEJMZXQHOEKYZRQCNYQADWTPBKPPSYZYADKBLRNOKUMQYYSLJJDBAJJWGBMWCBDTSU9CA";
+            string remainder = "MPOOXKJABYVHNSKMTCDRDZGSRPZKQTUMVPUWUBZIZWWQBWTERELESGEGBHAMJHINZOKRUNSXQCSIFBMYDKOLDQUPQA";
+            //string inputAddress = IotaApiUtils.CreateNewAddress(SEED, 0, 2, true);
             Transaction output = new Transaction(outgoingAddress, 2);
             Transaction input = new Transaction(inputAddress, -10, null, "IHATEJAVA", 0, 2);
 
-            Bundle transfer = api.PrepareTransfers(SEED, new List<Transaction> {output}, 2, new List<Transaction> {input});
+            Bundle transfer = api.PrepareTransfers(SEED, new List<Transaction> {output}, 2, new List<Transaction> {input}, remainder);
             Assert.IsTrue(transfer.Transactions.Count == 4);
             var response = api.GetTransactionsToApproveAsync(27).Result;
-            transfer = powService.Execute(transfer, response.BranchTransaction, response.TrunkTransaction);
-
-
+            powService.Load(transfer, response.BranchTransaction, response.TrunkTransaction);
+            transfer = powService.Execute();
+            var tmp = transfer.Transactions[3].Address;
             var result = api.BroadcastTransactions(transfer.GetRawTransactions().ToList());
             Assert.IsTrue(result.StatusCode == System.Net.HttpStatusCode.OK);
         }

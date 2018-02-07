@@ -103,7 +103,7 @@ namespace Iota.Lib
 
             if (inputs != null)
             {
-                if(!InputValidator.IsArrayOfValidTransactions(inputs))
+                if (!InputValidator.IsArrayOfValidTransactions(inputs))
                 {
                     throw new InvalidTransactionException();
                 }
@@ -117,7 +117,7 @@ namespace Iota.Lib
             BigInteger remainding = BigInteger.Add(GetTotalBalance(inputs), GetTotalBalance(outputs));
 
 
-            if(remainding > 0)
+            if (remainding > 0)
             {
                 throw new NotEnoughBalanceException();
             }
@@ -131,12 +131,9 @@ namespace Iota.Lib
             bundle.SliceSignatures(securityLevel);
             bundle.AddEntry(new Transaction(remainderAddress, -remainding));
             bundle.FinalizeBundle();
-            return Task.Run(() => SignInputsAndReturn(seed, bundle)).Result;
-            //var response = GetTransactionsToApproveAsync(SAVE_DEPTH).Result;
-            //bundle.CreateTail(response.BranchTransaction, response.TrunkTransaction);
-            //IEnumerable<String> bundleTrytes = bundle.GetRawTransactions();
-            //bundleTrytes.Reverse();
-            //return bundleTrytes;  
+            bundle = Task.Run(() => SignInputsAndReturn(seed, bundle)).Result;
+            //bundle.Transactions.Reverse();
+            return bundle;
         }
 
         /// <summary>

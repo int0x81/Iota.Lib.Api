@@ -148,9 +148,31 @@ namespace Iota.Lib.Utils
             return true;
         }
 
-        public static bool IsValidBundle()
+        public static bool IsValidBundle(Bundle bundle)
         {
-            throw new NotImplementedException();
+            if(bundle == null)
+            {
+                return false;
+            }
+            for(int i = 0; i < bundle.Transactions.Count; i++)
+            {
+                if(!IsValidTransaction(bundle.Transactions[i]))
+                {
+                    return false;
+                }
+                if(bundle.Transactions[i].CurrentIndex > bundle.Transactions[i].LastIndex)
+                {
+                    return false;
+                }
+                if(bundle.Transactions[i].CurrentIndex != 0)
+                {
+                    if(bundle.Transactions[i].CurrentIndex - 1 != bundle.Transactions[i-1].CurrentIndex)
+                    {
+                        return false;
+                    }
+                }
+            }
+            return true;
         }
     }
 }

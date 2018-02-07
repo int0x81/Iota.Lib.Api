@@ -86,7 +86,7 @@ namespace Iota.Lib.Utils
         /// <summary>
         /// The minimum weight magnitutde that is considered as save
         /// </summary>
-        public const int MIN_WEIGHT_MAGNITUDE = 18;
+        public const int MIN_WEIGHT_MAGNITUDE = 14;
 
         /// <summary>
         /// The size in trytes of a message of a transaction in trytes
@@ -118,6 +118,7 @@ namespace Iota.Lib.Utils
         /// </summary>
         public const int BUNDLE_HASH_LENGTH = 81;
 
+        public const string EMPTY_NONCE = "999999999999999999999999999";
         /// <summary>
         /// Testing var
         /// </summary>

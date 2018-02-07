@@ -130,18 +130,7 @@ namespace Iota.Lib.Model
         /// Gets or sets the hash.
         /// </summary>
         /// <value>A unique hash which is 81-trytes long.</value>
-        public string Hash {
-            get
-            {
-                Curl curl = new Curl();
-                curl.Absorb(Converter.ConvertTrytesToTrits(ToTransactionTrytes()));
-                return Converter.ConvertTritsToTrytes(curl.Squeeze(Curl.HASH_LENGTH));
-            }
-            set
-            {
-                Hash = value;
-            }
-        }
+        public string Hash { get; set; }
 
         /// <summary>
         /// Gets or sets the signatureMessageFragment.
