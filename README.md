@@ -1,7 +1,8 @@
+[<img src="https://finnpersonalserver.visualstudio.com/_apis/public/build/definitions/9c406e00-f146-446c-aa58-e3030f5de520/2/badge"/>](https://finnpersonalserver.visualstudio.com/_apis/_build/index?definitionId=9c406e00-f146-446c-aa58-e3030f5de520)
+
 # IOTA C# Library
 
 This is an unofficial C#-Library to interact with the Iota network. It targets .NET Standard 2.0 which means it can be used within .NET Framework-, .NET Core- and Xamarin-Projects. It supports all 14 [Core API calls](https://iota.readme.io/docs/getnodeinfo) aswell as the [Proposed calls](https://github.com/iotaledger/wiki/blob/master/api-proposal.md). All API calls are also available as asynchronous methods.
-
 This library is actively supported (as of 2017-02-10). I will try to implement all upcoming Iota-Features as soon as possible. Please note that the Iota project is still in Beta and so is this API. (I am not responsible for any kind of loss of your Iota ;))
 
 ## Getting Started
