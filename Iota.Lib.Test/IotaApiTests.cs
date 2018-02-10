@@ -11,9 +11,9 @@ namespace Iota.Lib.Test
     [TestClass]
     public class IotaApiTests
     {
-        const string NODE = "nodes.thetangle.org"; //Your test node; Please note that not all nodes accept the all requests
-        const int PORT = 443;                      //Your test nodes's port
-        const bool IS_SSL = true;                  //Your test node's encryption state
+        const string NODE = "03.nl.nodes.iota.cafe"; //Your test node; Please note that not all nodes accept the all requests
+        const int PORT = 14265;                      //Your test nodes's port
+        const bool IS_SSL = false;                  //Your test node's encryption state
         const int TIMEOUT = 10000;                 //Limits the time a request should take in milliseconds
 
         readonly List<string> ADDRESSES = new List<string>()
@@ -38,21 +38,94 @@ namespace Iota.Lib.Test
 
         IotaApi api = new IotaApi(NODE, PORT, IS_SSL);
 
-        [TestMethod, Timeout(TIMEOUT)]
-        public void TestGetInputs()
-        {
-            var inputs = api.GetInputs(TEST_SEED_01);
-            Assert.IsTrue(InputValidator.IsArrayOfValidTransactionHashes(inputs));
-        }
+        //[TestMethod, Timeout(TIMEOUT)]
+        //public void TestGetInputs()
+        //{
+        //    var inputs = api.GetInputs(TEST_SEED_01);
+        //    Assert.IsTrue(InputValidator.IsArrayOfValidTransactionHashes(inputs));
+        //}
 
-        [TestMethod]
-        public void TestGetNewAddresses()
-        {
-            int numberOfAddresses = 21;
+        //[TestMethod]
+        //public void TestPrepareTransfers()
+        //{
+        //    const int SECURITY_LEVEL = 3;
+        //    string inputAddress = IotaApiUtils.CreateNewAddress(TEST_SEED_01, 1, SECURITY_LEVEL, false);
+        //    string remainderAddress = IotaApiUtils.CreateNewAddress(TEST_SEED_01, 2, SECURITY_LEVEL, false);
 
-            var addresses = api.GetNewAddresses(TEST_SEED_01, 0, numberOfAddresses);
-            Assert.IsTrue(InputValidator.IsArrayOfValidAddress(addresses));
-            Assert.IsTrue(addresses.Count() == numberOfAddresses);
-        }
+        //    List <Transaction> outputs = new List<Transaction>
+        //    {
+        //        new Transaction
+        //        {
+        //            Address = "JHYLDJCBBTSFGVTBONTIVOWURCWMWBGGVRTOAMTKKFHWJAJHKKPWEYTAVDXMUSJBIUYEVZMO9LXBWHTUZ",
+        //            Value = 3,
+        //            ObsoleteTag = "999999999999999999999999999",
+        //            Tag = "999999999999999999999999999",
+        //            Timestamp = 1515494426
+        //        }
+        //    };
+
+        //    List<Transaction> inputs = new List<Transaction>
+        //    {
+        //        new Transaction
+        //        {
+        //            Address = inputAddress,
+        //            Value = -5,
+        //            KeyIndex = 1,
+        //            SecurityLevel = 3,
+        //            ObsoleteTag = "999999999999999999999999999",
+        //            Tag = "999999999999999999999999999",
+        //            Timestamp = 1515494426
+        //        }
+        //    };
+
+        //    Bundle result = api.PrepareTransfers(TEST_SEED_01, outputs, SECURITY_LEVEL, inputs, remainderAddress);
+        //    Assert.IsTrue(result.Transactions.Count() == 5);
+        //}
+
+        //[TestMethod]
+        //public void TestGetNewAddresses()
+        //{
+        //    int numberOfAddresses = 21;
+
+        //    var addresses = api.GetNewAddresses(TEST_SEED_01, 0, numberOfAddresses);
+        //    Assert.IsTrue(InputValidator.IsArrayOfValidAddress(addresses));
+        //    Assert.IsTrue(addresses.Count() == numberOfAddresses);
+        //}
+
+        //[TestMethod]
+        //public void TestGetBundle()
+        //{
+        //    var bundle = api.GetBundle(RAW_TRANSACTIONS[0]);
+        //    Assert.IsTrue(bundle != null);
+        //}
+
+        //[TestMethod]
+        //public void TestGetTransfers()
+        //{
+        //    var bundles = api.GetTransfers(TEST_SEED_01, 0, 5, 2);
+        //    Assert.IsTrue(bundles.Count >= 0);
+        //}
+
+        /// <summary>
+        /// This test performs an actuall transfer including local proof-of-work
+        /// </summary>
+        //[TestMethod]
+        //public void PROOF_OF_CONCEPT()
+        //{
+        //    PowService powService = new PowService();
+        //    const string SEED = "HAKHOVW9EQWPESUCKITYGLYWGCCOXYH9EOZITARIFJMARWB9SSNB9URZFFANPWEGNONPGEUDBENZRZW9R";
+        //    string outgoingAddress = "DMDSWYIUUFDMHKIBQPP9LMCQNYQDFXXMPT9GWHXYZ9IQNEYJLSNASVXFFSZZKJAVHTFIDSZGIOXDURONWDTTBHVBWX";
+        //    string inputAddress = "RQXWRWSRPKRFTCJQME9FPXEJMZXQHOEKYZRQCNYQADWTPBKPPSYZYADKBLRNOKUMQYYSLJJDBAJJWGBMWCBDTSU9CA";
+        //    string remainder = "MPOOXKJABYVHNSKMTCDRDZGSRPZKQTUMVPUWUBZIZWWQBWTERELESGEGBHAMJHINZOKRUNSXQCSIFBMYDKOLDQUPQA";
+        //    Transaction output = new Transaction(outgoingAddress, 2);
+        //    Transaction input = new Transaction(inputAddress, -10, null, "IHATEJAVA", 0, 2);
+
+        //    Bundle transfer = api.PrepareTransfers(SEED, new List<Transaction> { output }, 2, new List<Transaction> { input }, remainder);
+        //    var response = api.GetTransactionsToApproveAsync(27).Result;
+        //    powService.Load(transfer, response.BranchTransaction, response.TrunkTransaction);
+        //    transfer = powService.Execute();
+        //    var result = api.BroadcastTransactions(transfer.GetRawTransactions().ToList());
+        //    Assert.IsTrue(result.StatusCode == System.Net.HttpStatusCode.OK);
+        //}
     }
 }

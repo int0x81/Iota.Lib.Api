@@ -14,62 +14,87 @@ namespace Iota.Lib.Model
         /// <summary>
         /// Initializes a new instance of the <see cref="Bundle"/>
         /// </summary>
-        public Bundle()
+        public Bundle(List<Transaction> transactions = null)
         {
+            if(transactions != null)
+            {
+                Transactions = transactions;
+            }
+            else
+            {
+                Transactions = new List<Transaction>();
+            }
         }
 
         public List<Transaction> Transactions { get; set; }
 
+        /// <summary>
+        /// A 81-tryte string that respresents the bundle hash
+        /// </summary>
+        public string BundleHash { get; set; }
+
         /// <summary>Adds a bundle entry</summary>
-        /// <param name="input">The transaction</param>
-        public void AddEntry(Transaction input)
+        /// <param name="transaction">The transaction</param>
+        public void AddEntry(Transaction transaction)
         {
-            if(!InputValidator.IsValidTransaction(input))
+            if(!InputValidator.IsValidTransaction(transaction))
             {
                 throw new InvalidTransactionException();
             }
 
-            Transactions.Add(input);
+            Transactions.Add(transaction);
+        }
+
+        /// <summary>Adds multiple bundle entries</summary>
+        /// <param name="input">The transactions</param>
+        public void AddEntries(List<Transaction> transactions)
+        {
+            if (!InputValidator.IsArrayOfValidTransactions(transactions))
+            {
+                throw new InvalidTransactionException();
+            }
+
+            Transactions.AddRange(transactions);
         }
 
         /// <summary>
         /// Adds the trytes.
         /// </summary>
         /// <param name="signatureFragments">The signature fragments.</param>
-        //public void AddTrytes(List<string> signatureFragments)
-        //{
-        //    string emptySignatureFragment = String.Empty;
+        public void AddTrytes(List<string> signatureFragments)
+        {
+            string emptySignatureFragment = String.Empty;
 
-        //    for (int j = 0; emptySignatureFragment.Length < Constants.SIGNATURE_MESSAGE_LENGTH; j++)
-        //    {
-        //        emptySignatureFragment += "9";
-        //    }
+            for (int j = 0; emptySignatureFragment.Length < Constants.SIGNATURE_MESSAGE_LENGTH; j++)
+            {
+                emptySignatureFragment += "9";
+            }
 
-        //    for (int i = 0; i < Transactions.Count; i++)
-        //    {
-        //        Transaction transaction = Transactions[i];
+            for (int i = 0; i < Transactions.Count; i++)
+            {
+                Transaction transaction = Transactions[i];
 
-        //        // Fill empty signatureMessageFragment
-        //        transaction.SignatureMessageFragment = ((signatureFragments.Count <= i || string.IsNullOrEmpty(signatureFragments[i]))
-        //            ? emptySignatureFragment
-        //            : signatureFragments[i]);
-        //        // Fill empty trunkTransaction
-        //        transaction.TrunkTransaction = Constants.EMPTY_HASH;
+                // Fill empty signatureMessageFragment
+                transaction.SignatureMessageFragment = ((signatureFragments.Count <= i || string.IsNullOrEmpty(signatureFragments[i]))
+                    ? emptySignatureFragment
+                    : signatureFragments[i]);
+                // Fill empty trunkTransaction
+                transaction.TrunkTransaction = Constants.EMPTY_HASH;
 
-        //        // Fill empty branchTransaction
-        //        transaction.BranchTransaction = Constants.EMPTY_HASH;
+                // Fill empty branchTransaction
+                transaction.BranchTransaction = Constants.EMPTY_HASH;
 
-        //        // Fill empty nonce
-        //        transaction.Nonce = Constants.EMPTY_HASH;
-        //    }
-        //}
+                // Fill empty nonce
+                transaction.Nonce = Constants.EMPTY_HASH;
+            }
+        }
 
         /// <summary>
         /// Normalizes the bundle
         /// </summary>
-        /// <param name="bundleHash">The bundle hash</param>
+        /// <param name="BundleHash">The bundle hash</param>
         /// <returns></returns>
-        public int[] NormalizedBundle(string bundleHash)
+        public int[] NormalizeBundle(string bundleHash)
         {
             int[] normalizedBundle = new int[81];
 
@@ -119,8 +144,64 @@ namespace Iota.Lib.Model
         /// </summary>
         public void FinalizeBundle()
         {
-            SetIndexes();
-            CreateAndAssignBundleHash();
+            //SetIndexes();
+            //CreateAndAssignBundleHash();
+            int[] normalizedBundleValue;
+            int[] obsoleteTagTrits = new int[81];
+            String hashInTrytes;
+            bool valid = true;
+            Kerl kerl = new Kerl();
+            do
+            {
+                kerl.Reset();
+
+                for (int i = 0; i < Transactions.Count; i++)
+                {
+
+                    int[] valueTrits = ArrayUtils.PadArrayWithZeros(Converter.ConvertBigIntToTrits(Transactions[i].Value), 81);
+
+                    int[] timestampTrits = ArrayUtils.PadArrayWithZeros(Converter.ConvertBigIntToTrits(Transactions[i].Timestamp), 27);
+
+                    Transactions[i].CurrentIndex = i;
+
+                    int[] currentIndexTrits = ArrayUtils.PadArrayWithZeros(Converter.ConvertBigIntToTrits(Transactions[i].CurrentIndex), 27);
+
+                    Transactions[i].LastIndex = Transactions.Count - 1;
+
+                    int[] lastIndexTrits = ArrayUtils.PadArrayWithZeros(Converter.ConvertBigIntToTrits(Transactions[i].LastIndex), 27);
+
+                    int[] t = Converter.ConvertTrytesToTrits(Transactions[i].Address + Converter.ConvertTritsToTrytes(valueTrits) + Transactions[i].ObsoleteTag + Converter.ConvertTritsToTrytes(timestampTrits) + Converter.ConvertTritsToTrytes(currentIndexTrits) + Converter.ConvertTritsToTrytes(lastIndexTrits));
+
+                    kerl.Absorb(t);
+                }
+
+                int[] hashInTrits = new int[Kerl.HASH_LENGTH];
+                kerl.Squeeze(ref hashInTrits, 0, hashInTrits.Length);
+
+                hashInTrytes = Converter.ConvertTritsToTrytes(hashInTrits);
+                normalizedBundleValue = NormalizeBundle(hashInTrytes);
+
+                bool foundValue = false;
+                foreach(int aNormalizedBundleValue in normalizedBundleValue)
+                {
+                    if (aNormalizedBundleValue == 13)
+                    {
+                        foundValue = true;
+                        obsoleteTagTrits = Converter.ConvertTrytesToTrits(Transactions[0].ObsoleteTag);
+                        obsoleteTagTrits = Converter.Increment(obsoleteTagTrits, 81);
+                        Transactions[0].ObsoleteTag = Converter.ConvertTritsToTrytes(obsoleteTagTrits);
+                    }
+                }
+                valid = !foundValue;
+
+            } while (!valid);
+
+            BundleHash = hashInTrytes;
+
+            foreach(Transaction transaction in Transactions)
+            {
+                transaction.Bundle = hashInTrytes;
+            }
         }
 
         /// <summary>
@@ -128,32 +209,33 @@ namespace Iota.Lib.Model
         /// </summary>
         public void SliceSignatures(int securityLevel)
         {
-            for (int c = 0; c <= Transactions.Count; c++)
+            for (int c = 0; c < Transactions.Count; c++)
             {
-                if (Transactions[c].SignatureMessageFragment.Length % Constants.SIGNATURE_MESSAGE_LENGTH != 0
-                    || Transactions[c].SignatureMessageFragment.Length / securityLevel != Constants.SIGNATURE_MESSAGE_LENGTH)
+                if(Transactions[c].Value >= 0)
+                {
+                    continue;
+                }
+
+                if (Transactions[c].SignatureMessageFragment.Length % Constants.SIGNATURE_MESSAGE_LENGTH != 0)
                 {
                     throw new InvalidBundleException("Invalid signature message length");
                 }
 
-                switch (Transactions[c].SignatureMessageFragment.Length / Constants.SIGNATURE_MESSAGE_LENGTH)
+                switch (securityLevel)
                 {
                     case 1:
                         break;
                     case 2:
                         {
-                            Transaction metaTransaction = (Transaction)Transactions[0].Clone();
-                            metaTransaction.SignatureMessageFragment = Transactions[c].SignatureMessageFragment.Substring(Constants.SIGNATURE_MESSAGE_LENGTH);
+                            Transaction metaTransaction = (Transaction)Transactions[c].Clone();
                             Transactions.Insert(c + 1, metaTransaction);
                             c++;
                             break;
                         }
                     case 3:
                         {
-                            Transaction metaTransaction_01 = (Transaction)Transactions[0].Clone();
-                            Transaction metaTransaction_02 = (Transaction)Transactions[0].Clone();
-                            metaTransaction_01.SignatureMessageFragment = Transactions[c].SignatureMessageFragment.Substring(Constants.SIGNATURE_MESSAGE_LENGTH);
-                            metaTransaction_02.SignatureMessageFragment = Transactions[c].SignatureMessageFragment.Substring(Constants.SIGNATURE_MESSAGE_LENGTH * 2);
+                            Transaction metaTransaction_01 = (Transaction)Transactions[c].Clone();
+                            Transaction metaTransaction_02 = (Transaction)Transactions[c].Clone();
                             Transactions.Insert(c + 1, metaTransaction_01);
                             c++;
                             Transactions.Insert(c + 1, metaTransaction_02);
@@ -166,27 +248,15 @@ namespace Iota.Lib.Model
             }
         }
 
-        /// <summary>
-        /// Sets the branch- and trunktransaction for each transaction
-        /// </summary>
-        /// <param name="tip_01">The first tip</param>
-        /// <param name="tip_02">The second tip</param>
-        public void CreateTail(string tip_01, string tip_02)
+        public IEnumerable<string> GetRawTransactions()
         {
-            for (int c = 0; c <= Transactions.Count; c++)
+            foreach(Transaction transaction in Transactions)
             {
-                if (c == Transactions.Count)
-                {
-                    Transactions[c].BranchTransaction = tip_02;
-                    Transactions[c].TrunkTransaction = tip_01;
-                }
-                else
-                {
-                    Transactions[c].BranchTransaction = tip_01;
-                    Transactions[c].TrunkTransaction = Transactions[c + 1].Hash;
-                }
+                var dummy = transaction.ToTransactionTrytes().Length;
+                yield return transaction.ToTransactionTrytes();
             }
         }
+
 
         /// <summary>
         /// Returns a <see cref="System.String" /> that represents this instance.
@@ -196,7 +266,7 @@ namespace Iota.Lib.Model
         /// </returns>
         public override string ToString()
         {
-            return $"{nameof(Transactions)}: {string.Join(",", Transactions)}";
+            return "Bundle";
         }
 
         /// <summary>
@@ -211,13 +281,15 @@ namespace Iota.Lib.Model
                 kerl.Absorb(Converter.ConvertTrytesToTrits(transaction.Address));
                 kerl.Absorb(Converter.ConvertBigIntToTrits(transaction.Value));
                 kerl.Absorb(Converter.ConvertTrytesToTrits(transaction.ObsoleteTag));
-                kerl.Absorb(Converter.ConvertLongToTrits(transaction.Timestamp));
+                kerl.Absorb(Converter.ConvertBigIntToTrits(transaction.Timestamp));
                 kerl.Absorb(Converter.ConvertIntegerToTrits(transaction.CurrentIndex));
                 kerl.Absorb(Converter.ConvertIntegerToTrits(transaction.LastIndex));
             }
 
-            string bundleHash = Converter.ConvertTritsToTrytes(kerl.Squeeze());
-            Transactions.ForEach(tx => tx.Bundle = bundleHash);
+            int[] hashInTrits = new int[Kerl.HASH_LENGTH];
+
+            BundleHash = Converter.ConvertTritsToTrytes(hashInTrits);
+            Transactions.ForEach(tx => tx.Bundle = BundleHash);
         }
         
         /// <summary>

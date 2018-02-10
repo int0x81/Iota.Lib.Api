@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Numerics;
+using Iota.Lib.Exception;
 using Iota.Lib.Utils;
 using static Iota.Lib.Utils.Constants;
+using static Iota.Lib.Utils.ArrayUtils;
 
 namespace Iota.Lib.Model
 {
@@ -15,6 +17,9 @@ namespace Iota.Lib.Model
         /// </summary>
         public Transaction()
         {
+            SignatureMessageFragment = AdjustTryteString(string.Empty, SIGNATURE_MESSAGE_LENGTH);
+            Tag = AdjustTryteString(string.Empty, Constants.TAG_LENGTH);
+            ObsoleteTag = AdjustTryteString(string.Empty, Constants.TAG_LENGTH);
         }
 
         /// <summary>
@@ -24,41 +29,40 @@ namespace Iota.Lib.Model
         /// <exception cref="System.ArgumentException">Is thrown when the provided trytes do not actually represent a transaction.</exception>
         public Transaction(string trytes)
         {
-            Kerl kerl = new Kerl();
             if (string.IsNullOrEmpty(trytes))
             {
-                throw new ArgumentException("trytes must non-null");
+                throw new InvalidTryteException();
             }
 
-            for (int i = 2279; i < 2295; i++)
+            if(trytes.Length != RAW_TRANSACTION_LENGTH)
             {
-                if (trytes[i] != '9')
-                {
-                    throw new ArgumentException("position " + i + "must not be '9'");
-                }
+                trytes = AdjustTryteString(trytes, RAW_TRANSACTION_LENGTH);
             }
+
+            Curl curl = new Curl(81);
 
             int[] transactionTrits = Converter.ConvertTrytesToTrits(trytes);
-            int[] hash = new int[243];
 
-            kerl.Reset();
-            kerl.Absorb(transactionTrits);
+            curl.Reset();
+            int[] hashInTrits = new int[TRANSACTION_HASH_LENGTH * 3];
+            curl.Absorb(transactionTrits);
+            curl.Squeeze(ref hashInTrits, 0 ,hashInTrits.Length);
 
-            Hash = Converter.ConvertTritsToTrytes(kerl.Squeeze());
+            Hash = Converter.ConvertTritsToTrytes(hashInTrits);
             SignatureMessageFragment = trytes.Substring(0, SIGNATURE_MESSAGE_LENGTH);
             Address = trytes.Substring(2187, ADDRESSLENGTH_WITHOUT_CHECKSUM);
             Value = Converter.ConvertTritsToBigInt(ArrayUtils.CreateSubArray(transactionTrits, 6804, 33));
             ObsoleteTag = trytes.Substring(2295, TAG_LENGTH);
-            Timestamp = Converter.ConvertTritsToLong(ArrayUtils.CreateSubArray(transactionTrits, 6966, 33));
-            CurrentIndex = Converter.ConvertTritsToInteger(ArrayUtils.CreateSubArray(transactionTrits, 6993, 27));
-            LastIndex = Converter.ConvertTritsToInteger(ArrayUtils.CreateSubArray(transactionTrits, 7020, 27));
+            Timestamp = Converter.ConvertTritsToBigInt(ArrayUtils.CreateSubArray(transactionTrits, 6966, 27));
+            CurrentIndex = Converter.ConvertTritsToInteger(ArrayUtils.EraseNullValuesFromEnd(ArrayUtils.CreateSubArray(transactionTrits, 6993, 27)));
+            LastIndex = Converter.ConvertTritsToInteger(ArrayUtils.EraseNullValuesFromEnd(ArrayUtils.CreateSubArray(transactionTrits, 7020, 27)));
             Bundle = trytes.Substring(2349, BUNDLE_HASH_LENGTH);
             TrunkTransaction = trytes.Substring(2430, TRANSACTION_HASH_LENGTH);
             BranchTransaction = trytes.Substring(2511, TRANSACTION_HASH_LENGTH);
             Tag = trytes.Substring(2592, TAG_LENGTH);
-            AttachmentTimestamp = Converter.ConvertTritsToLong(ArrayUtils.CreateSubArray(transactionTrits, 7857, 27));
-            AttachmentTimestampLowerBound = Converter.ConvertTritsToLong(ArrayUtils.CreateSubArray(transactionTrits, 7884, 27));
-            AttachmentTimestampUpperBound = Converter.ConvertTritsToLong(ArrayUtils.CreateSubArray(transactionTrits, 7911, 27));
+            AttachmentTimestamp = Converter.ConvertTritsToBigInt(ArrayUtils.CreateSubArray(transactionTrits, 7857, 27));
+            AttachmentTimestampLowerBound = Converter.ConvertTritsToBigInt(ArrayUtils.CreateSubArray(transactionTrits, 7884, 27));
+            AttachmentTimestampUpperBound = Converter.ConvertTritsToBigInt(ArrayUtils.CreateSubArray(transactionTrits, 7911, 27));
             Nonce = trytes.Substring(2646, NONCE_LENGTH);
         }
 
@@ -69,13 +73,59 @@ namespace Iota.Lib.Model
         /// <param name="value">The value</param>
         /// <param name="message">The message</param>
         /// <param name="tag">The tag</param>
-        public Transaction(string address, BigInteger value, string message = null, string tag = null)
+        public Transaction(string address, BigInteger value, string message = null, string tag = null, int keyIndex = -1, int securityLevel = 0)
         {
-            Address = address;
+            if(!InputValidator.IsValidAddress(address))
+            {
+                throw new InvalidAddressException($"{address} is not a valid address");
+            }
+            if(address.Length == ADDRESSLENGTH_WITH_CHECKSUM)
+            {
+                Address = Checksum.RemoveChecksum(address); 
+            }
+            else
+            {
+                Address = address;
+            }
+            if(value < 0)
+            {
+                if(keyIndex > -1 && securityLevel > 0)
+                {
+                    Value = value;
+                    KeyIndex = keyIndex;
+                    SecurityLevel = securityLevel;
+                }
+                else
+                {
+                    throw new InvalidTransactionException();
+                } 
+            }
             Value = value;
-            SignatureMessageFragment = message;
-            Tag = tag;
+            KeyIndex = keyIndex;
+            SecurityLevel = securityLevel;
+            if (string.IsNullOrEmpty(message))
+            {
+                SignatureMessageFragment = AdjustTryteString(string.Empty, SIGNATURE_MESSAGE_LENGTH);
+            }
+            else
+            {
+                SignatureMessageFragment = AdjustTryteString(message, SIGNATURE_MESSAGE_LENGTH);
+            }
+            if (string.IsNullOrEmpty(tag))
+            {
+                Tag = AdjustTryteString(string.Empty, TAG_LENGTH);
+            }
+            else
+            {
+                Tag = AdjustTryteString(tag, TAG_LENGTH);
+            }
+
+            ObsoleteTag = AdjustTryteString(string.Empty, TAG_LENGTH);
             Timestamp = IotaApiUtils.CreateTimeStampNow();
+            Bundle = AdjustTryteString(string.Empty, BUNDLE_HASH_LENGTH);
+            BranchTransaction = AdjustTryteString(string.Empty, TRANSACTION_HASH_LENGTH);
+            TrunkTransaction = AdjustTryteString(string.Empty, TRANSACTION_HASH_LENGTH);
+            Nonce = AdjustTryteString(string.Empty, NONCE_LENGTH);
         }
 
         /// <summary>
@@ -101,30 +151,20 @@ namespace Iota.Lib.Model
         public string Address { get; set; }
 
         /// <summary>
-        /// Gets or sets the value. When the bundle is created with a value less then 0 that means this transaction has to be signed later on.
-        /// That why you have to set the key index first.
+        /// Gets or sets the value.
         /// </summary>
-        /// <value>The value transfered in this transaction.</value>
-        public BigInteger Value
-        {
-            get { return Value; }
-            
-            set
-            {
-                if(value < 0 && KeyIndex == 0)
-                {
-                    throw new ArgumentException("When preparing an input transaction, make sure to assign the KeyIndex first! (Needed for later bundle signing)");
-                }
-            }
-        }
-
+        /// <value>The value transfered in this transaction</value>
+        public BigInteger Value { get; set; }
+        
         /// <summary>
         /// Gets or sets the timestamp.
         /// </summary>
         /// <value>Timestamp of the transaction. Timestamps are not enforced in iota.</value>
-        public long Timestamp { get; set; }
+        public BigInteger Timestamp { get; set; }
 
         public int KeyIndex { get; set; } //This value is just used internal for proper signing; not sent to the node
+        public int SecurityLevel { get; set; } //This value is just used internal for proper signing; not sent to the node
+        public bool Persistance { get; set; }
 
         /// <summary>
         /// Gets or sets the current index.
@@ -170,9 +210,9 @@ namespace Iota.Lib.Model
 
         public string ObsoleteTag { get; set; }
         public string Tag { get; set; }
-        public long AttachmentTimestamp { get; set; }
-        public long AttachmentTimestampLowerBound { get; set; }
-        public long AttachmentTimestampUpperBound { get; set; }
+        public BigInteger AttachmentTimestamp { get; set; }
+        public BigInteger AttachmentTimestampLowerBound { get; set; }
+        public BigInteger AttachmentTimestampUpperBound { get; set; }
 
         /// <summary>
         /// Converts the transaction to the corresponding trytes representation
@@ -182,23 +222,35 @@ namespace Iota.Lib.Model
         {
             int[] valueTrits = Converter.ConvertBigIntToTrits(Value);
             valueTrits = ArrayUtils.PadArrayWithZeros(valueTrits, 81);
-            int[] timestampTrits = Converter.ConvertLongToTrits(Timestamp);
+            int[] timestampTrits = Converter.ConvertBigIntToTrits(Timestamp);
             timestampTrits = ArrayUtils.PadArrayWithZeros(timestampTrits, 27);
             int[] currentIndexTrits = Converter.ConvertIntegerToTrits(CurrentIndex);
             currentIndexTrits = ArrayUtils.PadArrayWithZeros(currentIndexTrits, 27);
             int[] lastIndexTrits = Converter.ConvertIntegerToTrits(LastIndex);
             lastIndexTrits = ArrayUtils.PadArrayWithZeros(lastIndexTrits, 27);
+            int[] attachmentTimestampTrits = Converter.ConvertBigIntToTrits(AttachmentTimestamp);
+            attachmentTimestampTrits = ArrayUtils.PadArrayWithZeros(attachmentTimestampTrits, 27);
+            int[] attachmentTimestampLowerBoundTrits = Converter.ConvertBigIntToTrits(AttachmentTimestampLowerBound);
+            attachmentTimestampLowerBoundTrits = ArrayUtils.PadArrayWithZeros(attachmentTimestampLowerBoundTrits, 27);
+            int[] attachmentTimestampUpperBoundTrits = Converter.ConvertBigIntToTrits(AttachmentTimestampUpperBound);
+            attachmentTimestampUpperBoundTrits = ArrayUtils.PadArrayWithZeros(attachmentTimestampUpperBoundTrits, 27);
 
-            return SignatureMessageFragment
-                   + Address
-                   + Converter.ConvertTritsToTrytes(valueTrits)
-                   + Converter.ConvertTritsToTrytes(timestampTrits)
-                   + Converter.ConvertTritsToTrytes(currentIndexTrits)
-                   + Converter.ConvertTritsToTrytes(lastIndexTrits)
-                   + Bundle
-                   + TrunkTransaction
-                   + BranchTransaction
-                   + Nonce;
+            string trytes = AdjustTryteString(SignatureMessageFragment, SIGNATURE_MESSAGE_LENGTH);
+            trytes += AdjustTryteString(Address, ADDRESSLENGTH_WITHOUT_CHECKSUM);
+            trytes += Converter.ConvertTritsToTrytes(valueTrits);
+            trytes += AdjustTryteString(ObsoleteTag, TAG_LENGTH);
+            trytes += Converter.ConvertTritsToTrytes(timestampTrits).Substring(0, 9);
+            trytes += Converter.ConvertTritsToTrytes(currentIndexTrits).Substring(0, 9);
+            trytes += Converter.ConvertTritsToTrytes(lastIndexTrits).Substring(0, 9);
+            trytes += AdjustTryteString(Bundle, BUNDLE_HASH_LENGTH);
+            trytes += AdjustTryteString(TrunkTransaction, TRANSACTION_HASH_LENGTH);
+            trytes += AdjustTryteString(BranchTransaction, TRANSACTION_HASH_LENGTH);
+            trytes += AdjustTryteString(Tag, TAG_LENGTH);
+            trytes += Converter.ConvertTritsToTrytes(attachmentTimestampTrits).Substring(0, 9);
+            trytes += Converter.ConvertTritsToTrytes(attachmentTimestampLowerBoundTrits).Substring(0, 9);
+            trytes += Converter.ConvertTritsToTrytes(attachmentTimestampUpperBoundTrits).Substring(0, 9);
+            trytes += AdjustTryteString(Nonce, NONCE_LENGTH);
+            return trytes;
         }
 
         /// <summary>
@@ -223,7 +275,11 @@ namespace Iota.Lib.Model
                 Address = this.Address,
                 ObsoleteTag = this.ObsoleteTag,
                 Timestamp = this.Timestamp,
-                Tag = this.Tag
+                Tag = this.Tag,
+                BranchTransaction = this.BranchTransaction,
+                Bundle = this.Bundle,
+                TrunkTransaction = this.TrunkTransaction,
+                Nonce = this.Nonce
             };
             return clone;
         }

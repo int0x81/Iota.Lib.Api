@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Iota.Lib.Model;
@@ -116,24 +117,13 @@ namespace Iota.Lib.Utils
                 return false;
             }
 
-            if (!IsStringOfTrytes(transaction.SignatureMessageFragment))
+            if(transaction.Value < 0)
             {
-                return false;
-            }
-
-            if (transaction.CurrentIndex > transaction.LastIndex)
-            {
-                return false;
-            }
-
-            if (transaction.TrunkTransaction.Length != TRANSACTION_HASH_LENGTH)
-            {
-                return false;
-            }
-
-            if (transaction.BranchTransaction.Length != TRANSACTION_HASH_LENGTH)
-            {
-                return false;
+                if(transaction.KeyIndex < 0 || transaction.SecurityLevel < 1)
+                {
+                    return false;
+                }
+                return true;
             }
 
             return true;
@@ -154,6 +144,33 @@ namespace Iota.Lib.Utils
             if (seed.Length > SEED_MAX_LENGTH)
             {
                 return false;
+            }
+            return true;
+        }
+
+        public static bool IsValidBundle(Bundle bundle)
+        {
+            if(bundle == null)
+            {
+                return false;
+            }
+            for(int i = 0; i < bundle.Transactions.Count; i++)
+            {
+                if(!IsValidTransaction(bundle.Transactions[i]))
+                {
+                    return false;
+                }
+                if(bundle.Transactions[i].CurrentIndex > bundle.Transactions[i].LastIndex)
+                {
+                    return false;
+                }
+                if(bundle.Transactions[i].CurrentIndex != 0)
+                {
+                    if(bundle.Transactions[i].CurrentIndex - 1 != bundle.Transactions[i-1].CurrentIndex)
+                    {
+                        return false;
+                    }
+                }
             }
             return true;
         }

@@ -16,7 +16,9 @@ namespace Iota.Lib.Test
             int[] tritValue = Converter.ConvertTrytesToTrits("KFNNRVYTYYYNHJLBTXOEFYBZTHGXHTX9XKXB9KUZDHGLKBQGPQCNHPGDSGYKWGHVXVLHPOEAWREBIVK99");
 
             kerl.Absorb(tritValue);
-            string hash = Converter.ConvertTritsToTrytes(kerl.Squeeze());
+            int[] hashInTrits = new int[Kerl.HASH_LENGTH];
+            kerl.Squeeze(ref hashInTrits, 0 , hashInTrits.Length);
+            string hash = Converter.ConvertTritsToTrytes(hashInTrits);
             Assert.AreEqual("SHTKPLZWIXLDVHAEAGFSVWNDGVIX9SDVGEHAFGXEIMLWSHDTQYNZZKPBGMUF9GNEWIGIFYWWMSCLJ9RCD", hash);
         }
     }

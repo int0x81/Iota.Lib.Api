@@ -1,5 +1,5 @@
 ﻿#region Acknowledgements
-/**
+/*
  * The code on this class is heavily based on:
  * 
  * https://github.com/iotaledger/iri/blob/dev/src/main/java/com/iota/iri/hash/PearlDiver.java
@@ -8,11 +8,15 @@
 #endregion
 
 using System;
-using System.Threading;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Iota.Lib.Utils
 {
-    class PearlDiver
+    /// <summary>
+    /// Does the proof of work
+    /// </summary>
+    class PearlDiver : IPoWComputer
     {
         enum State
         {
@@ -37,17 +41,25 @@ namespace Iota.Lib.Utils
         {
 
         }
+
+        /// <summary>
+        /// Cancels the current proof of work operation
+        /// </summary>
         public void Cancel()
         {
-            lock(interlock)
-            {
-                state = State.CANCELLED;
-            }
+            state = State.CANCELLED;
         }
 
-        public bool Search(int[] transactionTrits, int minWeightMagnitude)
+        /// <summary>
+        /// Searches for a nonce which results in a transactionhash with a number of zeroes at the end depended on the minimum weight magnitude
+        /// </summary>
+        /// <param name="rawTransaction">The transaction</param>
+        /// <param name="threadsAvail">The number of threads you are willing to provide</param>
+        /// <param name="minWeightMagnitude">The minimum weight magnitude</param>
+        /// <returns>The raw transaction with calculated nonce</returns>
+        public string Search(string rawTransaction, int threadsAvail, int minWeightMagnitude)
         {
-
+            int[] transactionTrits = Converter.ConvertTrytesToTrits(rawTransaction);
             if (transactionTrits.Length != TRANSACTION_LENGTH)
             {
                 throw new ArgumentException("Invalid transaction trits length", "transactionTrits");
@@ -57,75 +69,82 @@ namespace Iota.Lib.Utils
                 throw new ArgumentException("Invalid min weight magnitude", "minWeightMagnitude");
             }
 
-            lock(interlock)
+            lock (interlock)
             {
                 state = State.RUNNING;
             }
+            int numberOfProcs = 0;
+            if (threadsAvail < 1)
+            {
+                numberOfProcs = 1;
+            }
+            if (threadsAvail > 8)
+            {
+                numberOfProcs = 8;
+            }
+            else { numberOfProcs = threadsAvail; }
 
-            int numberOfProcs = Environment.ProcessorCount;
 
             ulong[] midCurlStateLow = new ulong[CURL_STATE_LENGTH];
             ulong[] midCurlStateHigh = new ulong[CURL_STATE_LENGTH];
-            
-            for (int i = CURL_HASH_LENGTH; i < CURL_STATE_LENGTH; i++)
-            {
-                midCurlStateLow[i] = HIGH_BITS;
-                midCurlStateHigh[i] = HIGH_BITS;
-            }
 
-            int offset = 0;
-            ulong[] curlScratchpadLow = new ulong[CURL_STATE_LENGTH];
-            ulong[] curlScratchpadHigh = new ulong[CURL_STATE_LENGTH];
-            for(int i = (TRANSACTION_LENGTH - CURL_HASH_LENGTH) / CURL_HASH_LENGTH; i-- > 0;)
             {
-                for (int j = 0; j < CURL_HASH_LENGTH; j++)
+                for (int i = CURL_HASH_LENGTH; i < CURL_STATE_LENGTH; i++)
+                {
+                    midCurlStateLow[i] = HIGH_BITS;
+                    midCurlStateHigh[i] = HIGH_BITS;
+                }
+
+                int offset = 0;
+                ulong[] curlScratchpadLow = new ulong[CURL_STATE_LENGTH];
+                ulong[] curlScratchpadHigh = new ulong[CURL_STATE_LENGTH];
+                for (int i = (TRANSACTION_LENGTH - CURL_HASH_LENGTH) / CURL_HASH_LENGTH; i-- > 0;)
+                {
+                    for (int j = 0; j < CURL_HASH_LENGTH; j++)
                     {
                         switch (transactionTrits[offset++])
                         {
-                            case 0: midCurlStateLow[j] = HIGH_BITS;
+                            case 0:
+                                midCurlStateLow[j] = HIGH_BITS;
                                 midCurlStateHigh[j] = HIGH_BITS;
                                 break;
 
-                            case 1: midCurlStateLow[j] = LOW_BITS;
+                            case 1:
+                                midCurlStateLow[j] = LOW_BITS;
                                 midCurlStateHigh[j] = HIGH_BITS;
                                 break;
 
-                            default: midCurlStateLow[j] = HIGH_BITS;
+                            default:
+                                midCurlStateLow[j] = HIGH_BITS;
                                 midCurlStateHigh[j] = LOW_BITS;
                                 break;
                         }
                     }
 
-                Transform(midCurlStateLow, midCurlStateHigh, ref curlScratchpadLow, ref curlScratchpadHigh);
-            }
+                    Transform(midCurlStateLow, midCurlStateHigh, curlScratchpadLow, curlScratchpadHigh);
+                }
 
-            for (int i = 0; i < 162; i++)
+                for (int i = 0; i < 162; i++)
                 {
 
                     switch (transactionTrits[offset++])
                     {
-
                         case 0:
                             {
-
                                 midCurlStateLow[i] = 0b1111111111111111111111111111111111111111111111111111111111111111L;
                                 midCurlStateHigh[i] = 0b1111111111111111111111111111111111111111111111111111111111111111L;
-
                             }
                             break;
 
                         case 1:
                             {
-
                                 midCurlStateLow[i] = 0b0000000000000000000000000000000000000000000000000000000000000000L;
                                 midCurlStateHigh[i] = 0b1111111111111111111111111111111111111111111111111111111111111111L;
-
                             }
                             break;
 
                         default:
                             {
-
                                 midCurlStateLow[i] = 0b1111111111111111111111111111111111111111111111111111111111111111L;
                                 midCurlStateHigh[i] = 0b0000000000000000000000000000000000000000000000000000000000000000L;
                                 break;
@@ -133,21 +152,23 @@ namespace Iota.Lib.Utils
                     }
                 }
 
-            midCurlStateLow[162 + 0] = 0b1101101101101101101101101101101101101101101101101101101101101101L;
-            midCurlStateHigh[162 + 0] = 0b1011011011011011011011011011011011011011011011011011011011011011L;
-            midCurlStateLow[162 + 1] = 0b1111000111111000111111000111111000111111000111111000111111000111L;
-            midCurlStateHigh[162 + 1] = 0b1000111111000111111000111111000111111000111111000111111000111111L;
-            midCurlStateLow[162 + 2] = 0b0111111111111111111000000000111111111111111111000000000111111111L;
-            midCurlStateHigh[162 + 2] = 0b1111111111000000000111111111111111111000000000111111111111111111L;
-            midCurlStateLow[162 + 3] = 0b1111111111000000000000000000000000000111111111111111111111111111L;
-            midCurlStateHigh[162 + 3] = 0b0000000000111111111111111111111111111111111111111111111111111111L;
+                midCurlStateLow[162 + 0] = 0b1101101101101101101101101101101101101101101101101101101101101101L;
+                midCurlStateHigh[162 + 0] = 0b1011011011011011011011011011011011011011011011011011011011011011L;
+                midCurlStateLow[162 + 1] = 0b1111000111111000111111000111111000111111000111111000111111000111L;
+                midCurlStateHigh[162 + 1] = 0b1000111111000111111000111111000111111000111111000111111000111111L;
+                midCurlStateLow[162 + 2] = 0b0111111111111111111000000000111111111111111111000000000111111111L;
+                midCurlStateHigh[162 + 2] = 0b1111111111000000000111111111111111111000000000111111111111111111L;
+                midCurlStateLow[162 + 3] = 0b1111111111000000000000000000000000000111111111111111111111111111L;
+                midCurlStateHigh[162 + 3] = 0b0000000000111111111111111111111111111111111111111111111111111111L;
 
-            Thread[] workers = new Thread[numberOfProcs];
+            }
 
-            while(numberOfProcs-- > 0)
+            List<Task> workers = new List<Task>();
+
+            while (numberOfProcs-- > 0)
             {
                 int threadIndex = numberOfProcs;
-                Thread worker = new Thread(() =>
+                var worker = Task.Factory.StartNew(() =>
                 {
                     ulong[] midCurlStateCopyLow = new ulong[CURL_STATE_LENGTH];
                     ulong[] midCurlStateCopyHigh = new ulong[CURL_STATE_LENGTH];
@@ -156,26 +177,24 @@ namespace Iota.Lib.Utils
                     for (int i = threadIndex; i-- > 0;)
                     {
                         Increment(midCurlStateCopyLow, midCurlStateCopyHigh, 162 + CURL_HASH_LENGTH / 9, 162 + (CURL_HASH_LENGTH / 9) * 2);
-
                     }
 
                     ulong[] curlStateLow = new ulong[CURL_STATE_LENGTH];
                     ulong[] curlStateHigh = new ulong[CURL_STATE_LENGTH];
-                    curlScratchpadLow = new ulong[CURL_STATE_LENGTH];
-                    curlScratchpadHigh = new ulong[CURL_STATE_LENGTH];
-                    ulong mask = 0;
+                    ulong[] curlScratchpadLow = new ulong[CURL_STATE_LENGTH];
+                    ulong[] curlScratchpadHigh = new ulong[CURL_STATE_LENGTH];
+
                     ulong outMask = 1;
 
-                    while (state == State.RUNNING && mask == 0)
+                    while (state == State.RUNNING)
                     {
-
                         Increment(midCurlStateCopyLow, midCurlStateCopyHigh, 162 + (CURL_HASH_LENGTH / 9) * 2, CURL_HASH_LENGTH);
 
                         Array.Copy(midCurlStateCopyLow, 0, curlStateLow, 0, CURL_STATE_LENGTH);
                         Array.Copy(midCurlStateCopyHigh, 0, curlStateHigh, 0, CURL_STATE_LENGTH);
-                        Transform(curlStateLow, curlStateHigh, ref curlScratchpadLow, ref curlScratchpadHigh);
+                        Transform(curlStateLow, curlStateHigh, curlScratchpadLow, curlScratchpadHigh);
 
-                        mask = HIGH_BITS;
+                        ulong mask = HIGH_BITS;
                         for (int i = minWeightMagnitude; i-- > 0;)
                         {
                             mask &= ~(curlStateLow[CURL_HASH_LENGTH - 1 - i] ^ curlStateHigh[CURL_HASH_LENGTH - 1 - i]);
@@ -183,6 +202,11 @@ namespace Iota.Lib.Utils
                             {
                                 break;
                             }
+                        }
+
+                        if (mask == 0)
+                        {
+                            continue;
                         }
 
                         lock(interlock)
@@ -198,49 +222,21 @@ namespace Iota.Lib.Utils
                                 {
                                     transactionTrits[TRANSACTION_LENGTH - CURL_HASH_LENGTH + i] = (midCurlStateCopyLow[i] & outMask) == 0 ? 1 : (midCurlStateCopyHigh[i] & outMask) == 0 ? -1 : 0;
                                 }
-                            }
+                            }  
                         }
+                        
+                        break;
                     }
                 });
 
-                workers[threadIndex] = worker;
-                worker.Start();
-            }
-            
-            try
-            {
-                lock(interlock)
-                {
-                    state = State.RUNNING;
-                }
-            }
-            catch (SystemException) 
-            {
-                lock(interlock)
-                {
-                    state = State.CANCELLED;
-                }
+                workers.Add(worker);
             }
 
-            foreach(var worker in workers)
-            {
-                try
-                {
-                    worker.Join();
-                }
-                catch (SystemException)
-                {
-                    lock(interlock)
-                    {
-                        state = State.CANCELLED;
-                    }
-                }
-            }
-
-            return state == State.COMPLETED;
+            Task.WaitAll(workers.ToArray());
+            return Converter.ConvertTritsToTrytes(transactionTrits);
         }
-        
-        private void Transform(ulong[] curlStateLow, ulong[] curlStateHigh, ref ulong[] curlScratchpadLow, ref ulong[] curlScratchpadHigh)
+
+        private void Transform(ulong[] curlStateLow, ulong[] curlStateHigh, ulong[] curlScratchpadLow, ulong[] curlScratchpadHigh)
         {
             int curlScratchpadIndex = 0;
             for (int round = 0; round < 81; round++)
@@ -272,7 +268,6 @@ namespace Iota.Lib.Utils
 
         private void Increment(ulong[] midCurlStateCopyLow, ulong[] midCurlStateCopyHigh, int fromIndex, int toIndex)
         {
-
             for (int i = fromIndex; i < toIndex; i++)
             {
                 if (midCurlStateCopyLow[i] == LOW_BITS)
@@ -293,6 +288,16 @@ namespace Iota.Lib.Utils
                     break;
                 }
             }
+        }
+
+        public static bool IsSystemSupported()
+        {
+            return true;
+        }
+
+        bool IPoWComputer.IsSystemSupported()
+        {
+            return IsSystemSupported();
         }
     }
 }

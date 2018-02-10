@@ -12,7 +12,7 @@ using Newtonsoft.Json;
 
 namespace Iota.Lib.Utils
 {
-    internal class JsonWebClient
+    class JsonWebClient
     {
         public TResponse GetResponse<TResponse>(Uri uri, string data) where TResponse : IotaResponse, new()
         {

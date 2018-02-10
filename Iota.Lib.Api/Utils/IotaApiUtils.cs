@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using Iota.Lib.Model;
 using System.Runtime.CompilerServices;
 using System.Numerics;
+using System.Threading.Tasks;
+using static Iota.Lib.Utils.Constants;
 
 namespace Iota.Lib.Utils
 {
@@ -29,77 +31,57 @@ namespace Iota.Lib.Utils
             return checksum ? Checksum.AddChecksum(address) : address;
         }
 
-        public static List<string> SignInputsAndReturn(string seed, Bundle bundle, int securityLevel)
+        /// <summary>
+        /// Takes a bundle and signs all transaction with input (negative value). At this point the meta transactions already have to be generated into the bundle
+        /// </summary>
+        /// <param name="seed">The seed</param>
+        /// <param name="bundle">The bundle containing all outputs, inputs and the needed meta transactions</param>
+        /// <returns>The bundle with signed inputs</returns>
+        public static Bundle SignInputsAndReturn(string seed, Bundle bundle)
         {
-            //bundle.AddTrytes(signatureFragments);
+            Kerl kerl = new Kerl();
 
-            //  SIGNING OF INPUTS
-            //
-            //  Here we do the actual signing of the inputs
-            //  Iterate over all bundle transactions, find the inputs
-            //  Get the corresponding private key and calculate the signatureFragment
-            foreach(Transaction transaction in bundle.Transactions)
+            bundle.FinalizeBundle();
+
+            for (int i = 0; i < bundle.Transactions.Count; i++)
             {
-                if (transaction.Value < 0)
+                if (bundle.Transactions[i].Value < 0)
                 {
-                    string thisAddress = transaction.Address;
+                    string thisAddress = bundle.Transactions[i].Address;
 
-                    string bundleHash = transaction.Bundle;
+                    string bundleHash = bundle.Transactions[i].Bundle;
 
-                    // Get corresponding private key of address
-                    int[] key = Signing.Key(Converter.ConvertTrytesToTrits(seed), transaction.KeyIndex, securityLevel);
+                    int[] key = Signing.Key(Converter.ConvertTrytesToTrits(seed), bundle.Transactions[i].KeyIndex, bundle.Transactions[i].SecurityLevel);
 
-                    //  First 6561 trits for the firstFragment
-                    int[] firstFragment = ArrayUtils.CreateSubArray(key, 0, Constants.SIGNATURE_MESSAGE_LENGTH * 3);
+                    int[] firstFragment = ArrayUtils.CreateSubArray(key, 0, Constants.KEY_LENGTH);
 
-                    //  Get the normalized bundle hash
-                    int[] normalizedBundleHash = bundle.NormalizedBundle(bundleHash);
+                    int[] normalizedBundleHash = bundle.NormalizeBundle(bundleHash);
 
-                    //  First bundle fragment uses 27 trytes
                     int[] firstBundleFragment = ArrayUtils.CreateSubArray(normalizedBundleHash, 0, 27);
 
-                    //  Calculate the new signatureFragment with the first bundle fragment
                     int[] firstSignedFragment = Signing.SignatureFragment(firstBundleFragment, firstFragment);
 
-                    //  Convert signature to trytes and assign the new signatureFragment
-                    transaction.SignatureMessageFragment = Converter.ConvertTritsToTrytes(firstSignedFragment);
+                    bundle.Transactions[i].SignatureMessageFragment = Converter.ConvertTritsToTrytes(firstSignedFragment);
 
-                    //  Because the signature is > 2187 trytes, we need to
-                    //  find the second transaction to add the remainder of the signature
-                    for (int j = 0; j < bundle.Transactions.Count; j++)
+                    for (int j = 1; j < bundle.Transactions[i].SecurityLevel; j++)
                     {
-                        //  Same address as well as value = 0 (as we already spent the input)
-                        if (bundle.Transactions[j].Address.Equals(thisAddress) &&
-                            bundle.Transactions[j].Value == 0)
+                        if (bundle.Transactions[i + j].Address.Equals(bundle.Transactions[i].Address) && bundle.Transactions[i + j].Value == 0)
                         {
-                            // Use the second 6562 trits
-                            int[] secondFragment = ArrayUtils.CreateSubArray(key, 6561, 6561);
+                            int[] nextFragment = ArrayUtils.CreateSubArray(key, KEY_LENGTH * j, KEY_LENGTH);
 
-                            // The second 27 to 54 trytes of the bundle hash
-                            int[] secondBundleFragment = ArrayUtils.CreateSubArray(normalizedBundleHash, 27, 27);
+                            int[] secondBundleFragment = ArrayUtils.CreateSubArray(normalizedBundleHash, 27 * j, 27);
 
-                            //  Calculate the new signature
-                            int[] secondSignedFragment = Signing.SignatureFragment(secondBundleFragment,
-                                secondFragment);
+                            int[] secondSignedFragment = Signing.SignatureFragment(secondBundleFragment, nextFragment);
 
-                            //  Convert signature to trytes and assign it again to this bundle entry
-                            bundle.Transactions[j].SignatureMessageFragment = (Converter.ConvertTritsToTrytes(secondSignedFragment));
+                            bundle.Transactions[i + j].SignatureMessageFragment = Converter.ConvertTritsToTrytes(secondSignedFragment);
                         }
                     }
                 }
             }
 
-            List<string> bundleTrytes = new List<string>();
-
-            // Convert all bundle entries into trytes
-            foreach (Transaction transaction in bundle.Transactions)
-            {
-                bundleTrytes.Add(transaction.ToTransactionTrytes());
-            }
-            bundleTrytes.Reverse();
-            return bundleTrytes;
+            return bundle;
         }
-
+ 
         /// <summary>
         /// Gets the balance of multiple transactions combined
         /// </summary>
@@ -116,21 +98,6 @@ namespace Iota.Lib.Utils
         }
 
         /// <summary>
-        /// Pads a seed until the the maximum seed length is reached
-        /// </summary>
-        /// <param name="seed">The seed</param>
-        /// <returns>The padded seed</returns>
-        public static string PadSeedWithNines(string seed)
-        {
-            while(seed.Length < Constants.SEED_MAX_LENGTH)
-            {
-                seed += "9";
-            }
-
-            return seed;
-        }
-
-        /// <summary>
         /// Gets the addresses from multiple transactions
         /// </summary>
         /// <param name="transactions">The transactions</param>
@@ -144,12 +111,12 @@ namespace Iota.Lib.Utils
         }
 
         /// <summary>
-        /// Creates a unix timestamp.
+        /// Creates a UNIX timestamp
         /// </summary>
-        /// <returns>An integer that represents a timestamp.</returns>
+        /// <returns>A long that represents a timestamp</returns>
         internal static long CreateTimeStampNow()
         {
-            return DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).Milliseconds;
+            return (long)DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).TotalSeconds;
         }
     }
 }

@@ -44,11 +44,6 @@ namespace Iota.Lib.Utils
         public const int SEED_MAX_LENGTH = 81;
 
         /// <summary>
-        /// This string represents an empty hash consisting of '9'
-        /// </summary>
-        public const string EMPTY_HASH = "999999999999999999999999999999999999999999999999999999999999999999999999999999999";
-
-        /// <summary>
         /// The length of an address without checksum in trytes
         /// </summary>
         public const int ADDRESSLENGTH_WITHOUT_CHECKSUM = 81;
@@ -59,17 +54,17 @@ namespace Iota.Lib.Utils
         public const int ADDRESSLENGTH_WITH_CHECKSUM = 90;
 
         /// <summary>
-        /// The radix of iotas trinary system
+        /// The radix of Iotas trinary system
         /// </summary>
         public const int RADIX = 3;
 
         /// <summary>
-        /// The maximum value a trit can have
+        /// The maximum value a trit can take
         /// </summary>
         public const int MAX_TRIT_VALUE = (RADIX - 1) / 2;
 
         /// <summary>
-        /// The minimum value a trit can have
+        /// The minimum value a trit can take
         /// </summary>
         public const int MIN_TRIT_VALUE = -MAX_TRIT_VALUE;
 
@@ -84,12 +79,12 @@ namespace Iota.Lib.Utils
         public const int NUMBER_OF_TRITS_IN_A_TRYTE = 3;
 
         /// <summary>
-        /// The minimum weight magnitutde that is considered as save
+        /// The minimum weight magnitude as specified by the Iota foundation
         /// </summary>
-        public const int MIN_WEIGHT_MAGNITUDE = 18;
+        public const int MIN_WEIGHT_MAGNITUDE = 14;
 
         /// <summary>
-        /// The size in trytes of a message of a transaction in trytes
+        /// The size in trytes of a transaction message in trytes
         /// </summary>
         public const int SIGNATURE_MESSAGE_LENGTH = 2187;
 
@@ -119,8 +114,18 @@ namespace Iota.Lib.Utils
         public const int BUNDLE_HASH_LENGTH = 81;
 
         /// <summary>
-        /// Testing var
+        /// The length of a private key for security level one
         /// </summary>
-        public const int SAVE_DEPTH = 27;
+        public const int KEY_LENGTH = SIGNATURE_MESSAGE_LENGTH * 3;
+
+        /// <summary>
+        /// Represents a 27-tryte string consisting of '9'
+        /// </summary>
+        public const string EMPTY_NONCE = "999999999999999999999999999";
+
+        /// <summary>
+        /// Represents a 81-tryte string consisting of '9'
+        /// </summary>
+        public const string EMPTY_HASH = "999999999999999999999999999999999999999999999999999999999999999999999999999999999";
     }
 }
