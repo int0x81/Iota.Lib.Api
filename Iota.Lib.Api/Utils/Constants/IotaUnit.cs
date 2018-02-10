@@ -1,17 +1,17 @@
 ﻿namespace Iota.Lib.Utils
 {
     /// <summary>
-    /// Iota Units 
+    /// The Iota units 
     /// </summary>
     public enum IotaUnit
     {
         /// <summary>
-        /// The corresponding value is in iota. Same as 'None' (<see cref="None"/>)
+        /// The corresponding value is in Iota. Same as 'None' (<see cref="None"/>)
         /// </summary>
         Iota = 0,
 
         /// <summary>
-        ///  The corresponding value is in iota. Same as 'Iota' (<see cref="Iota"/>)
+        ///  The corresponding value is in Iota. Same as 'Iota' (<see cref="Iota"/>)
         /// </summary>
         None = 0,
 

@@ -1,15 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Org.BouncyCastle.Crypto.Digests;
-
 using static Iota.Lib.Utils.Converter;
 
 namespace Iota.Lib.Utils
 {
     /// <summary>
-    /// <see href="https://github.com/iotaledger/kerl">Kerl</see> is the hashfunction Iota uses for multiple scenarios such as address generation, signature generation etc.
-    /// It is sponge-function based on <see href="https://keccak.team/keccak.html">Keccak-384</see>.
+    /// Kerl is the hashfunction Iota uses for multiple scenarios such as address generation, signature generation etc.
+    /// It is sponge-function based on Keccak-384
     /// </summary>
+    /// <seealso href="https://github.com/iotaledger/kerl">
+    /// <seealso href="https://keccak.team/keccak.html"/>
     public class Kerl : ISponge
     {
         private readonly KeccakDigest keccak;
@@ -21,6 +23,9 @@ namespace Iota.Lib.Utils
         private byte[] byteState;
         private int[] tritState;
 
+        /// <summary>
+        /// Creates a new <see cref="Kerl"/> instance
+        /// </summary>
         public Kerl() 
         {
             keccak = new KeccakDigest(BIT_HASH_LENGTH);
@@ -28,11 +33,13 @@ namespace Iota.Lib.Utils
             tritState = new int[HASH_LENGTH];
         }
 
-        public ISponge Clone()
-        {
-            return new Kerl();
-        }
-
+        /// <summary>
+        /// Absorbs the specified trits
+        /// </summary>
+        /// <param name="trits">The trits</param>
+        /// <param name="offset">The offset to start from</param>
+        /// <param name="length">The length</param>
+        /// <returns>An <see cref="ISponge"/> instance (used for method chaining)</returns>
         public ISponge Absorb(int[] trits, int offset, int length)
         {
             List<int> tritsAsList = new List<int>(trits);
@@ -53,43 +60,70 @@ namespace Iota.Lib.Utils
 
                 offset += HASH_LENGTH;
             }
-
             return this;
         }
 
+        /// <summary>
+        /// Absorbs the specified trits
+        /// </summary>
+        /// <param name="trits">The trits</param>
+        /// <returns>An <see cref="ISponge"/> instance (used for method chaining)</returns>
         public ISponge Absorb(int[] trits)
         {
-            Absorb(trits, 0, trits.Length);
+            return Absorb(trits, 0, trits.Length);
+        }
+
+        /// <summary>
+        /// Squeezes the absorbed trits
+        /// </summary>
+        /// <param name="array">The array</param>
+        /// <param name="offset">The offset</param>
+        /// <param name="length">The desired outputlength</param>
+        /// <returns>An <see cref="ISponge"/> instance (used for method chaining)</returns>
+        public ISponge Squeeze(ref int[] array, int offset, int length)
+        {
+            var tritsList = array.ToList();
+            while(tritsList.Count % HASH_LENGTH != 0)
+            {
+                tritsList.Add(0);
+            }
+            array = tritsList.ToArray();
+
+            do
+            {
+                keccak.DoFinal(byteState, 0);
+                tritState = Converter.ConvertBytesToTrits(byteState);
+                tritState = ArrayUtils.PadArrayWithZeros(tritState, HASH_LENGTH);
+                tritState[HASH_LENGTH - 1] = 0;
+                Array.Copy(tritState, 0, array, offset, HASH_LENGTH);
+
+                for (int i = byteState.Length; i-- > 0;)
+                {
+
+                    byteState[i] = (byte)(byteState[i] ^ 0xFF);
+                }
+                keccak.BlockUpdate(byteState, 0, byteState.Length);
+                offset += HASH_LENGTH;
+
+            } while ((length -= HASH_LENGTH) > 0);
+
             return this;
         }
 
-        public int[] Squeeze(int length = HASH_LENGTH)
+        /// <summary>
+        /// Squeezes the absorbed trits
+        /// </summary>
+        /// <param name="array">The array</param>
+        /// <returns>An <see cref="ISponge"/> instance (used for method chaining)</returns>
+        public ISponge Squeeze(ref int[] array)
         {
-            int[] digest = new int[length];
-            int offset = 0;
-
-            while (offset < length)
-            {
-                keccak.DoFinal(byteState, 0);
-                tritState = ConvertBytesToTrits(byteState);
-                tritState = ArrayUtils.PadArrayWithZeros(tritState, HASH_LENGTH);
-                tritState[HASH_LENGTH - 1] = 0;
-                Array.Copy(tritState, 0, digest, offset, HASH_LENGTH);
-
-                keccak.Reset();
-
-                for (int i = this.byteState.Length; i-- > 0;)
-                {
-                    byteState[i] = (byte)(byteState[i] ^ 0xFF);
-                }
-
-                keccak.BlockUpdate(this.byteState, 0, this.byteState.Length);
-                offset += HASH_LENGTH;
-            }
-
-            return digest;
+            return Squeeze(ref array, 0, array.Length);
         }
 
+        /// <summary>
+        /// Resets the state
+        /// </summary>
+        /// <returns>An <see cref="ISponge"/> instance (used for method chaining)</returns>
         public ISponge Reset()
         {
             keccak.Reset();

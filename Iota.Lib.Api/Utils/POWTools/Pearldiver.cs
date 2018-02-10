@@ -1,5 +1,5 @@
 ﻿#region Acknowledgements
-/**
+/*
  * The code on this class is heavily based on:
  * 
  * https://github.com/iotaledger/iri/blob/dev/src/main/java/com/iota/iri/hash/PearlDiver.java
@@ -7,16 +7,16 @@
  */
 #endregion
 
-using Iota.Lib.Exception;
-using Iota.Lib.Model;
 using System;
 using System.Collections.Generic;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Iota.Lib.Utils
 {
-    class PearlDiver :IPoWComputer
+    /// <summary>
+    /// Does the proof of work
+    /// </summary>
+    class PearlDiver : IPoWComputer
     {
         enum State
         {
@@ -42,11 +42,21 @@ namespace Iota.Lib.Utils
 
         }
 
+        /// <summary>
+        /// Cancels the current proof of work operation
+        /// </summary>
         public void Cancel()
         {
             state = State.CANCELLED;
         }
 
+        /// <summary>
+        /// Searches for a nonce which results in a transactionhash with a number of zeroes at the end depended on the minimum weight magnitude
+        /// </summary>
+        /// <param name="rawTransaction">The transaction</param>
+        /// <param name="threadsAvail">The number of threads you are willing to provide</param>
+        /// <param name="minWeightMagnitude">The minimum weight magnitude</param>
+        /// <returns>The raw transaction with calculated nonce</returns>
         public string Search(string rawTransaction, int threadsAvail, int minWeightMagnitude)
         {
             int[] transactionTrits = Converter.ConvertTrytesToTrits(rawTransaction);

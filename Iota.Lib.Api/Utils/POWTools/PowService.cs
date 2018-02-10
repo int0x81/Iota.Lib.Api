@@ -59,16 +59,13 @@ namespace Iota.Lib.Utils
 
         public Bundle Execute()
         {
-            Curl curl = new Curl();
-            _bundle.Transactions.Reverse();
+            Curl curl = new Curl(81);
 
             for (int c = _bundle.Transactions.Count - 1; c >= 0; c--)
             {
-                
-
                 _bundle.Transactions[c].AttachmentTimestamp = IotaApiUtils.CreateTimeStampNow() * 1000;
                 _bundle.Transactions[c].AttachmentTimestampLowerBound = 0;
-                _bundle.Transactions[c].AttachmentTimestampUpperBound = 3812798742493;
+                _bundle.Transactions[c].AttachmentTimestampUpperBound = 12;
 
                 if (c == _bundle.Transactions.Count - 1)
                 {
@@ -77,16 +74,13 @@ namespace Iota.Lib.Utils
                 }
                 else
                 {
-                    var rawTransaction = _bundle.Transactions[c + 1].ToTransactionTrytes();
-                    var trits = curl.Absorb(Converter.ConvertTrytesToTrits(rawTransaction));
                     _bundle.Transactions[c].BranchTransaction = _trunkTip;
-                    _bundle.Transactions[c + 1].Hash = Converter.ConvertTritsToTrytes(curl.Squeeze(Curl.HASH_LENGTH));
                     _bundle.Transactions[c].TrunkTransaction = _bundle.Transactions[c + 1].Hash;
                 }
                 
                 string transWithPOW = _powComputer.Search(_bundle.Transactions[c].ToTransactionTrytes(), 10, Constants.MIN_WEIGHT_MAGNITUDE);
                 _bundle.Transactions[c] = new Transaction(transWithPOW);
-                var testme = _bundle.Transactions[c].ToTransactionTrytes();
+                var testme = _bundle.Transactions[c].Hash.Length;
             }
             return _bundle;
 

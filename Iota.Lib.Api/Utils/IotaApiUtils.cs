@@ -4,6 +4,7 @@ using Iota.Lib.Model;
 using System.Runtime.CompilerServices;
 using System.Numerics;
 using System.Threading.Tasks;
+using static Iota.Lib.Utils.Constants;
 
 namespace Iota.Lib.Utils
 {
@@ -30,12 +31,17 @@ namespace Iota.Lib.Utils
             return checksum ? Checksum.AddChecksum(address) : address;
         }
 
+        /// <summary>
+        /// Takes a bundle and signs all transaction with input (negative value). At this point the meta transactions already have to be generated into the bundle
+        /// </summary>
+        /// <param name="seed">The seed</param>
+        /// <param name="bundle">The bundle containing all outputs, inputs and the needed meta transactions</param>
+        /// <returns>The bundle with signed inputs</returns>
         public static Bundle SignInputsAndReturn(string seed, Bundle bundle)
         {
             Kerl kerl = new Kerl();
 
             bundle.FinalizeBundle();
-            //bundle.AddTrytes(signatureFragments);
 
             for (int i = 0; i < bundle.Transactions.Count; i++)
             {
@@ -45,43 +51,28 @@ namespace Iota.Lib.Utils
 
                     string bundleHash = bundle.Transactions[i].Bundle;
 
-                    // Get corresponding private key of address
                     int[] key = Signing.Key(Converter.ConvertTrytesToTrits(seed), bundle.Transactions[i].KeyIndex, bundle.Transactions[i].SecurityLevel);
 
-                    //  First 6561 trits for the firstFragment
-                    int[] firstFragment = ArrayUtils.CreateSubArray(key, 0, Constants.SIGNATURE_MESSAGE_LENGTH * 3);
+                    int[] firstFragment = ArrayUtils.CreateSubArray(key, 0, Constants.KEY_LENGTH);
 
-                    //  Get the normalized bundle hash
-                    int[] normalizedBundleHash = bundle.NormalizeBundle(); //81 trytes
+                    int[] normalizedBundleHash = bundle.NormalizeBundle(bundleHash);
 
-                    //  First bundle fragment uses 27 trytes
-                    int[] firstBundleFragment = ArrayUtils.CreateSubArray(normalizedBundleHash, 0, 27); //27 trytes
+                    int[] firstBundleFragment = ArrayUtils.CreateSubArray(normalizedBundleHash, 0, 27);
 
-                    //  Calculate the new signatureFragment with the first bundle fragment
-                    int[] firstSignedFragment = Signing.SignatureFragment(firstBundleFragment, firstFragment); //243 trits
+                    int[] firstSignedFragment = Signing.SignatureFragment(firstBundleFragment, firstFragment);
 
-                    //  Convert signature to trytes and assign the new signatureFragment
                     bundle.Transactions[i].SignatureMessageFragment = Converter.ConvertTritsToTrytes(firstSignedFragment);
 
-                    // if user chooses higher than 27-tryte security
-                    // for each security level, add an additional signature
                     for (int j = 1; j < bundle.Transactions[i].SecurityLevel; j++)
                     {
-                        //  Because the signature is > 2187 trytes, we need to
-                        //  find the second transaction to add the remainder of the signature
-                        //  Same address as well as value = 0 (as we already spent the input)
                         if (bundle.Transactions[i + j].Address.Equals(bundle.Transactions[i].Address) && bundle.Transactions[i + j].Value == 0)
                         {
-                            // Use the second 6562 trits
-                            int[] secondFragment = ArrayUtils.CreateSubArray(key, 6561 * j, Constants.SIGNATURE_MESSAGE_LENGTH);
+                            int[] nextFragment = ArrayUtils.CreateSubArray(key, KEY_LENGTH * j, KEY_LENGTH);
 
-                            // The second 27 to 54 trytes of the bundle hash
                             int[] secondBundleFragment = ArrayUtils.CreateSubArray(normalizedBundleHash, 27 * j, 27);
 
-                            //  Calculate the new signature
-                            int[] secondSignedFragment = Signing.SignatureFragment(secondBundleFragment, secondFragment);
+                            int[] secondSignedFragment = Signing.SignatureFragment(secondBundleFragment, nextFragment);
 
-                            //  Convert signature to trytes and assign it again to this bundle entry
                             bundle.Transactions[i + j].SignatureMessageFragment = Converter.ConvertTritsToTrytes(secondSignedFragment);
                         }
                     }
@@ -89,15 +80,6 @@ namespace Iota.Lib.Utils
             }
 
             return bundle;
-
-            //List<string> bundleTrytes = new List<string>();
-            //// Convert all bundle entries into trytes
-            //foreach (Transaction transaction in bundle.Transactions)
-            //{
-            //    bundleTrytes.Add(transaction.ToTransactionTrytes());
-            //}
-            //bundleTrytes.Reverse();
-            //return bundleTrytes;
         }
  
         /// <summary>

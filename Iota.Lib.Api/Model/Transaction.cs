@@ -39,14 +39,16 @@ namespace Iota.Lib.Model
                 trytes = AdjustTryteString(trytes, RAW_TRANSACTION_LENGTH);
             }
 
-            ISponge curl = new Curl();
+            Curl curl = new Curl(81);
 
             int[] transactionTrits = Converter.ConvertTrytesToTrits(trytes);
 
             curl.Reset();
+            int[] hashInTrits = new int[TRANSACTION_HASH_LENGTH * 3];
             curl.Absorb(transactionTrits);
+            curl.Squeeze(ref hashInTrits, 0 ,hashInTrits.Length);
 
-            Hash = Converter.ConvertTritsToTrytes(curl.Squeeze(Curl.HASH_LENGTH));
+            Hash = Converter.ConvertTritsToTrytes(hashInTrits);
             SignatureMessageFragment = trytes.Substring(0, SIGNATURE_MESSAGE_LENGTH);
             Address = trytes.Substring(2187, ADDRESSLENGTH_WITHOUT_CHECKSUM);
             Value = Converter.ConvertTritsToBigInt(ArrayUtils.CreateSubArray(transactionTrits, 6804, 33));

@@ -94,7 +94,7 @@ namespace Iota.Lib.Model
         /// </summary>
         /// <param name="BundleHash">The bundle hash</param>
         /// <returns></returns>
-        public int[] NormalizeBundle()
+        public int[] NormalizeBundle(string bundleHash)
         {
             int[] normalizedBundle = new int[81];
 
@@ -103,7 +103,7 @@ namespace Iota.Lib.Model
                 long sum = 0;
                 for (int j = 0; j < 27; j++)
                 {
-                    sum += (normalizedBundle[i*27 + j] = Converter.ConvertTritsToInteger(Converter.ConvertTrytesToTrits("" + BundleHash[i*27 + j])));
+                    sum += (normalizedBundle[i*27 + j] = Converter.ConvertTritsToInteger(Converter.ConvertTrytesToTrits("" + bundleHash[i*27 + j])));
                 }
 
                 if (sum >= 0)
@@ -144,8 +144,64 @@ namespace Iota.Lib.Model
         /// </summary>
         public void FinalizeBundle()
         {
-            SetIndexes();
-            CreateAndAssignBundleHash();
+            //SetIndexes();
+            //CreateAndAssignBundleHash();
+            int[] normalizedBundleValue;
+            int[] obsoleteTagTrits = new int[81];
+            String hashInTrytes;
+            bool valid = true;
+            Kerl kerl = new Kerl();
+            do
+            {
+                kerl.Reset();
+
+                for (int i = 0; i < Transactions.Count; i++)
+                {
+
+                    int[] valueTrits = ArrayUtils.PadArrayWithZeros(Converter.ConvertBigIntToTrits(Transactions[i].Value), 81);
+
+                    int[] timestampTrits = ArrayUtils.PadArrayWithZeros(Converter.ConvertBigIntToTrits(Transactions[i].Timestamp), 27);
+
+                    Transactions[i].CurrentIndex = i;
+
+                    int[] currentIndexTrits = ArrayUtils.PadArrayWithZeros(Converter.ConvertBigIntToTrits(Transactions[i].CurrentIndex), 27);
+
+                    Transactions[i].LastIndex = Transactions.Count - 1;
+
+                    int[] lastIndexTrits = ArrayUtils.PadArrayWithZeros(Converter.ConvertBigIntToTrits(Transactions[i].LastIndex), 27);
+
+                    int[] t = Converter.ConvertTrytesToTrits(Transactions[i].Address + Converter.ConvertTritsToTrytes(valueTrits) + Transactions[i].ObsoleteTag + Converter.ConvertTritsToTrytes(timestampTrits) + Converter.ConvertTritsToTrytes(currentIndexTrits) + Converter.ConvertTritsToTrytes(lastIndexTrits));
+
+                    kerl.Absorb(t);
+                }
+
+                int[] hashInTrits = new int[Kerl.HASH_LENGTH];
+                kerl.Squeeze(ref hashInTrits, 0, hashInTrits.Length);
+
+                hashInTrytes = Converter.ConvertTritsToTrytes(hashInTrits);
+                normalizedBundleValue = NormalizeBundle(hashInTrytes);
+
+                bool foundValue = false;
+                foreach(int aNormalizedBundleValue in normalizedBundleValue)
+                {
+                    if (aNormalizedBundleValue == 13)
+                    {
+                        foundValue = true;
+                        obsoleteTagTrits = Converter.ConvertTrytesToTrits(Transactions[0].ObsoleteTag);
+                        obsoleteTagTrits = Converter.Increment(obsoleteTagTrits, 81);
+                        Transactions[0].ObsoleteTag = Converter.ConvertTritsToTrytes(obsoleteTagTrits);
+                    }
+                }
+                valid = !foundValue;
+
+            } while (!valid);
+
+            BundleHash = hashInTrytes;
+
+            foreach(Transaction transaction in Transactions)
+            {
+                transaction.Bundle = hashInTrytes;
+            }
         }
 
         /// <summary>
@@ -192,32 +248,6 @@ namespace Iota.Lib.Model
             }
         }
 
-        /// <summary>
-        /// Sets the branch- and trunktransaction for each transaction
-        /// </summary>
-        /// <param name="tip_01">The first tip</param>
-        /// <param name="tip_02">The second tip</param>
-        public void CreateTail(string branchTip, string trunkTip)
-        {
-            if(string.IsNullOrEmpty(branchTip) || branchTip.Length != Constants.TRANSACTION_HASH_LENGTH || string.IsNullOrEmpty(trunkTip) || trunkTip.Length != Constants.TRANSACTION_HASH_LENGTH)
-            {
-                throw new ArgumentException();
-            }
-            for (int c = Transactions.Count - 1; c >= 0; c--)
-            {
-                if (c == Transactions.Count - 1)
-                {
-                    Transactions[c].BranchTransaction = branchTip;
-                    Transactions[c].TrunkTransaction = trunkTip;
-                }
-                else
-                {
-                    Transactions[c].BranchTransaction = trunkTip;
-                    Transactions[c].TrunkTransaction = Transactions[c+1].Hash;
-                }
-            }
-        }
-
         public IEnumerable<string> GetRawTransactions()
         {
             foreach(Transaction transaction in Transactions)
@@ -236,7 +266,7 @@ namespace Iota.Lib.Model
         /// </returns>
         public override string ToString()
         {
-            return $"{nameof(Transactions)}: {string.Join(",", Transactions)}";
+            return "Bundle";
         }
 
         /// <summary>
@@ -256,7 +286,9 @@ namespace Iota.Lib.Model
                 kerl.Absorb(Converter.ConvertIntegerToTrits(transaction.LastIndex));
             }
 
-            BundleHash = Converter.ConvertTritsToTrytes(kerl.Squeeze());
+            int[] hashInTrits = new int[Kerl.HASH_LENGTH];
+
+            BundleHash = Converter.ConvertTritsToTrytes(hashInTrits);
             Transactions.ForEach(tx => tx.Bundle = BundleHash);
         }
         

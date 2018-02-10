@@ -68,7 +68,9 @@ namespace Iota.Lib.Utils
             Kerl kerl = new Kerl();
             kerl.Reset();
             kerl.Absorb(Converter.ConvertTrytesToTrits(address));
-            string checksum = Converter.ConvertTritsToTrytes(kerl.Squeeze());
+            int[] hashInTrits = new int[Kerl.HASH_LENGTH];
+            kerl.Squeeze(ref hashInTrits, 0 ,hashInTrits.Length);
+            string checksum = Converter.ConvertTritsToTrytes(hashInTrits);
             return checksum.Substring(72);
         }
     }

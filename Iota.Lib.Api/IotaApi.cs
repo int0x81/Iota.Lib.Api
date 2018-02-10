@@ -179,73 +179,7 @@ namespace Iota.Lib
         /// <returns>The bundle</returns>
         public Bundle GetBundle(string rawTransaction)
         {
-            Bundle bundle = TraverseBundle(rawTransaction, null, new Bundle());
-
-            if (bundle == null)
-            {
-                throw new InvalidBundleException("Bundle can not be null");
-            }
-            
-            BigInteger totalValue = 0;
-            string bundleHash = bundle.Transactions[0].Bundle;
-
-            kerl.Reset();
-
-            List<Signature> signaturesToValidate = new List<Signature>();
-
-            for(int index = 0; index < bundle.Transactions.Count; index++)
-            {
-                Transaction bundleTransaction = bundle.Transactions[index];
-                totalValue += bundleTransaction.Value;
-
-                if(bundleTransaction.CurrentIndex != index)
-                {
-                    throw new InvalidBundleException("The index of the bundle " + bundleTransaction.CurrentIndex + " did not match the expected index " + index);
-                }
-
-                kerl.Absorb(Converter.ConvertTrytesToTrits(bundleTransaction.ToTransactionTrytes().Substring(2187, 162)));
-
-                if (bundleTransaction.Value < 0)
-                {
-                    Signature sig = new Signature
-                    {
-                        Address = bundleTransaction.Address
-                    };
-                    sig.SignatureFragments.Add(bundleTransaction.SignatureMessageFragment);
-
-                    for (int i = index; i < bundle.Transactions.Count - 1; i++)
-                    {
-                        var newBundleTx = bundle.Transactions[i + 1];
-
-                        if (newBundleTx.Address == bundleTransaction.Address && newBundleTx.Value == 0)
-                        {
-                            sig.SignatureFragments.Add(newBundleTx.SignatureMessageFragment);
-                        }
-                    }
-
-                    signaturesToValidate.Add(sig);
-                }
-            }
-
-            string bundleFromTxString = Converter.ConvertTritsToTrytes(kerl.Squeeze());
-
-            if (totalValue != 0 || !bundle.Transactions[bundle.Transactions.Count - 1].CurrentIndex.Equals(bundle.Transactions[bundle.Transactions.Count - 1].LastIndex) || !bundleFromTxString.Equals(bundleHash))
-            {
-                throw new InvalidBundleException("Invalid Bundle");
-            } 
-
-            foreach (Signature signature in signaturesToValidate)
-            {
-                String[] signatureFragments = signature.SignatureFragments.ToArray();
-                string address = signature.Address;
-
-                if (Signing.ValidateSignatures(address, signatureFragments, bundleHash))
-                {
-                    throw new InvalidSignatureException();
-                }     
-            }
-
-            return bundle;
+            throw new NotImplementedException();
         }
 
         public List<Bundle> GetTransfers(string seed, int start, int end, int securityLevel, bool inclusionStates = false)

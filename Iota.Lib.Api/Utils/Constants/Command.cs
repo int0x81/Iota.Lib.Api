@@ -3,13 +3,12 @@
 namespace Iota.Lib.Core
 {
     /// <summary>
-    /// This enumeration defines the core API call commands
+    /// This enumeration defines the core API call commands as specified on <see href="https://iota.readme.io/reference"/>
     /// </summary>
-    /// <see href="https://iota.readme.io/reference"/>
     public enum Command
     {
         /// <summary>
-        /// Get information about the node.
+        /// Gets information about the node
         /// </summary>
         [Description("getNodeInfo")] GetNodeInfo,
 
@@ -19,32 +18,32 @@ namespace Iota.Lib.Core
         [Description("getTips")] GetTips,
 
         /// <summary>
-        /// Finds the transactions using different search criteria <see cref="FindTransactionsRequest"/>
+        /// Finds the transactions using different search criteria
         /// </summary>
         [Description("findTransactions")] FindTransactions,
 
         /// <summary>
-        /// Gets the transactions to approve
+        /// Gets two transactions to approve
         /// </summary>
         [Description("getTransactionsToApprove")] GetTransactionsToApprove,
 
         /// <summary>
-        /// Attaches to the tangle
+        /// Attaches transactions to the tangle
         /// </summary>
         [Description("attachToTangle")] AttachToTangle,
 
         /// <summary>
-        /// Gets the balances
+        /// Gets the balances of a list of addresses
         /// </summary>
         [Description("getBalances")] GetBalances,
 
         /// <summary>
-        /// Gets the inclusion state
+        /// Gets the inclusion states of a set of transactions
         /// </summary>
         [Description("getInclusionStates")] GetInclusionStates,
 
         /// <summary>
-        /// Gets the trytes
+        /// Gets the raw transaction data of a specific transaction
         /// </summary>
         [Description("getTrytes")] GetTrytes,
 
@@ -74,7 +73,7 @@ namespace Iota.Lib.Core
         [Description("broadcastTransactions")] BroadcastTransactions,
 
         /// <summary>
-        /// Stores transactions
+        /// Stores transactions locally
         /// </summary>
         [Description("storeTransactions")] StoreTransactions
     }
