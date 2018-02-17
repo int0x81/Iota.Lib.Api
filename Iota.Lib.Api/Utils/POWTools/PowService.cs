@@ -78,12 +78,21 @@ namespace Iota.Lib.Utils
                     _bundle.Transactions[c].TrunkTransaction = _bundle.Transactions[c + 1].Hash;
                 }
                 
-                string transWithPOW = _powComputer.Search(_bundle.Transactions[c].ToTransactionTrytes(), 10, Constants.MIN_WEIGHT_MAGNITUDE);
+                string transWithPOW = _powComputer.Search(_bundle.Transactions[c].ToTransactionTrytes(), DetermineAvailThreads(), Constants.MIN_WEIGHT_MAGNITUDE);
                 _bundle.Transactions[c] = new Transaction(transWithPOW);
                 var testme = _bundle.Transactions[c].Hash.Length;
             }
             return _bundle;
+        }
 
+        private int DetermineAvailThreads()
+        {
+            int threads = (Environment.ProcessorCount / 4) * 3;
+            if(threads <=0)
+            {
+                threads = 1;
+            }
+            return threads;
         }
     }
 }

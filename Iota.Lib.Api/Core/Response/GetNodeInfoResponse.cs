@@ -1,18 +1,18 @@
 ﻿namespace Iota.Lib.Core
 {
     /// <summary>
-    /// This class represents the response of <see cref="GetNodeInfoRequest"/>
+    /// Represents the response of <see cref="GetNodeInfoRequest"/>
     /// </summary>
     /// <seealso cref="IotaResponse"/>
     public class GetNodeInfoResponse : IotaResponse
     {
         /// <summary>
-        /// Name of the Iota software the corresponding node is currently using.
+        /// Name of the Iota software the corresponding node is currently using
         /// </summary>
         public string AppName { get; set; }
 
         /// <summary>
-        /// The version of the Iota software the corresponding node is currently using.
+        /// The version of the Iota software the corresponding node is currently using
         /// </summary>
         public string AppVersion { get; set; }
 
@@ -22,44 +22,44 @@
         public int JreAvailableProcessors { get; set; }
 
         /// <summary>
-        /// The amount of free memory in the nodes Java Virtual Machine.
+        /// The amount of free memory in the nodes Java Virtual Machine
         /// </summary>
         public long JreFreeMemory { get; set; }
 
         /// <summary>
-        /// The maximum amount of memory that the nodes Java virtual machine will attempt to use.
+        /// The maximum amount of memory that the nodes Java virtual machine will attempt to use
         /// </summary>
         public long JreMaxMemory { get; set; }
 
         /// <summary>
-        /// The total amount of memory in the nodes Java virtual machine.
+        /// The total amount of memory in the nodes Java virtual machine
         /// </summary>
         public long JreTotalMemory { get; set; }
 
         /// <summary>
-        /// Latest milestone that was signed off by the coordinator. 
+        /// Latest milestone that was signed off by the coordinator
         /// </summary>
         public string LatestMilestone { get; set; }
 
         /// <summary>
-        /// Index of the latest milestone.
+        /// Index of the latest milestone
         /// </summary>
         public long LatestMilestoneIndex { get; set; }
 
         /// <summary>
         /// The latest milestone which is solid and is used for sending transactions. 
         /// For a milestone to become solid your local node must basically approve the subtangle of coordinator-approved transactions,
-        /// and have a consistent view of all referenced transactions. 
+        /// and have a consistent view of all referenced transactions
         /// </summary>
         public string LatestSolidSubtangleMilestone { get; set; }
 
         /// <summary>
-        ///  Index of the latest solid subtangle.
+        ///  Index of the latest solid subtangle
         /// </summary>
         public long LatestSolidSubtangleMilestoneIndex { get; set; }
 
         /// <summary>
-        /// Number of neighbors the node is directly connected with.
+        /// Number of neighbors the node is directly connected with
         /// </summary>
         public long Neighbors { get; set; }
 
@@ -74,7 +74,7 @@
         public long Time { get; set; }
 
         /// <summary>
-        /// Number of tips in the network.
+        /// Number of tips in the network
         /// </summary>
         public long Tips { get; set; }
 
@@ -92,10 +92,10 @@
         public string JreVersion { get; set; }
 
         /// <summary>
-        /// Returns a <see cref="String" /> that represents this instance.
+        /// Returns a <see cref="System.String" /> that represents this instance.
         /// </summary>
         /// <returns>
-        /// A <see cref="String" /> that represents this instance.
+        /// A <see cref="System.String" /> that represents this instance.
         /// </returns>
         public override string ToString()
         {

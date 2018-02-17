@@ -2,6 +2,9 @@
 
 namespace Iota.Lib.Utils
 {
+    /// <summary>
+    /// Contains several constants and standarts provided by the Iota-foundation
+    /// </summary>
     public static class Constants
     { 
         /// <summary>

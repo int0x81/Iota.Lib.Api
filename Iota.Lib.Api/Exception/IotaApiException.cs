@@ -7,9 +7,9 @@
     public class IotaApiException : System.Exception
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="IotaApiException"/> class.
+        /// Initializes a new instance of the <see cref="IotaApiException"/> class
         /// </summary>
-        /// <param name="error">The error.</param>
+        /// <param name="error">The error</param>
         public IotaApiException(string error = "Invalid Request") : base(error)
         {
         }

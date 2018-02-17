@@ -182,23 +182,18 @@ namespace Iota.Lib
             throw new NotImplementedException();
         }
 
-        public List<Bundle> GetTransfers(string seed, int start, int end, int securityLevel, bool inclusionStates = false)
+        /// <summary>
+        /// Gets all transfers which are associated with a seed
+        /// </summary>
+        /// <param name="seed">The seed</param>
+        /// <param name="start">Thefirst key index to start searching from</param>
+        /// <param name="end">The last index</param>
+        /// <param name="securityLevel">The security level</param>
+        /// <param name="inclusionStates">States if only transactions should be returned, which are approved by the coordinator</param>
+        /// <returns>A list of transactions associated with the seed</returns>
+        public List<Transaction> GetTransfers(string seed, int start, int end, int securityLevel, bool inclusionStates)
         {
-            if(!InputValidator.IsValidSeed(seed))
-            {
-                throw new InvalidTryteException();
-            }
-            seed = ArrayUtils.AdjustTryteString(seed, SEED_MAX_LENGTH);
-
-            if (start > end || end > (start + 500))
-            {
-                throw new System.Exception("Invalid inputs provided: start, end");
-            }
-
-            IEnumerable<string> addresses = GetNewAddresses(seed, start, end, securityLevel, false);
-
-
-            return BundlesFromAddresses(addresses, inclusionStates);
+            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -239,12 +234,12 @@ namespace Iota.Lib
         /// Broadcasts and stores a list of transactions
         /// </summary>
         /// <param name="rawTransactions">The raw transactions</param>
-        public void BroadcastAndStore(List<string> trytes)
+        public void BroadcastAndStore(List<string> rawTransactions)
         {
-            var response = BroadcastTransactionsAsync(trytes).Result;
+            var response = BroadcastTransactionsAsync(rawTransactions).Result;
             if(response.StatusCode == System.Net.HttpStatusCode.OK)
             {
-                StoreTransactions(trytes);
+                StoreTransactions(rawTransactions);
             }
         }
 
@@ -272,7 +267,7 @@ namespace Iota.Lib
         /// <summary>
         /// Finds all transactions associated with a specified address and returns the hashes as list
         /// </summary>
-        /// <param name="address">The address</param>
+        /// <param name="addresses">The addresses</param>
         /// <returns>The transaction hashes</returns>
         public IEnumerable<Transaction> FindTransactionsByAddresses(params string[] addresses)
         {
@@ -304,7 +299,7 @@ namespace Iota.Lib
         /// </summary>
         /// <param name="inputs">The inputs</param>
         /// <param name="bundle">The bundle</param>
-        /// <returns>All valid inputs.</returns>
+        /// <returns>All valid inputs</returns>
         private IEnumerable<Transaction> ValidateInputs(IEnumerable<Transaction> inputs, Bundle bundle)
         {
             List<string> inputAddresses = new List<string>();
@@ -336,89 +331,6 @@ namespace Iota.Lib
             {
                 throw new NotEnoughBalanceException();
             }
-        }
-
-        private List<Bundle> BundlesFromAddresses(IEnumerable<string> addresses, bool inclusionStates)
-        {
-            IEnumerable<Transaction> foundTransactions = FindTransactionsByAddresses(addresses.ToArray());
-
-            List<string> tailTransactions = new List<string>();
-            List<string> nonTailBundleHashes = new List<string>();
-
-            foreach (Transaction transaction in foundTransactions)
-            {
-                // Sort tail and nonTails
-                if (transaction.CurrentIndex == 0)
-                {
-                    tailTransactions.Add(transaction.Hash);
-                }
-                else
-                {
-                    if (nonTailBundleHashes.IndexOf(transaction.Bundle) == -1)
-                    {
-                        nonTailBundleHashes.Add(transaction.Bundle);
-                    }
-                }
-            }
-
-            foundTransactions = FindTransactionsByBundleHash(nonTailBundleHashes.ToArray());
-            foreach (Transaction transaction in foundTransactions)
-            {
-                // Sort tail and nonTails
-                if (transaction.CurrentIndex == 0)
-                {
-                    if (tailTransactions.IndexOf(transaction.Hash) == -1)
-                    {
-                        tailTransactions.Add(transaction.Hash);
-                    }
-                }
-            }
-
-            List<Bundle> finalBundles = new List<Bundle>();
-            string[] tailTxArray = tailTransactions.ToArray();
-
-            GetInclusionStatesResponse gisr = null;
-            if(inclusionStates)
-            {
-                try
-                {
-                    gisr = GetLatestInclusion(tailTxArray);
-                }
-                catch(SystemException)
-                {}
-                if (gisr == null || gisr.States == null || gisr.States.Count == 0)
-                {
-                    throw new ArgumentException("Inclusion states not found");
-                }    
-            }
-
-
-            GetInclusionStatesResponse finalInclusionStates = gisr;
-
-            Parallel.ForEach(tailTransactions, (param) =>
-            {
-                try
-                {
-                    Bundle bundle = GetBundle(param);
-
-                    if (inclusionStates)
-                    {
-                        bool thisInclusion = finalInclusionStates.States[tailTxArray.ToList().IndexOf(param)];
-                        foreach(Transaction transaction in bundle.Transactions)
-                        {
-                            transaction.Persistance = thisInclusion;
-                        }
-                    }
-                    finalBundles.Add(bundle);
-                }
-                catch (System.Exception ex)
-                {
-                    Console.WriteLine("Bundle error: " + ex.Message);
-                }
-            });
-
-            finalBundles.Sort();
-            return finalBundles;
         }
 
         private Bundle TraverseBundle(string trunkTransaction, string bundleHash, Bundle bundle)
@@ -476,7 +388,7 @@ namespace Iota.Lib
         private GetInclusionStatesResponse GetLatestInclusion(string[] hashes)
         {
             string[] latestMilestone = { GetNodeInfo().LatestSolidSubtangleMilestone };
-            return GetInclusionStates(hashes, latestMilestone);
+            return GetInclusionStatesAsync(hashes, latestMilestone).Result;
         }
         #endregion
     }

@@ -7,7 +7,7 @@
     public class InvisibleBundleTransactionException : System.Exception
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="InvisibleBundleTransactionException"/> class.
+        /// Initializes a new instance of the <see cref="InvisibleBundleTransactionException"/> class
         /// </summary>
         public InvisibleBundleTransactionException() : base()
         {

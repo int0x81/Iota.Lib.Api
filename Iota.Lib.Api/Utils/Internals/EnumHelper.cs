@@ -8,9 +8,9 @@ using System.Runtime.CompilerServices;
 namespace Iota.Lib.Utils
 {
     /// <summary>
-    /// Helper class that extracts the command string corresponding to the different <see cref="Command"/>s
+    /// Helper class that extracts the command string corresponding to the different commands
     /// </summary>
-    internal static class EnumHelper
+    static class EnumHelper
     {
         /// <summary>
         /// Retrieve the description on the enum

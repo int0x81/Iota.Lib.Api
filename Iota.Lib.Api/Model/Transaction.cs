@@ -73,6 +73,8 @@ namespace Iota.Lib.Model
         /// <param name="value">The value</param>
         /// <param name="message">The message</param>
         /// <param name="tag">The tag</param>
+        /// <param name="keyIndex">The keyindex of the address with which the transaction is beeing created with</param>
+        /// <param name="securityLevel">The securityLevel of the address with which the transaction is beeing created with</param>
         public Transaction(string address, BigInteger value, string message = null, string tag = null, int keyIndex = -1, int securityLevel = 0)
         {
             if(!InputValidator.IsValidAddress(address))
@@ -129,95 +131,106 @@ namespace Iota.Lib.Model
         }
 
         /// <summary>
-        /// Gets or sets the hash.
+        /// A 81-tryte long string that represents the transaction hash
         /// </summary>
-        /// <value>A unique hash which is 81-trytes long.</value>
         public string Hash { get; set; }
 
         /// <summary>
-        /// Gets or sets the signatureMessageFragment.
+        /// A 2187-tryte long string. In case there is a spent input, the signature of the private key is stored here. If no signature is required,
+        /// it is empty (all 9's) and can be used for storing a message
         /// </summary>
-        /// <value>A 2187-trytes long string. In case there is a spent input, the signature of the private key is stored here. If no signature is required,
-        /// it is empty (all 9's) and can be used for storing a message.
-        /// </value>
         public string SignatureMessageFragment { get; set; }
 
         /// <summary>
-        /// Gets or sets the address.
+        /// A 81-tryte long string. In case this is an 'output', then this is the address of the recipient.
+        /// In case this is an 'input', then this is the address from where the tokens shall be sended from
         /// </summary>
-        /// <value>A 81-trytes long string. In case this is an 'output', then this is the address of the recipient.
-        /// In case this is an 'input', then this is the address from where the tokens shall be sended from.
-        /// </value>
         public string Address { get; set; }
 
         /// <summary>
-        /// Gets or sets the value.
+        /// The value transfered in this transaction.
         /// </summary>
-        /// <value>The value transfered in this transaction</value>
         public BigInteger Value { get; set; }
-        
+
         /// <summary>
-        /// Gets or sets the timestamp.
+        /// Timestamp of the transaction
         /// </summary>
-        /// <value>Timestamp of the transaction. Timestamps are not enforced in iota.</value>
         public BigInteger Timestamp { get; set; }
 
-        public int KeyIndex { get; set; } //This value is just used internal for proper signing; not sent to the node
-        public int SecurityLevel { get; set; } //This value is just used internal for proper signing; not sent to the node
+        /// <summary>
+        /// The key index of the address with which the transaction is beeing created with. Just used internal for proper signing
+        /// </summary>
+        public int KeyIndex { get; set; }
+
+        /// <summary>
+        /// The security level of the address with which the transaction is beeing created with. Just used internal for proper signing
+        /// </summary>
+        public int SecurityLevel { get; set; }
+
+        /// <summary>
+        /// States if the transaction is persistent
+        /// </summary>
         public bool Persistance { get; set; }
 
         /// <summary>
-        /// Gets or sets the current index.
+        /// The index this transaction has in its bundle
         /// </summary>
-        /// <value>The index this transaction has in its bundle.</value>
         public int CurrentIndex { get; set; }
 
         /// <summary>
-        /// Gets or sets the value.
+        /// The last index of the bundle where this transaction is placed in
         /// </summary>
-        /// <value>The last index of the bundle where this transaction is placed in.</value>
         public int LastIndex { get; set; }
 
         /// <summary>
-        /// Gets or sets the bundle hash.
+        /// a 81-tryte long string which represents the bundle hash
         /// </summary>
-        /// <value>
-        /// 81 trytes long string which represents the bundle hash, which is used for grouping transactions of a bundle together.
-        /// With the bundle hash you can identify transactions which were in the same bundle.
-        /// </value>
         public string Bundle { get; set; }
 
         /// <summary>
-        /// Gets or sets the 'TrunkTransaction'.
+        /// A 81-tryte string which represents a transaction hash
         /// </summary>
-        /// <value>A 81-trytes string which represents an address</value>
         public string TrunkTransaction { get; set; }
 
         /// <summary>
-        /// Gets or sets the 'BranchTransaction'.
+        /// A 81-tryte string which represents a transaction hash
         /// </summary>
-        /// <value>A 81-trytes string which represents an address</value>
         public string BranchTransaction { get; set; }
 
         /// <summary>
-        /// Gets or sets the nounce.
+        /// A 27-tryte long string. The nounce is required for the transaction to be accepted by the network.
         /// </summary>
-        /// <value>
-        /// A 81-trytes hash. The nounce is required for the transaction to be accepted by the network.
-        /// It is generated by doing the proof of work localy or by an IRI via the 'AttachToTangle'-method.
-        /// </value>
         public string Nonce { get; set; }
-
+        
+        /// <summary>
+        /// (Will be removed soon!) The obsulete tag is a nine tryte long string that can be used for various reasons 
+        /// </summary>
         public string ObsoleteTag { get; set; }
+
+        /// <summary>
+        /// A nine tryte long string that can be used for various reasons
+        /// </summary>
         public string Tag { get; set; }
+
+        /// <summary>
+        /// Placeholder for later Iota implementations
+        /// </summary>
         public BigInteger AttachmentTimestamp { get; set; }
+
+        /// <summary>
+        /// The timestamp before the proof-of-work
+        /// </summary>
         public BigInteger AttachmentTimestampLowerBound { get; set; }
+
+        /// <summary>
+        /// The timestamp after the proof-of-work
+        /// </summary>
         public BigInteger AttachmentTimestampUpperBound { get; set; }
 
         /// <summary>
         /// Converts the transaction to the corresponding trytes representation
         /// </summary>
-        /// <returns></returns>
+        /// <returns>The raw transaction as 2673-tryte long string</returns>
         public string ToTransactionTrytes()
         {
             int[] valueTrits = Converter.ConvertBigIntToTrits(Value);

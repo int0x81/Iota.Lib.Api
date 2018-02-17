@@ -147,7 +147,7 @@ namespace Iota.Lib.Utils
         {
             byte[] result = new byte[outputLength];
             byte[] bytes = value.ToByteArray();              
-            bytes = bytes.Reverse().ToArray(); // In .NET Standard the 'ToByteArray()'-Function fills the array in reverse order compared to .NET Framework 4
+            bytes = bytes.Reverse().ToArray();
 
 
             var i = 0;
@@ -278,7 +278,7 @@ namespace Iota.Lib.Utils
         /// <summary>
         /// Increments the value of a tryte-string
         /// </summary>
-        /// <param name="trits">The tryte-string</param>
+        /// <param name="trytes">The tryte-string</param>
         /// <param name="summand">The summand (1 by default)</param>
         /// <returns>The incremented tryte-string</returns>
         public static string Increment(string trytes, int summand = 1)

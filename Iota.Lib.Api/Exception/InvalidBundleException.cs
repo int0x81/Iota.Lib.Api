@@ -9,7 +9,7 @@
         /// <summary>
         /// Initializes a new instance of the <see cref="InvalidBundleException"/> class.
         /// </summary>
-        /// <param name="message">The error</param>
+        /// <param name="error">The error</param>
         public InvalidBundleException(string error) : base(error)
         {
         }
