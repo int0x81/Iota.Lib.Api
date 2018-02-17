@@ -25,7 +25,10 @@ namespace Iota.Lib.Model
                 Transactions = new List<Transaction>();
             }
         }
-
+        
+        /// <summary>
+        /// The transactions of the bundle (input-, output- and meta transactions)
+        /// </summary>
         public List<Transaction> Transactions { get; set; }
 
         /// <summary>
@@ -46,7 +49,7 @@ namespace Iota.Lib.Model
         }
 
         /// <summary>Adds multiple bundle entries</summary>
-        /// <param name="input">The transactions</param>
+        /// <param name="transactions">The transactions</param>
         public void AddEntries(List<Transaction> transactions)
         {
             if (!InputValidator.IsArrayOfValidTransactions(transactions))
@@ -92,7 +95,7 @@ namespace Iota.Lib.Model
         /// <summary>
         /// Normalizes the bundle
         /// </summary>
-        /// <param name="BundleHash">The bundle hash</param>
+        /// <param name="bundleHash">The bundle hash</param>
         /// <returns></returns>
         public int[] NormalizeBundle(string bundleHash)
         {
@@ -248,6 +251,10 @@ namespace Iota.Lib.Model
             }
         }
 
+        /// <summary>
+        /// Returns all transactions as raw transactions
+        /// </summary>
+        /// <returns>The raw transactions as tryte encoded strings</returns>
         public IEnumerable<string> GetRawTransactions()
         {
             foreach(Transaction transaction in Transactions)

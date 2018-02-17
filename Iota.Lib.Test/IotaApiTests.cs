@@ -13,8 +13,8 @@ namespace Iota.Lib.Test
     {
         const string NODE = "03.nl.nodes.iota.cafe"; //Your test node; Please note that not all nodes accept the all requests
         const int PORT = 14265;                      //Your test nodes's port
-        const bool IS_SSL = false;                  //Your test node's encryption state
-        const int TIMEOUT = 10000;                 //Limits the time a request should take in milliseconds
+        const bool IS_SSL = false;                   //Your test node's encryption state
+        const int TIMEOUT = 10000;                   //Limits the time a request should take in milliseconds
 
         readonly List<string> ADDRESSES = new List<string>()
         {
@@ -109,23 +109,26 @@ namespace Iota.Lib.Test
         /// <summary>
         /// This test performs an actuall transfer including local proof-of-work
         /// </summary>
-        //[TestMethod]
-        //public void PROOF_OF_CONCEPT()
-        //{
-        //    PowService powService = new PowService();
-        //    const string SEED = "HAKHOVW9EQWPESUCKITYGLYWGCCOXYH9EOZITARIFJMARWB9SSNB9URZFFANPWEGNONPGEUDBENZRZW9R";
-        //    string outgoingAddress = "DMDSWYIUUFDMHKIBQPP9LMCQNYQDFXXMPT9GWHXYZ9IQNEYJLSNASVXFFSZZKJAVHTFIDSZGIOXDURONWDTTBHVBWX";
-        //    string inputAddress = "RQXWRWSRPKRFTCJQME9FPXEJMZXQHOEKYZRQCNYQADWTPBKPPSYZYADKBLRNOKUMQYYSLJJDBAJJWGBMWCBDTSU9CA";
-        //    string remainder = "MPOOXKJABYVHNSKMTCDRDZGSRPZKQTUMVPUWUBZIZWWQBWTERELESGEGBHAMJHINZOKRUNSXQCSIFBMYDKOLDQUPQA";
-        //    Transaction output = new Transaction(outgoingAddress, 2);
-        //    Transaction input = new Transaction(inputAddress, -10, null, "IHATEJAVA", 0, 2);
+        [TestMethod]
+        public void PROOF_OF_CONCEPT()
+        {
+            PowService powService = new PowService();
+            const string SEED = "HAKHOVW9EQWPESUCKITYGLYWGCCOXYH9EOZITARIFJMARWB9SSNB9URZFFANPWEGNONPGEUDBENZRZW9R";
+            string outgoingAddress = "DMDSWYIUUFDMHKIBQPP9LMCQNYQDFXXMPT9GWHXYZ9IQNEYJLSNASVXFFSZZKJAVHTFIDSZGIOXDURONWDTTBHVBWX";
+            string inputAddress = "RQXWRWSRPKRFTCJQME9FPXEJMZXQHOEKYZRQCNYQADWTPBKPPSYZYADKBLRNOKUMQYYSLJJDBAJJWGBMWCBDTSU9CA";
+            //string remainder = "MPOOXKJABYVHNSKMTCDRDZGSRPZKQTUMVPUWUBZIZWWQBWTERELESGEGBHAMJHINZOKRUNSXQCSIFBMYDKOLDQUPQA";
+            Transaction output = new Transaction(outgoingAddress, 2);
+            Transaction input = new Transaction(inputAddress, -10, null, "IHATEJAVA", 0, 2);
+            Transaction metaTest = new Transaction(inputAddress, 0, "HOOKME", "YESYES");
 
-        //    Bundle transfer = api.PrepareTransfers(SEED, new List<Transaction> { output }, 2, new List<Transaction> { input }, remainder);
-        //    var response = api.GetTransactionsToApproveAsync(27).Result;
-        //    powService.Load(transfer, response.BranchTransaction, response.TrunkTransaction);
-        //    transfer = powService.Execute();
-        //    var result = api.BroadcastTransactions(transfer.GetRawTransactions().ToList());
-        //    Assert.IsTrue(result.StatusCode == System.Net.HttpStatusCode.OK);
-        //}
+            //Bundle transfer = api.PrepareTransfers(SEED, new List<Transaction> { output }, 2, new List<Transaction> { input }, remainder);
+            Bundle transfer = api.PrepareTransfers(SEED, new List<Transaction> { metaTest }, 2);
+
+            var response = api.GetTransactionsToApproveAsync(2).Result;
+            powService.Load(transfer, response.BranchTransaction, response.TrunkTransaction);
+            transfer = powService.Execute();
+            var result = api.BroadcastTransactions(transfer.GetRawTransactions().ToList());
+            Assert.IsTrue(result.StatusCode == System.Net.HttpStatusCode.OK);
+        }
     }
 }

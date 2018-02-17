@@ -22,8 +22,6 @@ namespace Iota.Lib.Utils
         private const int NUMBER_OF_ROUNDSP81 = 81; //used for transaction-hash generation and the proof of work
         private readonly int numberOfRounds;
         private readonly int[] TRUTH_TABLE = { 1, 0, -1, 2, 1, -1, 0, 2, -1, 1, 0 };
-        private readonly long[] stateLow;
-        private readonly long[] stateHigh;
         private readonly int[] scratchpad = new int[STATE_LENGTH];
         private int[] State;
 
@@ -43,8 +41,6 @@ namespace Iota.Lib.Utils
             }
 
             State = new int[STATE_LENGTH];
-            stateHigh = null;
-            stateLow = null;
         }
 
         /// <summary>

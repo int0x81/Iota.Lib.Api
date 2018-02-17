@@ -8,7 +8,7 @@ using static Iota.Lib.Utils.Constants;
 namespace Iota.Lib.Utils
 {
     /// <summary>
-    /// This class provides several methods to validate inputs
+    /// Provides several methods to validate inputs
     /// </summary>
     public static class InputValidator
     {
@@ -94,7 +94,7 @@ namespace Iota.Lib.Utils
         /// <summary>
         /// Determines whether a list only contains valid transactions
         /// </summary>
-        /// <param name="transfers">The transactions</param>
+        /// <param name="transactions">The transactions</param>
         /// <returns>
         /// The state as boolean if the provided array only contains valid transactions
         /// </returns>
@@ -148,6 +148,11 @@ namespace Iota.Lib.Utils
             return true;
         }
 
+        /// <summary>
+        /// Determines if a bundle is valid
+        /// </summary>
+        /// <param name="bundle">The bundle to be checked</param>
+        /// <returns>The state if a bundle is a valid bundle</returns>
         public static bool IsValidBundle(Bundle bundle)
         {
             if(bundle == null)

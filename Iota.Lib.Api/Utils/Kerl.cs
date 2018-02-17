@@ -10,18 +10,20 @@ namespace Iota.Lib.Utils
     /// Kerl is the hashfunction Iota uses for multiple scenarios such as address generation, signature generation etc.
     /// It is sponge-function based on Keccak-384
     /// </summary>
-    /// <seealso href="https://github.com/iotaledger/kerl">
+    /// <seealso href="https://github.com/iotaledger/kerl"/>
     /// <seealso href="https://keccak.team/keccak.html"/>
     public class Kerl : ISponge
     {
         private readonly KeccakDigest keccak;
-
-        public const int HASH_LENGTH = 243;
-        public const int BIT_HASH_LENGTH = 384;
-        public const int BYTE_HASH_LENGTH = BIT_HASH_LENGTH / 8;
-
+        private const int BIT_HASH_LENGTH = 384;
+        private const int BYTE_HASH_LENGTH = BIT_HASH_LENGTH / 8;
         private byte[] byteState;
         private int[] tritState;
+        
+        /// <summary>
+        /// The array length of one 'squeeze' in trits 
+        /// </summary>
+        public const int HASH_LENGTH = 243;
 
         /// <summary>
         /// Creates a new <see cref="Kerl"/> instance

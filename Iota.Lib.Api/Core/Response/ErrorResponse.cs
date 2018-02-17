@@ -6,6 +6,9 @@
     /// <seealso cref="IotaResponse"/>
     public class ErrorResponse : IotaResponse
     {
+        /// <summary>
+        /// The error
+        /// </summary>
         public string Error { get; set; }
     }
 }
